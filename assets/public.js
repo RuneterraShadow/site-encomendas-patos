@@ -3,6 +3,9 @@ import {
   doc, onSnapshot, collection, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+// ✅ Endpoint do Cloudflare Worker
+const ORDER_ENDPOINT = "https://site-encomendas-patos.viniespezio21.workers.dev";
+
 const el = (id) => document.getElementById(id);
 const grid = el("productsGrid");
 
@@ -32,6 +35,16 @@ function humanDate(ts){
   }
 }
 
+async function sendOrderToDiscord({ productName, qty, priceText }){
+  const r = await fetch(ORDER_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productName, qty, priceText }),
+  });
+  if (!r.ok) throw new Error("order_failed");
+  return r.json().catch(() => ({}));
+}
+
 function renderProducts(items){
   grid.innerHTML = "";
   for (const p of items){
@@ -58,27 +71,72 @@ function renderProducts(items){
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         ${desc ? `<p>${desc}</p>` : `<p class="small">Sem descrição</p>`}
+
         <div class="badges">
           ${stockBadge}
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
         </div>
+
         ${priceHtml}
-        <button class="btn" data-buy>${(window.__BUY_TEXT || "COMPRE AGORA!")}</button>
+
+        <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+          <input
+            class="input"
+            data-qty
+            type="number"
+            min="1"
+            max="999"
+            value="1"
+            style="width:120px;"
+          />
+          <button class="btn" data-buy>${(window.__BUY_TEXT || "ENCOMENDAR")}</button>
+        </div>
+
+        <p class="small" data-status style="margin:8px 0 0; opacity:.9;"></p>
       </div>
     `;
 
     setSafeImg(card.querySelector("img"), p.imageUrl);
 
-    card.querySelector("[data-buy]").addEventListener("click", () => {
-      const base = (window.__WHATSAPP_LINK || "").trim();
-      if (!base){
-        alert("WhatsApp não configurado no painel.");
+    const qtyEl = card.querySelector("[data-qty]");
+    const statusEl = card.querySelector("[data-status]");
+    const btnEl = card.querySelector("[data-buy]");
+
+    btnEl.addEventListener("click", async () => {
+      const qty = Number(qtyEl.value);
+
+      if (!Number.isFinite(qty) || qty < 1 || qty > 999){
+        statusEl.textContent = "Quantidade inválida.";
         return;
       }
-      const finalPrice = promo ? moneyBRL(p.promoPrice) : moneyBRL(p.price);
-      const msg = encodeURIComponent(`Olá! Quero comprar: ${p.name} (${finalPrice})`);
-      const link = base.includes("?") ? `${base}&text=${msg}` : `${base}?text=${msg}`;
-      window.open(link, "_blank", "noopener");
+
+      // opcional: se quiser travar pelo estoque
+      if (typeof p.stock === "number" && qty > p.stock){
+        statusEl.textContent = `Quantidade maior que o estoque (${p.stock}).`;
+        return;
+      }
+
+      const priceText = promo ? moneyBRL(p.promoPrice) : moneyBRL(p.price);
+
+      // UI
+      btnEl.disabled = true;
+      statusEl.textContent = "Enviando pedido...";
+      statusEl.style.opacity = "1";
+
+      try{
+        await sendOrderToDiscord({
+          productName: p.name || "Produto",
+          qty,
+          priceText
+        });
+
+        // ✅ confirmação pro cliente
+        statusEl.textContent = "✅ Pedido recebido! Entraremos em contato em breve.";
+      }catch{
+        statusEl.textContent = "❌ Não foi possível enviar agora. Tente novamente.";
+      }finally{
+        btnEl.disabled = false;
+      }
     });
 
     grid.appendChild(card);
@@ -98,8 +156,11 @@ onSnapshot(settingsRef, (snap) => {
   el("bannerDesc").textContent = s.bannerDesc || "Edite isso no /admin";
   el("globalDesc").textContent = s.globalDesc || "—";
 
+  // Mantém caso você ainda use no botão de WhatsApp global
   window.__WHATSAPP_LINK = s.whatsappLink || "";
-  window.__BUY_TEXT = s.buyBtnText || "COMPRE AGORA!";
+
+  // Texto do botão (vai aparecer como ENCOMENDAR)
+  window.__BUY_TEXT = s.buyBtnText || "ENCOMENDAR";
 
   el("whatsBtn").href = s.whatsappLink || "#";
 

@@ -3,10 +3,53 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Site Encomendas Patos</title>
+  <title>Loja</title>
+  <link rel="stylesheet" href="./assets/app.css" />
 </head>
 <body>
-  <h1>Site no ar ✅</h1>
-  <p>GitHub Pages funcionando.</p>
+  <div class="topbar">
+    <div class="row container">
+      <div class="brand">
+        <h1 id="siteTitle">Carregando...</h1>
+        <p id="siteSubtitle">—</p>
+      </div>
+      <div class="rowBtns">
+        <a id="whatsBtn" class="btn" href="#" target="_blank" rel="noopener">COMPRE AGORA!</a>
+        <a class="btn secondary" href="./admin.html">Admin</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="hero">
+      <div class="heroBanner">
+        <img id="bannerImg" alt="Banner" />
+        <div class="overlay"></div>
+        <div class="text">
+          <h2 id="bannerTitle">—</h2>
+          <p class="desc" id="bannerDesc">—</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin:0;">Informações</h3>
+        <p id="globalDesc" class="small" style="margin:0;">—</p>
+        <div class="hr"></div>
+        <div class="kpiRow">
+          <div class="kpi" id="kpiProducts">Produtos: —</div>
+          <div class="kpi" id="kpiUpdated">Atualizado: —</div>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin:18px 0 10px;">Produtos</h2>
+    <div id="productsGrid" class="grid"></div>
+
+    <p class="small" style="margin-top:18px;">
+      * Preços e disponibilidade podem mudar em tempo real.
+    </p>
+  </div>
+
+  <script type="module" src="./assets/public.js"></script>
 </body>
 </html>

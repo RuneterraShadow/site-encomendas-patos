@@ -2,7 +2,7 @@ import { db } from "./firebase.js";
 import { doc, onSnapshot, collection, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /** ✅ COLOQUE A URL DO SEU WORKER AQUI */
-const ORDER_ENDPOINT = "https://SEU-WORKER.workers.dev";
+const ORDER_ENDPOINT = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
 const el = (id) => document.getElementById(id);
 const grid = el("productsGrid");

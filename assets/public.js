@@ -1,4 +1,4 @@
-// assets/public.js
+// assets/public.js (VERSÃO ÚNICA - sem carrinho antigo)
 import { db } from "./firebase.js";
 import {
   doc,
@@ -10,6 +10,31 @@ import {
 
 const el = (id) => document.getElementById(id);
 const grid = el("productsGrid");
+
+// ======================
+// REMOVE UI ANTIGA (se existir)
+// ======================
+function removeOldCartUI() {
+  // remove qualquer coisa antiga que tenha ficado na página
+  const selectors = [
+    "#cart", "#cartDrawer", "#cartSidebar", "#checkout", "#checkoutForm",
+    ".cart", ".cartPanel", ".cartDrawer", ".checkout", ".checkoutPanel",
+    "[data-cart]", "[data-checkout]"
+  ];
+  selectors.forEach((sel) => {
+    document.querySelectorAll(sel).forEach((n) => n.remove());
+  });
+
+  // remove botões antigos por texto (fallback)
+  document.querySelectorAll("button, a").forEach((b) => {
+    const t = (b.textContent || "").trim().toLowerCase();
+    if (t === "encomendar" || t === "encomende agora" || t === "enviar pedido") {
+      // só remove se NÃO for o nosso botão novo (que tem ids)
+      if (!b.id && !b.hasAttribute("data-keep")) b.remove();
+    }
+  });
+}
+removeOldCartUI();
 
 // ======================
 // Utils
@@ -43,13 +68,13 @@ function humanDate(ts) {
   }
 }
 
-// pega preço final (promo se existir)
 function finalPriceNumber(p) {
   const price = Number(p.price || 0);
   const promo = Number(p.promoPrice || 0);
   const isPromo = promo > 0 && promo < price;
   return isPromo ? promo : price;
 }
+
 function finalPriceText(p) {
   return moneyBRL(finalPriceNumber(p));
 }
@@ -70,11 +95,11 @@ function saveCart(cart) {
 }
 let cart = loadCart();
 
-// produtos em memória (para render e enviar)
+// produtos em memória
 let productsById = new Map();
 
 // ======================
-// UI (Carrinho + Checkout) FIXO no topo esquerdo
+// UI fixa (topo esquerdo)
 // ======================
 function injectCartStyles() {
   if (document.getElementById("cartStyles")) return;
@@ -363,18 +388,7 @@ function ensureCartUI() {
     openCheckout();
   });
 
-  return {
-    btn,
-    panel,
-    overlay,
-    modal,
-    cartItemsEl,
-    cartTotalEl,
-    openCart,
-    closeCart,
-    openCheckout,
-    closeCheckout,
-  };
+  return { btn, panel, overlay, modal, cartItemsEl, cartTotalEl };
 }
 
 const UI = ensureCartUI();
@@ -406,26 +420,25 @@ function cartToItems() {
 }
 
 function calcTotal(items) {
-  return items.reduce((acc, i) => acc + Number(i.price || 0) * Number(i.qty || 0), 0);
+  return items.reduce(
+    (acc, i) => acc + Number(i.price || 0) * Number(i.qty || 0),
+    0
+  );
 }
 
 function setCartQty(id, qty) {
   const q = Math.max(0, Math.floor(Number(qty || 0)));
-  if (q <= 0) {
-    delete cart[id];
-  } else {
-    cart[id] = q;
-  }
+  if (q <= 0) delete cart[id];
+  else cart[id] = q;
+
   saveCart(cart);
   renderCart();
 }
 
 function renderCart() {
-  // contador no botão
   UI.btn.textContent = `Carrinho (${cartCount()})`;
 
   const items = cartToItems();
-
   if (!items.length) {
     UI.cartItemsEl.innerHTML = `<p class="small" style="margin:0;">Carrinho vazio.</p>`;
     UI.cartTotalEl.textContent = moneyBRL(0);
@@ -441,7 +454,6 @@ function renderCart() {
         <div class="cartName">${it.name}</div>
         <div class="cartPrice">${it.priceText}</div>
       </div>
-
       <div class="cartQtyRow">
         <div class="qtyBtns">
           <button type="button" data-dec>-</button>
@@ -452,15 +464,20 @@ function renderCart() {
       </div>
     `;
 
-    row.querySelector("[data-dec]").addEventListener("click", () => setCartQty(it.id, it.qty - 1));
-    row.querySelector("[data-inc]").addEventListener("click", () => setCartQty(it.id, it.qty + 1));
-    row.querySelector("[data-remover]").addEventListener("click", () => setCartQty(it.id, 0));
+    row.querySelector("[data-dec]").addEventListener("click", () =>
+      setCartQty(it.id, it.qty - 1)
+    );
+    row.querySelector("[data-inc]").addEventListener("click", () =>
+      setCartQty(it.id, it.qty + 1)
+    );
+    row.querySelector("[data-remover]").addEventListener("click", () =>
+      setCartQty(it.id, 0)
+    );
 
     UI.cartItemsEl.appendChild(row);
   }
 
-  const total = calcTotal(items);
-  UI.cartTotalEl.textContent = moneyBRL(total);
+  UI.cartTotalEl.textContent = moneyBRL(calcTotal(items));
 }
 
 // ======================
@@ -496,20 +513,16 @@ function renderProducts(items) {
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         ${desc ? `<p>${desc}</p>` : `<p class="small">Sem descrição</p>`}
-
         <div class="badges">
           ${stockBadge}
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
           ${promo ? `<div class="badge">Promo</div>` : ``}
         </div>
-
         ${priceHtml}
-
         <div style="display:flex; gap:10px; align-items:center;">
           <input class="input" type="number" min="1" step="1" value="1" style="width:90px;" data-qty />
           <button class="btn" type="button" data-add>Adicionar</button>
         </div>
-
         <p class="small" data-added style="margin:0; display:none; color:var(--ok);">Adicionado ao carrinho.</p>
       </div>
     `;
@@ -533,7 +546,7 @@ function renderProducts(items) {
 }
 
 // ======================
-// SETTINGS (site/settings)
+// SETTINGS
 // ======================
 const settingsRef = doc(db, "site", "settings");
 onSnapshot(settingsRef, (snap) => {
@@ -547,7 +560,6 @@ onSnapshot(settingsRef, (snap) => {
   el("bannerDesc").textContent = s.bannerDesc || "Edite isso no /admin";
   el("globalDesc").textContent = s.globalDesc || "—";
 
-  // whatsapp botão do topo
   window.__WHATSAPP_LINK = (s.whatsappLink || "").trim();
   window.__BUY_TEXT = s.buyBtnText || "COMPRE AGORA!";
   el("whatsBtn").textContent = window.__BUY_TEXT;
@@ -557,12 +569,12 @@ onSnapshot(settingsRef, (snap) => {
 
   el("kpiUpdated").textContent = `Atualizado: ${humanDate(s.updatedAt)}`;
 
-  // URL do worker para enviar pedidos
+  // Worker URL
   window.__ORDER_WORKER_URL = (s.orderWebhookUrl || "").trim();
 });
 
 // ======================
-// PRODUCTS (sem where, filtra no client)
+// PRODUCTS
 // ======================
 const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
 
@@ -580,13 +592,11 @@ onSnapshot(qProducts, (snap) => {
 
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   renderProducts(items);
-
-  // re-render carrinho pra atualizar nomes/preços caso mudem
   renderCart();
 });
 
 // ======================
-// Envio do pedido (checkout -> Worker)
+// Checkout -> Worker
 // ======================
 async function sendOrder() {
   const msgEl = document.getElementById("checkoutMsg");
@@ -611,7 +621,7 @@ async function sendOrder() {
   const url = (window.__ORDER_WORKER_URL || "").trim();
   if (!url) {
     msgEl.style.color = "var(--danger)";
-    msgEl.textContent = "Webhook/Worker não configurado. (orderWebhookUrl no painel)";
+    msgEl.textContent = "Worker não configurado (orderWebhookUrl no painel).";
     return;
   }
 
@@ -631,27 +641,23 @@ async function sendOrder() {
       throw new Error(t || `HTTP ${resp.status}`);
     }
 
-    // sucesso
     msgEl.style.color = "var(--ok)";
     msgEl.textContent = "✅ Pedido recebido! Entraremos em contato em breve.";
 
-    // limpa carrinho
     cart = {};
     saveCart(cart);
     renderCart();
 
-    // fecha modal depois de um tempo
     setTimeout(() => {
       UI.modal.classList.remove("open");
       msgEl.textContent = "";
       document.getElementById("checkoutNick").value = "";
       document.getElementById("checkoutDiscord").value = "";
     }, 1400);
-
   } catch (err) {
+    console.error(err);
     msgEl.style.color = "var(--danger)";
     msgEl.textContent = "❌ Não foi possível enviar agora. Tente novamente.";
-    console.error(err);
   } finally {
     btnEl.disabled = false;
   }
@@ -659,5 +665,5 @@ async function sendOrder() {
 
 document.getElementById("sendOrderBtn").addEventListener("click", sendOrder);
 
-// render inicial do carrinho (antes do firestore chegar)
+// inicial
 renderCart();

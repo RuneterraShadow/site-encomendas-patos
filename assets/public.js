@@ -39,22 +39,6 @@ function makeWhatsLink(raw) {
   return digits.length >= 10 ? `https://wa.me/${digits}` : "#";
 }
 
-function pick(obj, keys, fallback = "") {
-  for (const k of keys) {
-    if (!obj) continue;
-    if (k.includes(".")) {
-      const parts = k.split(".");
-      let cur = obj;
-      for (const p of parts) cur = cur?.[p];
-      if (cur !== undefined && cur !== null && String(cur).trim() !== "") return cur;
-    } else {
-      const v = obj?.[k];
-      if (v !== undefined && v !== null && String(v).trim() !== "") return v;
-    }
-  }
-  return fallback;
-}
-
 /* ======================
    CARRINHO
 ====================== */
@@ -65,6 +49,7 @@ const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
 
+// painel do carrinho
 const cartPanel = document.createElement("div");
 cartPanel.id = "cartPanel";
 cartPanel.style.display = "none";
@@ -195,121 +180,33 @@ async function sendOrder() {
 }
 
 /* ======================
-   CONFIG GLOBAL (O PULO DO GATO)
-   - escuta vários docs até achar o mesmo do admin
+   CONFIG GLOBAL (MESMO DOC DO ADMIN!)
+   Admin grava em: doc(db,"site","settings")
 ====================== */
-let configUnsubs = [];
+const settingsRef = doc(db, "site", "settings");
 
-function applyConfig(data) {
-  // títulos
-  el("siteTitle").textContent = pick(data, ["siteTitle", "title", "nome", "titulo"], "Loja");
-  el("siteSubtitle").textContent = pick(data, ["siteSubtitle", "subtitle", "subtitulo"], "—");
+onSnapshot(settingsRef, (snap) => {
+  const s = snap.exists() ? snap.data() : {};
 
-  // descrição global (painel Informações)
-  el("globalDesc").textContent = pick(
-    data,
-    ["globalDesc", "description", "descricaoGlobal", "descricao", "info"],
-    "—"
-  );
+  // titulo/subtitulo
+  el("siteTitle").textContent = s.siteTitle || "Loja";
+  el("siteSubtitle").textContent = s.siteSubtitle || "—";
+
+  // texto info
+  el("globalDesc").textContent = s.globalDesc || "—";
 
   // banner
-  el("bannerTitle").textContent = pick(
-    data,
-    ["bannerTitle", "banner.title", "bannerTitulo", "banner_titulo"],
-    "—"
-  );
-  el("bannerDesc").textContent = pick(
-    data,
-    ["bannerDesc", "banner.description", "bannerDescricao", "banner_desc"],
-    "—"
-  );
-
-  const bannerUrlRaw = pick(
-    data,
-    ["bannerUrl", "bannerImage", "bannerImg", "banner.url", "bannerURL", "banner_imagem"],
-    ""
-  );
-  const bannerUrl = fixAssetPath(bannerUrlRaw);
+  el("bannerTitle").textContent = s.bannerTitle || "—";
+  el("bannerDesc").textContent = s.bannerDesc || "—";
+  const bannerUrl = fixAssetPath(s.bannerImageUrl || "");
   if (bannerUrl) el("bannerImg").src = bannerUrl;
 
-  // Whats + texto do botão
-  const whatsRaw = pick(
-    data,
-    ["whatsLink", "whatsappLink", "whatsapp", "linkWhats", "linkWhatsapp", "telefone"],
-    ""
-  );
-  el("whatsBtn").href = makeWhatsLink(whatsRaw);
-
-  const whatsText = pick(data, ["whatsText", "textoBotao", "buttonText"], "");
-  if (whatsText) el("whatsBtn").textContent = whatsText;
+  // botão comprar agora
+  el("whatsBtn").href = makeWhatsLink(s.whatsappLink || "");
+  el("whatsBtn").textContent = s.buyBtnText || "COMPRE AGORA!";
 
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
-}
-
-function watchGlobalConfig() {
-  // limpa listeners antigos
-  configUnsubs.forEach((fn) => {
-    try { fn(); } catch {}
-  });
-  configUnsubs = [];
-
-  // TENTATIVAS (bem amplas)
-  // Se o admin estiver salvando em qualquer uma dessas, o site vai refletir.
-  const targets = [
-    ["site", "main"],
-    ["site", "global"],
-    ["config", "main"],
-    ["config", "global"],
-    ["settings", "main"],
-    ["settings", "global"],
-    ["globals", "main"],
-    ["globals", "global"],
-    ["public", "main"],
-    ["public", "global"],
-    ["app", "main"],
-    ["app", "global"],
-    ["loja", "main"],
-    ["loja", "global"],
-  ];
-
-  let appliedOnce = false;
-
-  targets.forEach(([col, id]) => {
-    const ref = doc(db, col, id);
-    const unsub = onSnapshot(
-      ref,
-      (snap) => {
-        if (!snap.exists()) return;
-
-        const data = snap.data();
-
-        // aplica sempre (se admin mudar, atualiza em tempo real)
-        applyConfig(data);
-
-        if (!appliedOnce) {
-          appliedOnce = true;
-          console.log("[CONFIG] Usando config de:", `${col}/${id}`, data);
-        }
-      },
-      (err) => {
-        // silencioso
-      }
-    );
-
-    configUnsubs.push(unsub);
-  });
-
-  // fallback: se não achar nada, pelo menos não fica travado
-  setTimeout(() => {
-    if (!appliedOnce) {
-      console.warn(
-        "[CONFIG] Nenhuma config global encontrada nas rotas padrão. " +
-        "Provavelmente o admin salva em outra coleção/doc."
-      );
-      el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
-    }
-  }, 2500);
-}
+});
 
 /* ======================
    PRODUTOS
@@ -321,14 +218,28 @@ function renderProducts(items) {
     const card = document.createElement("div");
     card.className = "card";
 
-    const img = fixAssetPath(p.imageUrl || p.image || p.img || "");
+    const img = fixAssetPath(p.imageUrl || "");
+
+    // preço com promo (se existir)
+    const hasPromo =
+      p.promoPrice !== null &&
+      p.promoPrice !== undefined &&
+      Number(p.promoPrice) > 0 &&
+      Number(p.promoPrice) < Number(p.price || 0);
+
+    const shownPrice = hasPromo ? Number(p.promoPrice) : Number(p.price || 0);
 
     card.innerHTML = `
       <div class="img"><img src="${img}" alt=""></div>
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
-        <strong>${money(p.price)}</strong>
+
+        <div class="priceRow">
+          <div class="price">${money(shownPrice)}</div>
+          ${hasPromo ? `<div class="old">${money(p.price)}</div>` : ``}
+        </div>
+
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
           <input type="number" min="1" value="1" class="input qty" style="width:90px">
           <button class="btn" type="button">Adicionar</button>
@@ -338,7 +249,7 @@ function renderProducts(items) {
 
     card.querySelector(".btn").addEventListener("click", () => {
       const qty = Math.max(1, Number(card.querySelector(".qty").value || 1));
-      cart.push({ name: p.name, price: Number(p.price || 0), qty });
+      cart.push({ name: p.name, price: shownPrice, qty });
       renderCart();
     });
 
@@ -358,10 +269,8 @@ onSnapshot(qProducts, (snap) => {
   renderProducts(items);
 
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
-  el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+  // o "Atualizado" também é setado pelo settings; aqui é só fallback
+  if (el("kpiUpdated").textContent.includes("—")) {
+    el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+  }
 });
-
-/* ======================
-   START
-====================== */
-watchGlobalConfig();

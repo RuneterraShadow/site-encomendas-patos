@@ -13,7 +13,13 @@
         <h1 id="siteTitle">Carregando...</h1>
         <p id="siteSubtitle">—</p>
       </div>
+
       <div class="rowBtns">
+        <!-- BOTÃO DO CARRINHO -->
+        <button id="cartOpenBtn" class="btn secondary" type="button">
+          Carrinho (<span id="cartCount">0</span>)
+        </button>
+
         <a id="whatsBtn" class="btn" href="#" target="_blank" rel="noopener">COMPRE AGORA!</a>
         <a class="btn secondary" href="./admin.html">Admin</a>
       </div>
@@ -48,6 +54,55 @@
     <p class="small" style="margin-top:18px;">
       * Preços e disponibilidade podem mudar em tempo real.
     </p>
+  </div>
+
+  <!-- SIDEBAR DO CARRINHO -->
+  <div id="cartDrawer" class="drawer hidden" aria-hidden="true">
+    <div class="drawerPanel">
+      <div class="drawerHeader">
+        <h3 style="margin:0;">Carrinho</h3>
+        <button id="cartCloseBtn" class="btn secondary" type="button">Fechar</button>
+      </div>
+
+      <div id="cartItems" class="cartItems"></div>
+
+      <div class="cartFooter">
+        <div class="cartTotal">
+          Total: <strong id="cartTotal">R$ 0,00</strong>
+        </div>
+        <div class="cartActions">
+          <button id="cartClearBtn" class="btn secondary" type="button">Limpar</button>
+          <button id="cartCheckoutBtn" class="btn" type="button">Encomendar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FINALIZAR PEDIDO -->
+  <div id="orderModal" class="modal hidden" aria-hidden="true">
+    <div class="modalBox">
+      <div class="modalHeader">
+        <h3 style="margin:0;">Finalizar pedido</h3>
+        <button id="orderCloseBtn" class="btn secondary" type="button">Fechar</button>
+      </div>
+
+      <p class="small" style="margin-top:6px;">
+        Informe seus dados para enviarmos o pedido.
+      </p>
+
+      <!-- SEM EXEMPLO: inputs VAZIOS -->
+      <label class="small" for="orderNick">Nick no jogo</label>
+      <input id="orderNick" type="text" placeholder="Seu nick no jogo" autocomplete="off" />
+
+      <label class="small" for="orderDiscord" style="margin-top:10px;">@ do Discord</label>
+      <input id="orderDiscord" type="text" placeholder="@seuDiscord" autocomplete="off" />
+
+      <button id="btnEnviarPedido" class="btn" type="button" style="width:100%; margin-top:12px;">
+        Enviar pedido
+      </button>
+
+      <p id="orderStatus" class="small" style="margin-top:10px; opacity:.9;"></p>
+    </div>
   </div>
 
   <script type="module" src="./assets/public.js"></script>

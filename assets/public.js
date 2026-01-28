@@ -390,11 +390,13 @@ function renderProducts(items) {
       }
 
       cart.push({
-        productId: p.id,
-        name: p.name,
-        price: shownPrice,
-        qty: wanted,
-      });
+  productId: product.id,   // 🔴 ESSENCIAL
+  name: product.name,
+  unitPrice: product.price,
+  unitPriceText: product.priceText,
+  qty: quantity,
+  subtotalText: product.subtotalText
+});
 
       renderCart();
     });

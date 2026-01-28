@@ -101,7 +101,6 @@ cartBtn?.addEventListener("click", () => {
 });
 
 function getAvailableStock(productId) {
-  // null/undefined = estoque "não controlado"
   if (!stockMap.has(productId)) return null;
   const v = stockMap.get(productId);
   if (v === null || v === undefined) return null;
@@ -110,13 +109,12 @@ function getAvailableStock(productId) {
 }
 
 function normalizeCartAgainstStock() {
-  // ajusta itens do carrinho se o estoque baixou
   let changed = false;
 
   cart = cart
     .map((i) => {
       const avail = getAvailableStock(i.productId);
-      if (avail === null) return i; // sem controle de estoque
+      if (avail === null) return i;
 
       const newQty = Math.min(i.qty, avail);
       if (newQty !== i.qty) changed = true;
@@ -145,8 +143,7 @@ function renderCart() {
     ${cart
       .map((i, idx) => {
         const avail = getAvailableStock(i.productId);
-        const stockLine =
-          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+        const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
         return `
           <div class="hr" style="margin:10px 0"></div>
           <div>
@@ -195,8 +192,6 @@ function renderCart() {
 
 /* ======================
    ENVIA PEDIDO
-   - Bloqueia se qty > estoque
-   - Envia productId para o backend baixar estoque automático
 ====================== */
 async function sendOrder() {
   const nick = el("nickInput").value.trim();
@@ -247,14 +242,12 @@ async function sendOrder() {
     });
 
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+      const txt = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status} :: ${txt}`);
     }
 
     alert("Pedido recebido! Entraremos em contato.");
 
-    // IMPORTANTE:
-    // Estoque automático DE VERDADE deve ser baixado no backend (Worker).
-    // Aqui só limpamos o carrinho.
     cart = [];
     renderCart();
     cartOpen = false;
@@ -273,7 +266,6 @@ let configUnsubs = [];
 function applyConfig(data) {
   el("siteTitle").textContent = pick(data, ["siteTitle"], "Loja");
   el("siteSubtitle").textContent = pick(data, ["siteSubtitle"], "—");
-
   el("globalDesc").textContent = pick(data, ["globalDesc"], "—");
 
   el("bannerTitle").textContent = pick(data, ["bannerTitle"], "—");
@@ -297,24 +289,17 @@ function watchGlobalConfig() {
   });
   configUnsubs = [];
 
-  const targets = [
-    ["site", "settings"], // o certo (admin)
-  ];
-
-  targets.forEach(([col, id]) => {
-    const ref = doc(db, col, id);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (!snap.exists()) return;
-      applyConfig(snap.data());
-    });
-    configUnsubs.push(unsub);
+  const ref = doc(db, "site", "settings");
+  const unsub = onSnapshot(ref, (snap) => {
+    if (!snap.exists()) return;
+    applyConfig(snap.data());
   });
+
+  configUnsubs.push(unsub);
 }
 
 /* ======================
    PRODUTOS + ESTOQUE
-   - Mostra estoque
-   - Impede adicionar acima do estoque
 ====================== */
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
@@ -336,8 +321,9 @@ function renderProducts(items) {
 
     const shownPrice = promo ? Number(p.promoPrice) : Number(p.price || 0);
 
-    const stockBadge =
-      hasStock ? `<div class="badge">Estoque: ${stock}</div>` : `<div class="badge">Estoque: ∞</div>`;
+    const stockBadge = hasStock
+      ? `<div class="badge">Estoque: ${stock}</div>`
+      : `<div class="badge">Estoque: ∞</div>`;
 
     card.innerHTML = `
       <div class="img"><img src="${img}" alt=""></div>
@@ -357,13 +343,15 @@ function renderProducts(items) {
 
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
           <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
-          <button class="btn" type="button" ${out ? "disabled" : ""}>${out ? "Sem estoque" : "Adicionar"}</button>
+          <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>
+            ${out ? "Sem estoque" : "Adicionar"}
+          </button>
         </div>
       </div>
     `;
 
     const qtyInput = card.querySelector(".qty");
-    const addBtn = card.querySelector(".btn");
+    const addBtn = card.querySelector(".addBtn");
 
     // limita o input ao estoque
     if (hasStock) {
@@ -390,13 +378,11 @@ function renderProducts(items) {
       }
 
       cart.push({
-  productId: product.id,   // 🔴 ESSENCIAL
-  name: product.name,
-  unitPrice: product.price,
-  unitPriceText: product.priceText,
-  qty: quantity,
-  subtotalText: product.subtotalText
-});
+        productId: p.id,
+        name: p.name,
+        price: shownPrice,
+        qty: wanted,
+      });
 
       renderCart();
     });
@@ -418,7 +404,6 @@ onSnapshot(qProducts, (snap) => {
     const product = { id: d.id, ...data };
     items.push(product);
 
-    // guarda o estoque (pode ser null/undefined)
     stockMap.set(d.id, data.stock);
   });
 
@@ -427,7 +412,6 @@ onSnapshot(qProducts, (snap) => {
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 
-  // se o estoque mudou, ajusta carrinho
   if (normalizeCartAgainstStock() && cartOpen) {
     renderCart();
   }

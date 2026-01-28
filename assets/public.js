@@ -1,11 +1,14 @@
+// assets/public.js
 import { db } from "./firebase.js";
-import { doc, onSnapshot, collection, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  doc, onSnapshot, collection, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-/** ✅ COLOQUE A URL DO SEU WORKER AQUI */
-const ORDER_ENDPOINT = "https://site-encomendas-patos.viniespezio21.workers.dev";
+// ✅ TROQUE SE PRECISAR (é a URL do seu Cloudflare Worker)
+const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
+// helpers
 const el = (id) => document.getElementById(id);
-const grid = el("productsGrid");
 
 function moneyBRL(value){
   const n = Number(value || 0);
@@ -33,308 +36,200 @@ function humanDate(ts){
   }
 }
 
-/* ===========================
-   CARRINHO (localStorage)
-=========================== */
-const CART_KEY = "cart_v1";
+function safeTrim(s){ return String(s || "").trim(); }
 
+// state
+let PRODUCTS = []; // produtos ativos do Firestore
+let CART = loadCart(); // [{id, name, price, promoPrice, qty}]
+let SETTINGS = {}; // site/settings
+
+// DOM
+const productsGrid = el("productsGrid");
+
+// carrinho
+const cartOpenBtn = el("cartOpenBtn");
+const cartCloseBtn = el("cartCloseBtn");
+const cartDrawer = el("cartDrawer");
+const cartItemsEl = el("cartItems");
+const cartCountEl = el("cartCount");
+const cartTotalEl = el("cartTotal");
+const cartClearBtn = el("cartClearBtn");
+const cartCheckoutBtn = el("cartCheckoutBtn");
+
+// modal pedido
+const orderModal = el("orderModal");
+const orderCloseBtn = el("orderCloseBtn");
+const orderNick = el("orderNick");
+const orderDiscord = el("orderDiscord");
+const btnEnviarPedido = el("btnEnviarPedido");
+const orderStatus = el("orderStatus");
+
+// ---------- CART persistence ----------
 function loadCart(){
   try{
-    const raw = localStorage.getItem(CART_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    return (data && typeof data === "object") ? data : {};
+    const raw = localStorage.getItem("cart_v1");
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(parsed)) return parsed;
+    return [];
   }catch{
-    return {};
+    return [];
+  }
+}
+function saveCart(){
+  try{ localStorage.setItem("cart_v1", JSON.stringify(CART)); }catch{}
+}
+
+// ---------- CART utils ----------
+function getUnitPrice(p){
+  const price = Number(p.price || 0);
+  const promo = Number(p.promoPrice || 0);
+  if (promo > 0 && promo < price) return promo;
+  return price;
+}
+function cartCount(){
+  return CART.reduce((acc, it) => acc + Number(it.qty || 0), 0);
+}
+function cartTotal(){
+  return CART.reduce((acc, it) => acc + (getUnitPrice(it) * Number(it.qty || 0)), 0);
+}
+function addToCart(product, qty){
+  qty = Number(qty || 1);
+  if (!Number.isFinite(qty) || qty <= 0) qty = 1;
+
+  const idx = CART.findIndex(x => x.id === product.id);
+  if (idx >= 0){
+    CART[idx].qty += qty;
+  } else {
+    CART.push({
+      id: product.id,
+      name: product.name || "Produto",
+      price: Number(product.price || 0),
+      promoPrice: Number(product.promoPrice || 0),
+      imageUrl: product.imageUrl || "",
+      qty
+    });
+  }
+  saveCart();
+  renderCart();
+}
+
+function updateQty(id, qty){
+  qty = Number(qty || 1);
+  if (!Number.isFinite(qty) || qty <= 0) qty = 1;
+
+  const idx = CART.findIndex(x => x.id === id);
+  if (idx >= 0){
+    CART[idx].qty = qty;
+    saveCart();
+    renderCart();
   }
 }
 
-function saveCart(cart){
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  updateCartUI();
+function removeFromCart(id){
+  CART = CART.filter(x => x.id !== id);
+  saveCart();
+  renderCart();
 }
 
 function clearCart(){
-  saveCart({});
+  CART = [];
+  saveCart();
+  renderCart();
 }
 
-function cartCount(cart){
-  return Object.values(cart).reduce((a, it) => a + (Number(it.qty)||0), 0);
+// ---------- UI: cart drawer ----------
+function openCart(){
+  cartDrawer.classList.remove("hidden");
+  cartDrawer.setAttribute("aria-hidden", "false");
+}
+function closeCart(){
+  cartDrawer.classList.add("hidden");
+  cartDrawer.setAttribute("aria-hidden", "true");
 }
 
-function addToCart(p, qty){
-  const cart = loadCart();
-  const id = p.id;
-  const current = cart[id]?.qty || 0;
+function openOrderModal(){
+  orderStatus.textContent = "";
+  btnEnviarPedido.disabled = false;
+  btnEnviarPedido.textContent = "Enviar pedido";
 
-  const promo = p.promoPrice && Number(p.promoPrice) > 0 && Number(p.promoPrice) < Number(p.price || 0);
-  const priceText = promo ? moneyBRL(p.promoPrice) : moneyBRL(p.price);
+  // NÃO preencher valores (campos vazios)
+  orderNick.value = "";
+  orderDiscord.value = "";
 
-  cart[id] = {
-    id,
-    name: p.name || "Produto",
-    priceText,
-    qty: Math.min(999, current + qty),
-  };
-
-  saveCart(cart);
+  orderModal.classList.remove("hidden");
+  orderModal.setAttribute("aria-hidden", "false");
+}
+function closeOrderModal(){
+  orderModal.classList.add("hidden");
+  orderModal.setAttribute("aria-hidden", "true");
 }
 
-function setQty(id, qty){
-  const cart = loadCart();
-  if (!cart[id]) return;
-  if (qty <= 0) delete cart[id];
-  else cart[id].qty = Math.min(999, qty);
-  saveCart(cart);
-}
+function renderCart(){
+  // count + total
+  cartCountEl.textContent = String(cartCount());
+  cartTotalEl.textContent = moneyBRL(cartTotal());
 
-/* ===========================
-   CARRINHO (UI)  ✅ CORRIGIDO
-=========================== */
-function ensureCartUI(){
-  // já existe
-  if (document.getElementById("cartBtn")) return;
-
-  const topbar = document.querySelector(".topbar");
-  if (!topbar) return;
-
-  // Botão carrinho
-  const btn = document.createElement("button");
-  btn.id = "cartBtn";
-  btn.className = "btn";
-  btn.style.marginLeft = "10px";
-  btn.innerHTML = `Carrinho (<span id="cartCount">0</span>)`;
-  btn.addEventListener("click", openCartDrawer);
-
-  // coloca no topo (lado direito normalmente)
-  topbar.appendChild(btn);
-
-  // Drawer
-  const drawer = document.createElement("div");
-  drawer.id = "cartDrawer";
-  drawer.style.cssText = `
-    position: fixed; right: 16px; top: 80px; width: 420px; max-width: calc(100vw - 32px);
-    background: #111; border: 1px solid rgba(255,255,255,.08); border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6);
-    padding: 14px; z-index: 9999; display: none;
-  `;
-  drawer.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-      <h3 style="margin:0;">Carrinho</h3>
-      <button class="btn" id="cartCloseBtn">Fechar</button>
-    </div>
-
-    <div id="cartItems" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
-
-    <div style="display:flex; gap:10px; margin-top:12px;">
-      <button class="btn" id="cartClearBtn" style="opacity:.85;">Limpar</button>
-      <button class="btn" id="cartCheckoutBtn" style="flex:1;">Encomendar</button>
-    </div>
-
-    <p id="cartMsg" class="small" style="margin:10px 0 0; opacity:.9;"></p>
-  `;
-  document.body.appendChild(drawer);
-
-  drawer.querySelector("#cartCloseBtn").addEventListener("click", closeCartDrawer);
-  drawer.querySelector("#cartClearBtn").addEventListener("click", () => clearCart());
-  drawer.querySelector("#cartCheckoutBtn").addEventListener("click", openCheckoutModal);
-
-  // Modal
-  const modal = document.createElement("div");
-  modal.id = "checkoutModal";
-  modal.style.cssText = `
-    position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 10000;
-    display: none; align-items: center; justify-content: center; padding: 20px;
-  `;
-  modal.innerHTML = `
-    <div style="width:520px; max-width: 100%; background:#111; border:1px solid rgba(255,255,255,.08);
-                border-radius: 16px; padding: 16px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <h3 style="margin:0;">Finalizar pedido</h3>
-        <button class="btn" id="checkoutClose">Fechar</button>
-      </div>
-
-      <p class="small" style="margin:8px 0 14px; opacity:.9;">
-        Informe seus dados para enviarmos o pedido.
-      </p>
-
-      <label class="small">Nick no jogo</label>
-      <input id="nickInput" class="input" style="width:100%; margin:6px 0 12px;" placeholder="Ex: Viniespezio" />
-
-      <label class="small">@ do Discord</label>
-      <input id="discordInput" class="input" style="width:100%; margin:6px 0 12px;" placeholder="Ex: @viniespezio" />
-
-      <div style="display:flex; gap:10px; margin-top:10px;">
-        <button class="btn" id="checkoutSend" style="flex:1;">Enviar pedido</button>
-      </div>
-
-      <p id="checkoutMsg" class="small" style="margin:10px 0 0; opacity:.9;"></p>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  modal.querySelector("#checkoutClose").addEventListener("click", closeCheckoutModal);
-  modal.addEventListener("click", (e) => { if (e.target === modal) closeCheckoutModal(); });
-  modal.querySelector("#checkoutSend").addEventListener("click", sendCheckout);
-
-  // atualiza contador inicial
-  updateCartUI();
-}
-
-function openCartDrawer(){
-  const drawer = document.getElementById("cartDrawer");
-  if (!drawer) return;
-  drawer.style.display = "block";
-  updateCartUI();
-}
-
-function closeCartDrawer(){
-  const drawer = document.getElementById("cartDrawer");
-  if (!drawer) return;
-  drawer.style.display = "none";
-}
-
-function openCheckoutModal(){
-  const cart = loadCart();
-  const msg = document.getElementById("cartMsg");
-  if (cartCount(cart) === 0) {
-    if (msg) msg.textContent = "Seu carrinho está vazio.";
+  // items list
+  cartItemsEl.innerHTML = "";
+  if (!CART.length){
+    cartItemsEl.innerHTML = `<p class="small" style="opacity:.85;margin:6px 0;">Carrinho vazio.</p>`;
+    cartCheckoutBtn.disabled = true;
+    cartClearBtn.disabled = true;
     return;
   }
+  cartCheckoutBtn.disabled = false;
+  cartClearBtn.disabled = false;
 
-  const modal = document.getElementById("checkoutModal");
-  if (!modal) return;
-
-  const checkoutMsg = document.getElementById("checkoutMsg");
-  if (checkoutMsg) checkoutMsg.textContent = "";
-
-  modal.style.display = "flex";
-}
-
-function closeCheckoutModal(){
-  const modal = document.getElementById("checkoutModal");
-  if (!modal) return;
-  modal.style.display = "none";
-}
-
-function updateCartUI(){
-  const cart = loadCart();
-  const count = cartCount(cart);
-
-  const countEl = document.getElementById("cartCount");
-  if (countEl) countEl.textContent = String(count);
-
-  const itemsEl = document.getElementById("cartItems");
-  if (!itemsEl) return;
-
-  const entries = Object.values(cart);
-  itemsEl.innerHTML = "";
-
-  if (entries.length === 0) {
-    itemsEl.innerHTML = `<p class="small" style="opacity:.9;">Carrinho vazio.</p>`;
-    return;
-  }
-
-  for (const it of entries) {
+  for (const it of CART){
+    const unit = getUnitPrice(it);
     const row = document.createElement("div");
-    row.style.cssText = "display:flex; gap:10px; align-items:center; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px;";
+    row.className = "cartRow";
     row.innerHTML = `
-      <div style="flex:1;">
-        <div style="font-weight:700;">${it.name}</div>
-        <div class="small" style="opacity:.85;">${it.priceText || "—"}</div>
+      <div class="cartRowMain">
+        <div class="cartRowTitle">${it.name}</div>
+        <div class="cartRowPrice">${moneyBRL(unit)}</div>
       </div>
-      <input class="input" type="number" min="1" max="999" value="${it.qty}" style="width:90px;" data-qty />
-      <button class="btn" data-remove style="opacity:.85;">Remover</button>
+
+      <div class="cartRowActions">
+        <input class="cartQty" type="number" min="1" step="1" value="${it.qty}">
+        <button class="btn secondary cartRemove" type="button">Remover</button>
+      </div>
     `;
 
-    row.querySelector("[data-qty]").addEventListener("change", (e) => {
-      const q = Number(e.target.value);
-      if (!Number.isFinite(q) || q < 1) setQty(it.id, 0);
-      else setQty(it.id, q);
-    });
+    const qtyInput = row.querySelector(".cartQty");
+    qtyInput.addEventListener("change", () => updateQty(it.id, qtyInput.value));
 
-    row.querySelector("[data-remove]").addEventListener("click", () => setQty(it.id, 0));
-    itemsEl.appendChild(row);
+    row.querySelector(".cartRemove").addEventListener("click", () => removeFromCart(it.id));
+
+    cartItemsEl.appendChild(row);
   }
 }
 
-async function sendCheckout(){
-  const nick = (document.getElementById("nickInput")?.value || "").trim();
-  const discord = (document.getElementById("discordInput")?.value || "").trim();
-  const msgEl = document.getElementById("checkoutMsg");
-
-  if (!nick || nick.length < 2) {
-    if (msgEl) msgEl.textContent = "Informe um Nick válido.";
-    return;
-  }
-  if (!discord || discord.length < 2) {
-    if (msgEl) msgEl.textContent = "Informe seu @ do Discord.";
-    return;
-  }
-
-  const cart = loadCart();
-  const items = Object.values(cart);
-  if (items.length === 0) {
-    if (msgEl) msgEl.textContent = "Seu carrinho está vazio.";
-    return;
-  }
-
-  if (msgEl) msgEl.textContent = "Enviando pedido...";
-  const sendBtn = document.getElementById("checkoutSend");
-  if (sendBtn) sendBtn.disabled = true;
-
-  try{
-    const r = await fetch(ORDER_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nick, discord, items }),
-    });
-
-    if (!r.ok) throw new Error("failed");
-
-    if (msgEl) msgEl.textContent = "✅ Pedido recebido! Entraremos em contato em breve.";
-    clearCart();
-
-    setTimeout(() => {
-      closeCheckoutModal();
-      closeCartDrawer();
-    }, 900);
-  }catch{
-    if (msgEl) msgEl.textContent = "❌ Não foi possível enviar agora. Tente novamente.";
-  }finally{
-    if (sendBtn) sendBtn.disabled = false;
-  }
-}
-
-/* ===========================
-   PRODUTOS
-=========================== */
+// ---------- UI: products ----------
 function renderProducts(items){
-  // garante que o carrinho/UI existe e NÃO quebra
-  ensureCartUI();
+  productsGrid.innerHTML = "";
 
-  grid.innerHTML = "";
+  if (!items.length){
+    productsGrid.innerHTML = `<p class="small" style="opacity:.85;">Nenhum produto disponível no momento.</p>`;
+    return;
+  }
 
   for (const p of items){
-    const promo = p.promoPrice && Number(p.promoPrice) > 0 && Number(p.promoPrice) < Number(p.price || 0);
-
-    const priceHtml = promo
-      ? `<div class="priceRow">
-           <div>
-             <div class="old">${moneyBRL(p.price)}</div>
-             <div class="price">${moneyBRL(p.promoPrice)}</div>
-           </div>
-           <div class="badge">Promo</div>
-         </div>`
-      : `<div class="priceRow"><div class="price">${moneyBRL(p.price)}</div></div>`;
+    const price = Number(p.price || 0);
+    const promo = Number(p.promoPrice || 0);
+    const hasPromo = promo > 0 && promo < price;
+    const unit = hasPromo ? promo : price;
 
     const stock = (p.stock ?? null);
     const stockBadge = stock === null ? "" : `<div class="badge">Estoque: ${stock}</div>`;
-    const desc = (p.description || "").trim();
+    const desc = safeTrim(p.description);
 
     const card = document.createElement("div");
     card.className = "card";
+
     card.innerHTML = `
       <div class="img"><img alt="${p.name || "Produto"}"></div>
+
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         ${desc ? `<p>${desc}</p>` : `<p class="small">Sem descrição</p>`}
@@ -342,84 +237,198 @@ function renderProducts(items){
         <div class="badges">
           ${stockBadge}
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
+          ${hasPromo ? `<div class="badge">Promo</div>` : ``}
         </div>
 
-        ${priceHtml}
-
-        <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
-          <input class="input" data-qty type="number" min="1" max="999" value="1" style="width:120px;" />
-          <button class="btn" data-add>Adicionar</button>
+        <div class="priceRow">
+          <div>
+            ${hasPromo ? `<div class="old">${moneyBRL(price)}</div>` : ``}
+            <div class="price">${moneyBRL(unit)}</div>
+          </div>
         </div>
 
-        <p class="small" data-status style="margin:8px 0 0; opacity:.9;"></p>
+        <div class="row" style="gap:10px; margin-top:10px;">
+          <input class="qtyInput" type="number" min="1" step="1" value="1" style="max-width:90px;">
+          <button class="btn" type="button" data-add>Adicionar</button>
+        </div>
+
+        <p class="small" style="margin-top:8px; opacity:.85;" data-added></p>
       </div>
     `;
 
     setSafeImg(card.querySelector("img"), p.imageUrl);
 
-    const qtyEl = card.querySelector("[data-qty]");
-    const statusEl = card.querySelector("[data-status]");
+    const qtyInput = card.querySelector(".qtyInput");
+    const addedMsg = card.querySelector("[data-added]");
 
     card.querySelector("[data-add]").addEventListener("click", () => {
-      const qty = Number(qtyEl.value);
+      const qty = Number(qtyInput.value || 1);
 
-      if (!Number.isFinite(qty) || qty < 1 || qty > 999){
-        statusEl.textContent = "Quantidade inválida.";
-        return;
-      }
-
-      if (typeof p.stock === "number" && qty > p.stock){
-        statusEl.textContent = `Quantidade maior que o estoque (${p.stock}).`;
+      // opcional: respeitar estoque se tiver
+      if (stock !== null && Number.isFinite(Number(stock)) && qty > Number(stock)){
+        addedMsg.textContent = `Quantidade acima do estoque (${stock}).`;
         return;
       }
 
       addToCart(p, qty);
-      statusEl.textContent = `✅ Adicionado ao carrinho: ${qty}`;
+      addedMsg.textContent = `Adicionado ao carrinho: ${qty}`;
+      setTimeout(() => { addedMsg.textContent = ""; }, 1800);
     });
 
-    grid.appendChild(card);
+    productsGrid.appendChild(card);
   }
-
-  // atualiza contador após render
-  updateCartUI();
 }
 
-/* ===========================
-   SETTINGS
-=========================== */
+// ---------- ORDER: send to Worker ----------
+function buildOrderPayload(){
+  // itens do carrinho com preço unitário e subtotal (já bonitinho pro Worker/Discord)
+  const items = CART.map(it => {
+    const unit = getUnitPrice(it);
+    const qty = Number(it.qty || 0);
+    return {
+      id: it.id,
+      name: it.name,
+      qty,
+      unitPrice: unit,
+      unitPriceText: moneyBRL(unit),
+      subtotal: unit * qty,
+      subtotalText: moneyBRL(unit * qty)
+    };
+  });
+
+  return {
+    nick: safeTrim(orderNick.value),
+    discord: safeTrim(orderDiscord.value),
+    siteTitle: SETTINGS.siteTitle || "",
+    items,
+    total: cartTotal(),
+    totalText: moneyBRL(cartTotal()),
+    createdAt: new Date().toISOString()
+  };
+}
+
+async function enviarPedidoWorker(payload){
+  const res = await fetch(`${WORKER_URL}/order`, {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  // tenta ler json/text pra debug
+  const txt = await res.text().catch(() => "");
+  if (!res.ok){
+    throw new Error(`Worker respondeu ${res.status}: ${txt}`);
+  }
+  return txt;
+}
+
+// ---------- SETTINGS (site/settings) ----------
 const settingsRef = doc(db, "site", "settings");
 onSnapshot(settingsRef, (snap) => {
-  const s = snap.exists() ? snap.data() : {};
+  SETTINGS = snap.exists() ? snap.data() : {};
 
-  el("siteTitle").textContent = s.siteTitle || "Minha Loja";
-  el("siteSubtitle").textContent = s.siteSubtitle || "Atualiza em tempo real";
-  document.title = s.siteTitle || "Loja";
+  el("siteTitle").textContent = SETTINGS.siteTitle || "Minha Loja";
+  el("siteSubtitle").textContent = SETTINGS.siteSubtitle || "Atualiza em tempo real";
+  document.title = SETTINGS.siteTitle || "Loja";
 
-  el("bannerTitle").textContent = s.bannerTitle || "Banner";
-  el("bannerDesc").textContent = s.bannerDesc || "Edite isso no /admin";
-  el("globalDesc").textContent = s.globalDesc || "—";
+  el("bannerTitle").textContent = SETTINGS.bannerTitle || "Banner";
+  el("bannerDesc").textContent = SETTINGS.bannerDesc || "Edite isso no /admin";
+  el("globalDesc").textContent = SETTINGS.globalDesc || "—";
 
-  el("whatsBtn").href = s.whatsappLink || "#";
-  setSafeImg(el("bannerImg"), s.bannerImageUrl);
+  window.__WHATSAPP_LINK = SETTINGS.whatsappLink || "";
+  window.__BUY_TEXT = SETTINGS.buyBtnText || "COMPRE AGORA!";
 
-  el("kpiUpdated").textContent = `Atualizado: ${humanDate(s.updatedAt)}`;
+  el("whatsBtn").textContent = window.__BUY_TEXT;
+  el("whatsBtn").href = SETTINGS.whatsappLink || "#";
 
-  // garante UI do carrinho mesmo antes de produtos carregarem
-  ensureCartUI();
+  setSafeImg(el("bannerImg"), SETTINGS.bannerImageUrl);
+
+  el("kpiUpdated").textContent = `Atualizado: ${humanDate(SETTINGS.updatedAt)}`;
 });
 
-/* ===========================
-   PRODUCTS (sem where -> sem índice composto)
-=========================== */
-const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
+// ---------- PRODUCTS (sem where para evitar índice composto) ----------
+const qProducts = query(
+  collection(db, "products"),
+  orderBy("sortOrder", "asc")
+);
 
 onSnapshot(qProducts, (snap) => {
   const items = [];
   snap.forEach((d) => {
     const data = d.data();
-    if (data.active === true) items.push({ id: d.id, ...data });
+    if (data && data.active === true){
+      items.push({ id: d.id, ...data });
+    }
   });
 
+  PRODUCTS = items;
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   renderProducts(items);
 });
+
+// ---------- EVENTS ----------
+cartOpenBtn.addEventListener("click", openCart);
+cartCloseBtn.addEventListener("click", closeCart);
+
+// fechar clicando fora (drawer)
+cartDrawer.addEventListener("click", (e) => {
+  if (e.target === cartDrawer) closeCart();
+});
+
+cartClearBtn.addEventListener("click", () => {
+  if (!CART.length) return;
+  if (confirm("Limpar o carrinho?")) clearCart();
+});
+
+cartCheckoutBtn.addEventListener("click", () => {
+  if (!CART.length){
+    alert("Carrinho vazio.");
+    return;
+  }
+  openOrderModal();
+});
+
+orderCloseBtn.addEventListener("click", closeOrderModal);
+orderModal.addEventListener("click", (e) => {
+  if (e.target === orderModal) closeOrderModal();
+});
+
+btnEnviarPedido.addEventListener("click", async () => {
+  const nick = safeTrim(orderNick.value);
+  const discord = safeTrim(orderDiscord.value);
+
+  if (!nick || !discord){
+    orderStatus.textContent = "Preencha Nick no jogo e @ do Discord.";
+    return;
+  }
+  if (!CART.length){
+    orderStatus.textContent = "Carrinho vazio.";
+    return;
+  }
+
+  btnEnviarPedido.disabled = true;
+  btnEnviarPedido.textContent = "Enviando...";
+  orderStatus.textContent = "";
+
+  try{
+    const payload = buildOrderPayload();
+    await enviarPedidoWorker(payload);
+
+    // sucesso
+    clearCart();
+    closeOrderModal();
+    closeCart();
+
+    // confirmação pro cliente
+    alert("✅ Pedido recebido! Entraremos em contato em breve.");
+  }catch(err){
+    console.error(err);
+    orderStatus.textContent = "Não foi possível enviar agora. Tente novamente.";
+  }finally{
+    btnEnviarPedido.disabled = false;
+    btnEnviarPedido.textContent = "Enviar pedido";
+  }
+});
+
+// init
+renderCart();

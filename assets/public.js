@@ -1,6 +1,6 @@
 import { db } from "./firebase.js";
 import {
-  doc, onSnapshot, collection, query, where, orderBy
+  doc, onSnapshot, collection, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const el = (id) => document.getElementById(id);
@@ -99,6 +99,8 @@ onSnapshot(settingsRef, (snap) => {
   el("globalDesc").textContent = s.globalDesc || "—";
 
   window.__WHATSAPP_LINK = s.whatsappLink || "";
+  window.__BUY_TEXT = s.buyBtnText || "ENCOMENDE AGORA!";
+
   el("whatsBtn").href = s.whatsappLink || "#";
 
   setSafeImg(el("bannerImg"), s.bannerImageUrl);
@@ -106,16 +108,19 @@ onSnapshot(settingsRef, (snap) => {
   el("kpiUpdated").textContent = `Atualizado: ${humanDate(s.updatedAt)}`;
 });
 
-// PRODUCTS
+// PRODUCTS (SEM where -> SEM índice composto)
 const qProducts = query(
   collection(db, "products"),
-  where("active", "==", true),
   orderBy("sortOrder", "asc")
 );
 
 onSnapshot(qProducts, (snap) => {
   const items = [];
-  snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+  snap.forEach((d) => {
+    const data = d.data();
+    if (data.active === true) items.push({ id: d.id, ...data });
+  });
+
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   renderProducts(items);
 });

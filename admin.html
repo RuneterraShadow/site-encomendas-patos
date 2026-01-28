@@ -1,1 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin</title>
+  <link rel="stylesheet" href="./assets/app.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="row container">
+      <div class="brand">
+        <h1>Admin</h1>
+        <p>Controle total em tempo real</p>
+      </div>
+      <div class="rowBtns">
+        <a class="btn secondary" href="./index.html">Voltar</a>
+        <button class="btn danger" id="logoutBtn">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- LOGIN -->
+    <div id="loginBox" class="panel" style="max-width:520px; margin-top:16px;">
+      <h2 style="margin:0;">Entrar</h2>
+      <p class="small" style="margin:0;">Use o email/senha criado no Firebase Authentication.</p>
+
+      <div class="formGrid">
+        <div>
+          <label>Email</label>
+          <input id="email" class="input" type="email" placeholder="seuemail@..." />
+        </div>
+        <div>
+          <label>Senha</label>
+          <input id="pass" class="input" type="password" placeholder="********" />
+        </div>
+      </div>
+
+      <div class="rowBtns">
+        <button class="btn" id="loginBtn">Entrar</button>
+      </div>
+
+      <p class="small" id="loginMsg" style="margin:0;"></p>
+    </div>
+
+    <!-- PAINEL -->
+    <div id="adminBox" style="display:none; margin-top:16px;">
+
+      <div class="hero" style="grid-template-columns: 1fr 1fr;">
+        <!-- SETTINGS -->
+        <div class="panel">
+          <h2 style="margin:0;">Configurações Globais</h2>
+
+          <div class="formGrid">
+            <div>
+              <label>Título do site</label>
+              <input id="siteTitle" class="input" placeholder="Minha Loja" />
+            </div>
+            <div>
+              <label>Subtítulo</label>
+              <input id="siteSubtitle" class="input" placeholder="Entrega rápida..." />
+            </div>
+          </div>
+
+          <label>Descrição global</label>
+          <textarea id="globalDesc" class="input" rows="3" placeholder="Texto geral do site..."></textarea>
+
+          <div class="formGrid">
+            <div>
+              <label>Link do WhatsApp (ex: https://wa.me/55...)</label>
+              <input id="whatsappLink" class="input" placeholder="https://wa.me/55..." />
+            </div>
+            <div>
+              <label>Texto do botão (opcional)</label>
+              <input id="buyBtnText" class="input" placeholder="COMPRE AGORA!" />
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <h3 style="margin:0;">Banner</h3>
+
+          <div class="formGrid">
+            <div>
+              <label>Banner: título</label>
+              <input id="bannerTitle" class="input" placeholder="Promoções!" />
+            </div>
+            <div>
+              <label>Banner: URL da imagem</label>
+              <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
+            </div>
+          </div>
+
+          <label>Banner: descrição</label>
+          <textarea id="bannerDesc" class="input" rows="2" placeholder="Texto do banner..."></textarea>
+
+          <div class="rowBtns">
+            <button class="btn" id="saveSettingsBtn">Salvar configurações</button>
+          </div>
+
+          <p class="small" id="settingsMsg" style="margin:0;"></p>
+          <p class="small" style="margin:0;">
+            Dica: use imagem no GitHub tipo <b>/assets/images/banner/banner.jpg</b>
+          </p>
+        </div>
+
+        <!-- PRODUCT FORM -->
+        <div class="panel">
+          <h2 style="margin:0;">Criar / Editar Produto</h2>
+
+          <input type="hidden" id="productId" />
+
+          <label>Nome</label>
+          <input id="pName" class="input" placeholder="Nome do produto" />
+
+          <label>Descrição</label>
+          <textarea id="pDesc" class="input" rows="3" placeholder="Detalhes do produto..."></textarea>
+
+          <div class="formGrid">
+            <div>
+              <label>Preço (BRL)</label>
+              <input id="pPrice" class="input" type="number" step="0.01" />
+            </div>
+            <div>
+              <label>Preço Promo (opcional)</label>
+              <input id="pPromo" class="input" type="number" step="0.01" />
+            </div>
+          </div>
+
+          <div class="formGrid">
+            <div>
+              <label>Estoque (opcional)</label>
+              <input id="pStock" class="input" type="number" step="1" />
+            </div>
+            <div>
+              <label>Ordem (menor = primeiro)</label>
+              <input id="pOrder" class="input" type="number" step="1" value="100" />
+            </div>
+          </div>
+
+          <label>Imagem do produto (URL)</label>
+          <input id="pImageUrl" class="input" placeholder="/assets/images/products/produto.jpg" />
+
+          <div class="formGrid">
+            <div>
+              <label>Ativo</label>
+              <select id="pActive" class="input">
+                <option value="true">Sim (aparece)</option>
+                <option value="false">Não (some)</option>
+              </select>
+            </div>
+            <div>
+              <label>Destaque</label>
+              <select id="pFeatured" class="input">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn" id="saveProductBtn">Salvar produto</button>
+            <button class="btn secondary" id="clearFormBtn">Limpar</button>
+            <button class="btn danger" id="deleteProductBtn" disabled>Excluir</button>
+          </div>
+
+          <p class="small" id="productMsg" style="margin:0;"></p>
+          <p class="small" style="margin:0;">
+            Dica: imagens no GitHub tipo <b>/assets/images/products/foto.jpg</b>
+          </p>
+        </div>
+      </div>
+
+      <h2 style="margin:18px 0 10px;">Produtos cadastrados</h2>
+      <div id="productsGrid" class="grid"></div>
+
+    </div>
+  </div>
+
+  <script type="module" src="./assets/admin.js"></script>
+</body>
+</html>
 

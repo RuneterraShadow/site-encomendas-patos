@@ -19,14 +19,14 @@ function formatDateTime(d = new Date()) {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
-// GitHub Pages: Admin usa "/assets/..." -> site precisa "./assets/..."
+// GitHub Pages: Admin usa "/assets/..." -> público com <base> usa "./assets/..."
 function fixAssetPath(p) {
   if (!p) return "";
   const s = String(p).trim();
   if (!s) return "";
   if (s.startsWith("http://") || s.startsWith("https://")) return s;
   if (s.startsWith("./")) return s;
-  if (s.startsWith("/")) return "." + s;   // "/assets/..." => "./assets/..."
+  if (s.startsWith("/")) return "." + s; // "/assets/..." => "./assets/..."
   return "./" + s.replace(/^(\.\/)+/, "");
 }
 
@@ -39,19 +39,44 @@ function makeWhatsLink(raw) {
   return digits.length >= 10 ? `https://wa.me/${digits}` : "#";
 }
 
+function pick(obj, keys, fallback = "") {
+  for (const k of keys) {
+    if (!obj) continue;
+    if (k.includes(".")) {
+      const parts = k.split(".");
+      let cur = obj;
+      for (const p of parts) cur = cur?.[p];
+      if (cur !== undefined && cur !== null && String(cur).trim() !== "") return cur;
+    } else {
+      const v = obj?.[k];
+      if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+    }
+  }
+  return fallback;
+}
+
 /* ======================
-   CARRINHO (painel fixo esquerda)
+   ESTADO
 ====================== */
-let cart = [];
+let cart = []; // { productId, name, price, qty }
 let cartOpen = false;
+
+// mapa do estoque em tempo real: productId -> number|null
+const stockMap = new Map();
+
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
 
+/* ======================
+   CARRINHO (painel fixo)
+====================== */
 const cartPanel = document.createElement("div");
 cartPanel.id = "cartPanel";
 cartPanel.style.display = "none";
+
+// canto esquerdo fixo
 cartPanel.style.position = "fixed";
 cartPanel.style.left = "16px";
 cartPanel.style.top = "78px";
@@ -59,11 +84,14 @@ cartPanel.style.width = "320px";
 cartPanel.style.maxHeight = "calc(100vh - 110px)";
 cartPanel.style.overflow = "auto";
 cartPanel.style.zIndex = "99999";
+
+// visual
 cartPanel.style.background = "#141414";
 cartPanel.style.border = "1px solid rgba(255,255,255,.08)";
 cartPanel.style.borderRadius = "14px";
 cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
+
 document.body.appendChild(cartPanel);
 
 cartBtn?.addEventListener("click", () => {
@@ -72,7 +100,37 @@ cartBtn?.addEventListener("click", () => {
   renderCart();
 });
 
+function getAvailableStock(productId) {
+  // null/undefined = estoque "não controlado"
+  if (!stockMap.has(productId)) return null;
+  const v = stockMap.get(productId);
+  if (v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeCartAgainstStock() {
+  // ajusta itens do carrinho se o estoque baixou
+  let changed = false;
+
+  cart = cart
+    .map((i) => {
+      const avail = getAvailableStock(i.productId);
+      if (avail === null) return i; // sem controle de estoque
+
+      const newQty = Math.min(i.qty, avail);
+      if (newQty !== i.qty) changed = true;
+
+      return { ...i, qty: newQty };
+    })
+    .filter((i) => i.qty > 0);
+
+  return changed;
+}
+
 function renderCart() {
+  normalizeCartAgainstStock();
+
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
   cartCount.textContent = cart.length;
 
@@ -85,19 +143,23 @@ function renderCart() {
     ${cart.length === 0 ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>` : ""}
 
     ${cart
-      .map(
-        (i, idx) => `
-        <div class="hr" style="margin:10px 0"></div>
-        <div>
-          <strong>${i.name}</strong><br>
-          <span class="small">Qtd: ${i.qty}</span><br>
-          <strong>${money(i.price * i.qty)}</strong>
-          <div style="margin-top:8px">
-            <button class="btn danger" data-remove="${idx}" type="button">Remover</button>
+      .map((i, idx) => {
+        const avail = getAvailableStock(i.productId);
+        const stockLine =
+          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+        return `
+          <div class="hr" style="margin:10px 0"></div>
+          <div>
+            <strong>${i.name}</strong><br>
+            ${stockLine}
+            <span class="small">Qtd: ${i.qty}</span><br>
+            <strong>${money(i.price * i.qty)}</strong>
+            <div style="margin-top:8px">
+              <button class="btn danger" data-remove="${idx}" type="button">Remover</button>
+            </div>
           </div>
-        </div>
-      `
-      )
+        `;
+      })
       .join("")}
 
     <div class="hr" style="margin:12px 0"></div>
@@ -131,6 +193,11 @@ function renderCart() {
   el("sendOrder")?.addEventListener("click", sendOrder);
 }
 
+/* ======================
+   ENVIA PEDIDO
+   - Bloqueia se qty > estoque
+   - Envia productId para o backend baixar estoque automático
+====================== */
 async function sendOrder() {
   const nick = el("nickInput").value.trim();
   const discord = el("discordInput").value.trim();
@@ -140,12 +207,28 @@ async function sendOrder() {
     return;
   }
 
+  // valida estoque antes de enviar
+  for (const item of cart) {
+    const avail = getAvailableStock(item.productId);
+    if (avail !== null && item.qty > avail) {
+      alert(`"${item.name}" tem só ${avail} em estoque. Ajuste a quantidade.`);
+      renderCart();
+      return;
+    }
+    if (avail !== null && avail <= 0) {
+      alert(`"${item.name}" está sem estoque.`);
+      renderCart();
+      return;
+    }
+  }
+
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
 
   const payload = {
     nick,
     discord,
     items: cart.map((i) => ({
+      productId: i.productId,
       name: i.name,
       qty: i.qty,
       unitPrice: i.price,
@@ -157,61 +240,93 @@ async function sendOrder() {
   };
 
   try {
-    await fetch(WORKER_URL, {
+    const res = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
     alert("Pedido recebido! Entraremos em contato.");
+
+    // IMPORTANTE:
+    // Estoque automático DE VERDADE deve ser baixado no backend (Worker).
+    // Aqui só limpamos o carrinho.
     cart = [];
     renderCart();
     cartOpen = false;
     cartPanel.style.display = "none";
-  } catch {
+  } catch (e) {
     alert("Erro ao enviar pedido");
+    console.error(e);
   }
 }
 
 /* ======================
-   CONFIG GLOBAL (MESMO DOC DO ADMIN)
+   CONFIG GLOBAL
 ====================== */
-const settingsRef = doc(db, "site", "settings");
+let configUnsubs = [];
 
-onSnapshot(
-  settingsRef,
-  (snap) => {
-    const s = snap.exists() ? snap.data() : {};
+function applyConfig(data) {
+  el("siteTitle").textContent = pick(data, ["siteTitle"], "Loja");
+  el("siteSubtitle").textContent = pick(data, ["siteSubtitle"], "—");
 
-    el("siteTitle").textContent = s.siteTitle || "Loja";
-    el("siteSubtitle").textContent = s.siteSubtitle || "—";
-    el("globalDesc").textContent = s.globalDesc || "—";
+  el("globalDesc").textContent = pick(data, ["globalDesc"], "—");
 
-    el("bannerTitle").textContent = s.bannerTitle || "—";
-    el("bannerDesc").textContent = s.bannerDesc || "—";
+  el("bannerTitle").textContent = pick(data, ["bannerTitle"], "—");
+  el("bannerDesc").textContent = pick(data, ["bannerDesc"], "—");
 
-    const bannerUrl = fixAssetPath(s.bannerImageUrl || "");
-    if (bannerUrl) el("bannerImg").src = bannerUrl;
+  const bannerUrl = fixAssetPath(pick(data, ["bannerImageUrl"], ""));
+  if (bannerUrl) el("bannerImg").src = bannerUrl;
 
-    el("whatsBtn").href = makeWhatsLink(s.whatsappLink || "");
-    el("whatsBtn").textContent = s.buyBtnText || "COMPRE AGORA!";
+  const whatsRaw = pick(data, ["whatsappLink"], "");
+  el("whatsBtn").href = makeWhatsLink(whatsRaw);
 
-    el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
-  },
-  (err) => {
-    // Se tiver bloqueio de permissão, agora você VAI ver no console
-    console.error("[Firestore] Erro ao ler site/settings:", err);
-  }
-);
+  const btnText = pick(data, ["buyBtnText"], "");
+  if (btnText) el("whatsBtn").textContent = btnText;
+
+  el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+}
+
+function watchGlobalConfig() {
+  configUnsubs.forEach((fn) => {
+    try { fn(); } catch {}
+  });
+  configUnsubs = [];
+
+  const targets = [
+    ["site", "settings"], // o certo (admin)
+  ];
+
+  targets.forEach(([col, id]) => {
+    const ref = doc(db, col, id);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (!snap.exists()) return;
+      applyConfig(snap.data());
+    });
+    configUnsubs.push(unsub);
+  });
+}
 
 /* ======================
-   PRODUTOS
+   PRODUTOS + ESTOQUE
+   - Mostra estoque
+   - Impede adicionar acima do estoque
 ====================== */
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
 
   items.forEach((p) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
     const img = fixAssetPath(p.imageUrl || "");
+    const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
+    const hasStock = Number.isFinite(stock);
+    const out = hasStock && stock <= 0;
 
     const promo =
       p.promoPrice !== null &&
@@ -221,13 +336,19 @@ function renderProducts(items) {
 
     const shownPrice = promo ? Number(p.promoPrice) : Number(p.price || 0);
 
-    const card = document.createElement("div");
-    card.className = "card";
+    const stockBadge =
+      hasStock ? `<div class="badge">Estoque: ${stock}</div>` : `<div class="badge">Estoque: ∞</div>`;
+
     card.innerHTML = `
       <div class="img"><img src="${img}" alt=""></div>
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
+
+        <div class="badges">
+          ${stockBadge}
+          ${p.featured ? `<div class="badge">Destaque</div>` : ``}
+        </div>
 
         <div class="priceRow">
           <div class="price">${money(shownPrice)}</div>
@@ -235,15 +356,46 @@ function renderProducts(items) {
         </div>
 
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
-          <input type="number" min="1" value="1" class="input qty" style="width:90px">
-          <button class="btn" type="button">Adicionar</button>
+          <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
+          <button class="btn" type="button" ${out ? "disabled" : ""}>${out ? "Sem estoque" : "Adicionar"}</button>
         </div>
       </div>
     `;
 
-    card.querySelector(".btn").addEventListener("click", () => {
-      const qty = Math.max(1, Number(card.querySelector(".qty").value || 1));
-      cart.push({ name: p.name, price: shownPrice, qty });
+    const qtyInput = card.querySelector(".qty");
+    const addBtn = card.querySelector(".btn");
+
+    // limita o input ao estoque
+    if (hasStock) {
+      qtyInput.max = String(Math.max(1, stock));
+      qtyInput.value = String(Math.min(Number(qtyInput.value || 1), stock));
+      qtyInput.addEventListener("input", () => {
+        const v = Math.max(1, Number(qtyInput.value || 1));
+        qtyInput.value = String(Math.min(v, stock));
+      });
+    }
+
+    addBtn.addEventListener("click", () => {
+      const wanted = Math.max(1, Number(qtyInput.value || 1));
+
+      const avail = getAvailableStock(p.id);
+      if (avail !== null && wanted > avail) {
+        alert(`Só tem ${avail} em estoque.`);
+        qtyInput.value = String(avail);
+        return;
+      }
+      if (avail !== null && avail <= 0) {
+        alert("Sem estoque.");
+        return;
+      }
+
+      cart.push({
+        productId: p.id,
+        name: p.name,
+        price: shownPrice,
+        qty: wanted,
+      });
+
       renderCart();
     });
 
@@ -253,17 +405,33 @@ function renderProducts(items) {
 
 const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
 
-onSnapshot(
-  qProducts,
-  (snap) => {
-    const items = [];
-    snap.forEach((d) => {
-      const data = d.data();
-      if (data?.active) items.push(data);
-    });
+onSnapshot(qProducts, (snap) => {
+  const items = [];
+  stockMap.clear();
 
-    renderProducts(items);
-    el("kpiProducts").textContent = `Produtos: ${items.length}`;
-  },
-  (err) => console.error("[Firestore] Erro ao ler products:", err)
-);
+  snap.forEach((d) => {
+    const data = d.data();
+    if (!data?.active) return;
+
+    const product = { id: d.id, ...data };
+    items.push(product);
+
+    // guarda o estoque (pode ser null/undefined)
+    stockMap.set(d.id, data.stock);
+  });
+
+  renderProducts(items);
+
+  el("kpiProducts").textContent = `Produtos: ${items.length}`;
+  el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+
+  // se o estoque mudou, ajusta carrinho
+  if (normalizeCartAgainstStock() && cartOpen) {
+    renderCart();
+  }
+});
+
+/* ======================
+   START
+====================== */
+watchGlobalConfig();

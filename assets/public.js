@@ -4,45 +4,81 @@ import {
   query,
   orderBy,
   onSnapshot,
+  doc,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ======================
    HELPERS
 ====================== */
 const el = (id) => document.getElementById(id);
+
 const money = (v) =>
   Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+function formatDateTime(d = new Date()) {
+  return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+// GitHub Pages: se vier "/assets/..." do admin, converte pra "./assets/..."
+function fixAssetPath(p) {
+  if (!p) return "";
+  const s = String(p).trim();
+  if (!s) return "";
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+  if (s.startsWith("./")) return s;
+  if (s.startsWith("/")) return "." + s; // "/assets/..." => "./assets/..."
+  return "./" + s.replace(/^(\.\/)+/, "");
+}
+
+function makeWhatsLink(raw) {
+  if (!raw) return "#";
+  const s = String(raw).trim();
+  if (!s) return "#";
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+  const digits = s.replace(/\D/g, "");
+  return digits.length >= 10 ? `https://wa.me/${digits}` : "#";
+}
+
+function pick(obj, keys, fallback = "") {
+  for (const k of keys) {
+    if (!obj) continue;
+    if (k.includes(".")) {
+      const parts = k.split(".");
+      let cur = obj;
+      for (const p of parts) cur = cur?.[p];
+      if (cur !== undefined && cur !== null && String(cur).trim() !== "") return cur;
+    } else {
+      const v = obj?.[k];
+      if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+    }
+  }
+  return fallback;
+}
+
 /* ======================
-   ESTADO DO CARRINHO
+   CARRINHO
 ====================== */
 let cart = [];
 let cartOpen = false;
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
-/* ======================
-   BOTÃO DO CARRINHO (USA O DO HTML)
-====================== */
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
 
-/* ======================
-   PAINEL DO CARRINHO (FIXO NO CANTO ESQUERDO)
-====================== */
 const cartPanel = document.createElement("div");
 cartPanel.id = "cartPanel";
 cartPanel.style.display = "none";
 
-// posição/canto esquerdo
+// canto esquerdo fixo
 cartPanel.style.position = "fixed";
 cartPanel.style.left = "16px";
-cartPanel.style.top = "78px"; // abaixo da topbar
+cartPanel.style.top = "78px";
 cartPanel.style.width = "320px";
 cartPanel.style.maxHeight = "calc(100vh - 110px)";
 cartPanel.style.overflow = "auto";
 cartPanel.style.zIndex = "99999";
 
-// visual (pra ficar bonitinho mesmo sem CSS específico)
+// visual básico
 cartPanel.style.background = "#141414";
 cartPanel.style.border = "1px solid rgba(255,255,255,.08)";
 cartPanel.style.borderRadius = "14px";
@@ -51,15 +87,12 @@ cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
 
 document.body.appendChild(cartPanel);
 
-cartBtn.addEventListener("click", () => {
+cartBtn?.addEventListener("click", () => {
   cartOpen = !cartOpen;
   cartPanel.style.display = cartOpen ? "block" : "none";
   renderCart();
 });
 
-/* ======================
-   RENDERIZA CARRINHO
-====================== */
 function renderCart() {
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
   cartCount.textContent = cart.length;
@@ -104,13 +137,11 @@ function renderCart() {
     </button>
   `;
 
-  // fechar
   el("closeCart")?.addEventListener("click", () => {
     cartOpen = false;
     cartPanel.style.display = "none";
   });
 
-  // remover itens
   cartPanel.querySelectorAll("[data-remove]").forEach((btn) => {
     btn.addEventListener("click", () => {
       cart.splice(Number(btn.dataset.remove), 1);
@@ -118,13 +149,9 @@ function renderCart() {
     });
   });
 
-  // enviar
   el("sendOrder")?.addEventListener("click", sendOrder);
 }
 
-/* ======================
-   ENVIA PEDIDO
-====================== */
 async function sendOrder() {
   const nick = el("nickInput").value.trim();
   const discord = el("discordInput").value.trim();
@@ -168,6 +195,123 @@ async function sendOrder() {
 }
 
 /* ======================
+   CONFIG GLOBAL (O PULO DO GATO)
+   - escuta vários docs até achar o mesmo do admin
+====================== */
+let configUnsubs = [];
+
+function applyConfig(data) {
+  // títulos
+  el("siteTitle").textContent = pick(data, ["siteTitle", "title", "nome", "titulo"], "Loja");
+  el("siteSubtitle").textContent = pick(data, ["siteSubtitle", "subtitle", "subtitulo"], "—");
+
+  // descrição global (painel Informações)
+  el("globalDesc").textContent = pick(
+    data,
+    ["globalDesc", "description", "descricaoGlobal", "descricao", "info"],
+    "—"
+  );
+
+  // banner
+  el("bannerTitle").textContent = pick(
+    data,
+    ["bannerTitle", "banner.title", "bannerTitulo", "banner_titulo"],
+    "—"
+  );
+  el("bannerDesc").textContent = pick(
+    data,
+    ["bannerDesc", "banner.description", "bannerDescricao", "banner_desc"],
+    "—"
+  );
+
+  const bannerUrlRaw = pick(
+    data,
+    ["bannerUrl", "bannerImage", "bannerImg", "banner.url", "bannerURL", "banner_imagem"],
+    ""
+  );
+  const bannerUrl = fixAssetPath(bannerUrlRaw);
+  if (bannerUrl) el("bannerImg").src = bannerUrl;
+
+  // Whats + texto do botão
+  const whatsRaw = pick(
+    data,
+    ["whatsLink", "whatsappLink", "whatsapp", "linkWhats", "linkWhatsapp", "telefone"],
+    ""
+  );
+  el("whatsBtn").href = makeWhatsLink(whatsRaw);
+
+  const whatsText = pick(data, ["whatsText", "textoBotao", "buttonText"], "");
+  if (whatsText) el("whatsBtn").textContent = whatsText;
+
+  el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+}
+
+function watchGlobalConfig() {
+  // limpa listeners antigos
+  configUnsubs.forEach((fn) => {
+    try { fn(); } catch {}
+  });
+  configUnsubs = [];
+
+  // TENTATIVAS (bem amplas)
+  // Se o admin estiver salvando em qualquer uma dessas, o site vai refletir.
+  const targets = [
+    ["site", "main"],
+    ["site", "global"],
+    ["config", "main"],
+    ["config", "global"],
+    ["settings", "main"],
+    ["settings", "global"],
+    ["globals", "main"],
+    ["globals", "global"],
+    ["public", "main"],
+    ["public", "global"],
+    ["app", "main"],
+    ["app", "global"],
+    ["loja", "main"],
+    ["loja", "global"],
+  ];
+
+  let appliedOnce = false;
+
+  targets.forEach(([col, id]) => {
+    const ref = doc(db, col, id);
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+
+        // aplica sempre (se admin mudar, atualiza em tempo real)
+        applyConfig(data);
+
+        if (!appliedOnce) {
+          appliedOnce = true;
+          console.log("[CONFIG] Usando config de:", `${col}/${id}`, data);
+        }
+      },
+      (err) => {
+        // silencioso
+      }
+    );
+
+    configUnsubs.push(unsub);
+  });
+
+  // fallback: se não achar nada, pelo menos não fica travado
+  setTimeout(() => {
+    if (!appliedOnce) {
+      console.warn(
+        "[CONFIG] Nenhuma config global encontrada nas rotas padrão. " +
+        "Provavelmente o admin salva em outra coleção/doc."
+      );
+      el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+    }
+  }, 2500);
+}
+
+/* ======================
    PRODUTOS
 ====================== */
 function renderProducts(items) {
@@ -176,10 +320,13 @@ function renderProducts(items) {
   items.forEach((p) => {
     const card = document.createElement("div");
     card.className = "card";
+
+    const img = fixAssetPath(p.imageUrl || p.image || p.img || "");
+
     card.innerHTML = `
-      <div class="img"><img src="${p.imageUrl || ""}" alt=""></div>
+      <div class="img"><img src="${img}" alt=""></div>
       <div class="body">
-        <h3>${p.name}</h3>
+        <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
         <strong>${money(p.price)}</strong>
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
@@ -199,9 +346,6 @@ function renderProducts(items) {
   });
 }
 
-/* ======================
-   FIREBASE
-====================== */
 const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
 
 onSnapshot(qProducts, (snap) => {
@@ -210,5 +354,14 @@ onSnapshot(qProducts, (snap) => {
     const data = d.data();
     if (data?.active) items.push(data);
   });
+
   renderProducts(items);
+
+  el("kpiProducts").textContent = `Produtos: ${items.length}`;
+  el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 });
+
+/* ======================
+   START
+====================== */
+watchGlobalConfig();

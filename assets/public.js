@@ -63,7 +63,7 @@ function renderProducts(items){
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
         </div>
         ${priceHtml}
-        <button class="btn" data-buy>COMPRE AGORA!</button>
+        <button class="btn" data-buy>${(window.__BUY_TEXT || "COMPRE AGORA!")}</button>
       </div>
     `;
 

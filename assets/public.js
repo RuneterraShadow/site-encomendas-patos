@@ -99,7 +99,7 @@ onSnapshot(settingsRef, (snap) => {
   el("globalDesc").textContent = s.globalDesc || "—";
 
   window.__WHATSAPP_LINK = s.whatsappLink || "";
-  window.__BUY_TEXT = s.buyBtnText || "ENCOMENDE AGORA!";
+  window.__BUY_TEXT = s.buyBtnText || "COMPRE AGORA!";
 
   el("whatsBtn").href = s.whatsappLink || "#";
 

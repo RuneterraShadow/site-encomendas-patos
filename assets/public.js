@@ -19,14 +19,14 @@ function formatDateTime(d = new Date()) {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
-// GitHub Pages: se vier "/assets/..." do admin, converte pra "./assets/..."
+// GitHub Pages: Admin usa "/assets/..." -> site precisa "./assets/..."
 function fixAssetPath(p) {
   if (!p) return "";
   const s = String(p).trim();
   if (!s) return "";
   if (s.startsWith("http://") || s.startsWith("https://")) return s;
   if (s.startsWith("./")) return s;
-  if (s.startsWith("/")) return "." + s; // "/assets/..." => "./assets/..."
+  if (s.startsWith("/")) return "." + s;   // "/assets/..." => "./assets/..."
   return "./" + s.replace(/^(\.\/)+/, "");
 }
 
@@ -40,7 +40,7 @@ function makeWhatsLink(raw) {
 }
 
 /* ======================
-   CARRINHO
+   CARRINHO (painel fixo esquerda)
 ====================== */
 let cart = [];
 let cartOpen = false;
@@ -49,12 +49,9 @@ const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
 
-// painel do carrinho
 const cartPanel = document.createElement("div");
 cartPanel.id = "cartPanel";
 cartPanel.style.display = "none";
-
-// canto esquerdo fixo
 cartPanel.style.position = "fixed";
 cartPanel.style.left = "16px";
 cartPanel.style.top = "78px";
@@ -62,14 +59,11 @@ cartPanel.style.width = "320px";
 cartPanel.style.maxHeight = "calc(100vh - 110px)";
 cartPanel.style.overflow = "auto";
 cartPanel.style.zIndex = "99999";
-
-// visual básico
 cartPanel.style.background = "#141414";
 cartPanel.style.border = "1px solid rgba(255,255,255,.08)";
 cartPanel.style.borderRadius = "14px";
 cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
-
 document.body.appendChild(cartPanel);
 
 cartBtn?.addEventListener("click", () => {
@@ -180,33 +174,35 @@ async function sendOrder() {
 }
 
 /* ======================
-   CONFIG GLOBAL (MESMO DOC DO ADMIN!)
-   Admin grava em: doc(db,"site","settings")
+   CONFIG GLOBAL (MESMO DOC DO ADMIN)
 ====================== */
 const settingsRef = doc(db, "site", "settings");
 
-onSnapshot(settingsRef, (snap) => {
-  const s = snap.exists() ? snap.data() : {};
+onSnapshot(
+  settingsRef,
+  (snap) => {
+    const s = snap.exists() ? snap.data() : {};
 
-  // titulo/subtitulo
-  el("siteTitle").textContent = s.siteTitle || "Loja";
-  el("siteSubtitle").textContent = s.siteSubtitle || "—";
+    el("siteTitle").textContent = s.siteTitle || "Loja";
+    el("siteSubtitle").textContent = s.siteSubtitle || "—";
+    el("globalDesc").textContent = s.globalDesc || "—";
 
-  // texto info
-  el("globalDesc").textContent = s.globalDesc || "—";
+    el("bannerTitle").textContent = s.bannerTitle || "—";
+    el("bannerDesc").textContent = s.bannerDesc || "—";
 
-  // banner
-  el("bannerTitle").textContent = s.bannerTitle || "—";
-  el("bannerDesc").textContent = s.bannerDesc || "—";
-  const bannerUrl = fixAssetPath(s.bannerImageUrl || "");
-  if (bannerUrl) el("bannerImg").src = bannerUrl;
+    const bannerUrl = fixAssetPath(s.bannerImageUrl || "");
+    if (bannerUrl) el("bannerImg").src = bannerUrl;
 
-  // botão comprar agora
-  el("whatsBtn").href = makeWhatsLink(s.whatsappLink || "");
-  el("whatsBtn").textContent = s.buyBtnText || "COMPRE AGORA!";
+    el("whatsBtn").href = makeWhatsLink(s.whatsappLink || "");
+    el("whatsBtn").textContent = s.buyBtnText || "COMPRE AGORA!";
 
-  el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
-});
+    el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+  },
+  (err) => {
+    // Se tiver bloqueio de permissão, agora você VAI ver no console
+    console.error("[Firestore] Erro ao ler site/settings:", err);
+  }
+);
 
 /* ======================
    PRODUTOS
@@ -215,20 +211,18 @@ function renderProducts(items) {
   el("productsGrid").innerHTML = "";
 
   items.forEach((p) => {
-    const card = document.createElement("div");
-    card.className = "card";
-
     const img = fixAssetPath(p.imageUrl || "");
 
-    // preço com promo (se existir)
-    const hasPromo =
+    const promo =
       p.promoPrice !== null &&
       p.promoPrice !== undefined &&
       Number(p.promoPrice) > 0 &&
       Number(p.promoPrice) < Number(p.price || 0);
 
-    const shownPrice = hasPromo ? Number(p.promoPrice) : Number(p.price || 0);
+    const shownPrice = promo ? Number(p.promoPrice) : Number(p.price || 0);
 
+    const card = document.createElement("div");
+    card.className = "card";
     card.innerHTML = `
       <div class="img"><img src="${img}" alt=""></div>
       <div class="body">
@@ -237,7 +231,7 @@ function renderProducts(items) {
 
         <div class="priceRow">
           <div class="price">${money(shownPrice)}</div>
-          ${hasPromo ? `<div class="old">${money(p.price)}</div>` : ``}
+          ${promo ? `<div class="old">${money(p.price)}</div>` : ``}
         </div>
 
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
@@ -259,18 +253,17 @@ function renderProducts(items) {
 
 const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
 
-onSnapshot(qProducts, (snap) => {
-  const items = [];
-  snap.forEach((d) => {
-    const data = d.data();
-    if (data?.active) items.push(data);
-  });
+onSnapshot(
+  qProducts,
+  (snap) => {
+    const items = [];
+    snap.forEach((d) => {
+      const data = d.data();
+      if (data?.active) items.push(data);
+    });
 
-  renderProducts(items);
-
-  el("kpiProducts").textContent = `Produtos: ${items.length}`;
-  // o "Atualizado" também é setado pelo settings; aqui é só fallback
-  if (el("kpiUpdated").textContent.includes("—")) {
-    el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
-  }
-});
+    renderProducts(items);
+    el("kpiProducts").textContent = `Produtos: ${items.length}`;
+  },
+  (err) => console.error("[Firestore] Erro ao ler products:", err)
+);

@@ -2,14 +2,18 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Loja</title>
-  <link rel="stylesheet" href="./assets/app.css" />
+
+  <!-- CSS (CAMINHO CORRETO GITHUB PAGES) -->
+  <link rel="stylesheet" href="/site-encomendas-patos/assets/app.css" />
 </head>
 
 <body>
+  <!-- TOPO -->
   <div class="topbar">
     <div class="row container" style="justify-content:space-between; gap:12px;">
+
       <!-- ESQUERDA: CARRINHO + MARCA -->
       <div class="row" style="gap:12px; align-items:center;">
         <button id="cartOpenBtn" class="btn secondary" type="button">
@@ -22,15 +26,23 @@
         </div>
       </div>
 
-      <!-- DIREITA: BOTÕES -->
+      <!-- DIREITA -->
       <div class="rowBtns">
-        <a id="whatsBtn" class="btn" href="#" target="_blank" rel="noopener">COMPRE AGORA!</a>
-        <a class="btn secondary" href="./admin.html">Admin</a>
+        <a id="whatsBtn" class="btn" href="#" target="_blank" rel="noopener">
+          COMPRE AGORA!
+        </a>
+        <a class="btn secondary" href="/site-encomendas-patos/admin.html">
+          Admin
+        </a>
       </div>
+
     </div>
   </div>
 
+  <!-- CONTEÚDO -->
   <div class="container">
+
+    <!-- HERO -->
     <div class="hero">
       <div class="heroBanner">
         <img id="bannerImg" alt="Banner" />
@@ -44,7 +56,9 @@
       <div class="panel">
         <h3 style="margin:0;">Informações</h3>
         <p id="globalDesc" class="small" style="margin:0;">—</p>
+
         <div class="hr"></div>
+
         <div class="kpiRow">
           <div class="kpi" id="kpiProducts">Produtos: —</div>
           <div class="kpi" id="kpiUpdated">Atualizado: —</div>
@@ -52,6 +66,7 @@
       </div>
     </div>
 
+    <!-- PRODUTOS -->
     <h2 style="margin:18px 0 10px;">Produtos</h2>
     <div id="productsGrid" class="grid"></div>
 
@@ -60,6 +75,7 @@
     </p>
   </div>
 
+  <!-- JS PÚBLICO (CAMINHO CORRETO GITHUB PAGES) -->
   <script type="module" src="/site-encomendas-patos/assets/public.js"></script>
 </body>
 </html>

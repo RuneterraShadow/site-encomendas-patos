@@ -4,7 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCu5vZVYpMbApgz66QmqXvBh8eZP5sg",
+  apiKey: "AIzaSyDzdxKZqOgTjemtcRgM9arvGIYGcDdupGI",
   authDomain: "site-encomendas-patos.firebaseapp.com",
   projectId: "site-encomendas-patos",
   storageBucket: "site-encomendas-patos.firebasestorage.app",

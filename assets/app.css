@@ -55,3 +55,199 @@ label{ font-size:12px; color:var(--muted); }
 .small{ font-size:12px; color:var(--muted); }
 .rowBtns{ display:flex; gap:10px; flex-wrap:wrap; }
 
+/* ================================
+   CARRINHO / CHECKOUT (FIXO NO TOPO)
+   Cole no FINAL do app.css
+   ================================ */
+
+:root{
+  /* altura aproximada da topbar; ajuste se precisar */
+  --topbar-h: 64px;
+}
+
+/* Botão carrinho no topo-esquerdo */
+#cartBtn{
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 9999;
+  box-shadow: 0 10px 26px rgba(0,0,0,.35);
+}
+
+/* Painel do carrinho: topo-esquerdo (abaixo da topbar) */
+#cartPanel{
+  position: fixed;
+  top: calc(var(--topbar-h) + 10px);
+  left: 12px;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - var(--topbar-h) - 24px);
+  overflow: auto;
+
+  z-index: 9998;
+  border-radius: var(--radius);
+  background: rgba(21,21,21,.96);
+  border: 1px solid #232323;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  padding: 12px;
+  display: none;
+}
+
+#cartPanel.open{ display:block; }
+
+/* Overlay do carrinho */
+#cartOverlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 9997;
+  display: none;
+}
+#cartOverlay.open{ display:block; }
+
+/* Cabeçalho do carrinho */
+#cartPanel .cartHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+#cartPanel .cartTitle{
+  font-weight:800;
+  font-size:14px;
+}
+#cartPanel .cartEmpty{
+  color: var(--muted);
+  font-size: 12px;
+  margin: 10px 0;
+}
+
+/* Item do carrinho */
+#cartPanel .cartItem{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px;
+  border-radius: 12px;
+  background: var(--panel2);
+  border: 1px solid #2a2a2a;
+  margin-bottom:10px;
+}
+#cartPanel .cartItem .left{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width: 0;
+}
+#cartPanel .cartItem .name{
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#cartPanel .cartItem .price{
+  font-size: 12px;
+  color: var(--muted);
+}
+#cartPanel .cartItem .right{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+#cartPanel input.qty{
+  width: 64px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  background: #0f0f0f;
+  color: #fff;
+}
+
+/* Rodapé do carrinho */
+#cartPanel .cartFooter{
+  margin-top: 10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+#cartPanel .totalRow{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-weight:800;
+}
+#cartPanel .actionsRow{
+  display:flex;
+  gap:10px;
+}
+#cartPanel .actionsRow .btn{
+  flex:1;
+}
+
+/* ================================
+   CHECKOUT (MODAL CENTRAL)
+   ================================ */
+
+#checkoutModal{
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+}
+#checkoutModal.open{
+  display:grid;
+  place-items:center;
+}
+
+/* fundo escuro */
+#checkoutModal .backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.65);
+}
+
+/* caixa */
+#checkoutModal .box{
+  position: relative;
+  width: 520px;
+  max-width: calc(100vw - 24px);
+  border-radius: var(--radius);
+  background: rgba(21,21,21,.98);
+  border: 1px solid #232323;
+  padding: 14px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+
+/* topo modal */
+#checkoutModal .boxHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+#checkoutModal .boxHeader h3{
+  margin:0;
+  font-size: 16px;
+}
+#checkoutModal .hint{
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+/* botão fechar */
+#checkoutModal .closeBtn{
+  background: #2a2a2a;
+  color: #fff;
+}
+
+/* mobile */
+@media (max-width:480px){
+  #cartPanel{ width: 92vw; }
+}

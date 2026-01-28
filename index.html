@@ -6,6 +6,7 @@
   <title>Loja</title>
   <link rel="stylesheet" href="./assets/app.css" />
 </head>
+
 <body>
   <div class="topbar">
     <div class="row container">
@@ -15,7 +16,7 @@
       </div>
 
       <div class="rowBtns">
-        <!-- BOTÃO DO CARRINHO -->
+        <!-- BOTÃO DO CARRINHO (ÚNICO) -->
         <button id="cartOpenBtn" class="btn secondary" type="button">
           Carrinho (<span id="cartCount">0</span>)
         </button>
@@ -54,21 +55,6 @@
     <p class="small" style="margin-top:18px;">
       * Preços e disponibilidade podem mudar em tempo real.
     </p>
-  </div>
-
-      <!-- SEM EXEMPLO: inputs VAZIOS -->
-      <label class="small" for="orderNick">Nick no jogo</label>
-      <input id="orderNick" type="text" placeholder="Seu nick no jogo" autocomplete="off" />
-
-      <label class="small" for="orderDiscord" style="margin-top:10px;">@ do Discord</label>
-      <input id="orderDiscord" type="text" placeholder="@seuDiscord" autocomplete="off" />
-
-      <button id="btnEnviarPedido" class="btn" type="button" style="width:100%; margin-top:12px;">
-        Enviar pedido
-      </button>
-
-      <p id="orderStatus" class="small" style="margin-top:10px; opacity:.9;"></p>
-    </div>
   </div>
 
   <script type="module" src="./assets/public.js"></script>

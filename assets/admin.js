@@ -57,10 +57,11 @@ function clampPos(v, fallback=50){
   return Math.max(0, Math.min(100, n));
 }
 
+// ✅ agora permite zoom OUT (50%) até 200%
 function clampZoom(v, fallback=100){
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
-  return Math.max(100, Math.min(200, n));
+  return Math.max(50, Math.min(200, n));
 }
 
 function applyPreviewTransform(){
@@ -111,6 +112,7 @@ pImagePosX?.addEventListener("input", applyPreviewTransform);
 pImagePosY?.addEventListener("input", applyPreviewTransform);
 pImageZoom?.addEventListener("input", applyPreviewTransform);
 
+// ✅ reset funcional
 resetCropBtn?.addEventListener("click", () => {
   if (pImagePosX) pImagePosX.value = "50";
   if (pImagePosY) pImagePosY.value = "50";
@@ -225,7 +227,7 @@ $("saveProductBtn").addEventListener("click", async () => {
       sortOrder: parseOptionalNumber($("pOrder").value) ?? 100,
       imageUrl: $("pImageUrl").value.trim(),
 
-      // ✅ corte + zoom
+      // ✅ corte + zoom (com zoom OUT)
       imagePosX: clampPos(pImagePosX?.value, 50),
       imagePosY: clampPos(pImagePosY?.value, 50),
       imageZoom: clampZoom(pImageZoom?.value, 100),

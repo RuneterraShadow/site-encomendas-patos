@@ -32,7 +32,7 @@ const productsGrid = $("productsGrid");
   }
 })();
 
-// ✅ novos elementos (corte/preview + zoom)
+// ---------- ELEMENTOS IMAGEM (corte/preview + zoom) ----------
 const pImagePosX = $("pImagePosX");
 const pImagePosY = $("pImagePosY");
 const pImageZoom = $("pImageZoom");
@@ -42,8 +42,10 @@ const pImagePosYVal = $("pImagePosYVal");
 const pImageZoomVal = $("pImageZoomVal");
 
 const pImagePreview = $("pImagePreview");
+const pImagePreviewBox = $("pImagePreviewBox");
+const resetCropBtn = $("resetCropBtn");
 
-// ---------- UI HELPERS ----------
+// ---------- HELPERS ----------
 function setMsg(el, text, ok=true){
   el.textContent = text;
   el.style.color = ok ? "var(--ok)" : "var(--danger)";
@@ -67,6 +69,32 @@ function clampPos(v, fallback=50){
   return Math.max(0, Math.min(100, n));
 }
 
+function clampZoom(v, fallback=100){
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(50, Math.min(200, n));
+}
+
+/**
+ * ✅ Regra pedida:
+ * - zoom < 100: contain + checker + scale(z/100)
+ * - zoom >= 100: cover + scale(z/100)
+ */
+function applyImageView(imgEl, containerEl, { x=50, y=50, zoom=100 } = {}){
+  const z = clampZoom(zoom, 100);
+  const fit = z < 100 ? "contain" : "cover";
+
+  if (containerEl){
+    containerEl.classList.toggle("checker", z < 100);
+  }
+  if (imgEl){
+    imgEl.style.objectFit = fit;
+    imgEl.style.objectPosition = `${clampPos(x,50)}% ${clampPos(y,50)}%`;
+    imgEl.style.transform = `scale(${z/100})`;
+    imgEl.style.transformOrigin = "center center";
+  }
+}
+
 function updateImagePreview(){
   const url = $("pImageUrl")?.value?.trim() || "";
   if (!url){
@@ -81,18 +109,13 @@ function updateImagePreview(){
 
   const x = clampPos(pImagePosX?.value, 50);
   const y = clampPos(pImagePosY?.value, 50);
-  const z = Math.max(50, Math.min(200, Number(pImageZoom?.value || 100)));
+  const z = clampZoom(pImageZoom?.value, 100);
 
   if (pImagePosXVal) pImagePosXVal.textContent = String(x);
   if (pImagePosYVal) pImagePosYVal.textContent = String(y);
   if (pImageZoomVal) pImageZoomVal.textContent = String(z);
 
-  if (pImagePreview) {
-    pImagePreview.style.objectFit = "cover";
-    pImagePreview.style.objectPosition = `${x}% ${y}%`;
-    pImagePreview.style.transform = `scale(${z / 100})`;
-    pImagePreview.style.transformOrigin = "center center";
-  }
+  applyImageView(pImagePreview, pImagePreviewBox, { x, y, zoom: z });
 }
 
 function setSafeImg(imgEl, url){
@@ -106,11 +129,20 @@ function setSafeImg(imgEl, url){
   );
 }
 
-// preview reage em tempo real
+// listeners (preview em tempo real)
 $("pImageUrl")?.addEventListener("input", updateImagePreview);
 pImagePosX?.addEventListener("input", updateImagePreview);
 pImagePosY?.addEventListener("input", updateImagePreview);
 pImageZoom?.addEventListener("input", updateImagePreview);
+
+// ✅ reset corte
+resetCropBtn?.addEventListener("click", (ev) => {
+  ev?.preventDefault?.();
+  if (pImagePosX) pImagePosX.value = "50";
+  if (pImagePosY) pImagePosY.value = "50";
+  if (pImageZoom) pImageZoom.value = "100";
+  updateImagePreview();
+});
 
 // ---------- AUTH ----------
 $("loginBtn").addEventListener("click", async (ev) => {
@@ -203,7 +235,6 @@ function resetForm(){
   $("pFeatured").value = "false";
   $("deleteProductBtn").disabled = true;
 
-  // ✅ defaults do corte/zoom
   if (pImagePosX) pImagePosX.value = "50";
   if (pImagePosY) pImagePosY.value = "50";
   if (pImageZoom) pImageZoom.value = "100";
@@ -230,10 +261,10 @@ $("saveProductBtn").addEventListener("click", async (ev) => {
       sortOrder: parseOptionalNumber($("pOrder").value) ?? 100,
       imageUrl: $("pImageUrl").value.trim(),
 
-      // ✅ corte + zoom
+      // ✅ salva exatamente o que você pediu
       imagePosX: clampPos(pImagePosX?.value, 50),
       imagePosY: clampPos(pImagePosY?.value, 50),
-      imageZoom: Math.max(50, Math.min(200, Number(pImageZoom?.value || 100))),
+      imageZoom: clampZoom(pImageZoom?.value, 100),
 
       active: boolFromSelect($("pActive")),
       featured: boolFromSelect($("pFeatured")),
@@ -306,18 +337,16 @@ function renderProductCard(p){
     </div>
   `;
 
+  const imgContainer = card.querySelector(".img");
   const imgEl = card.querySelector("img");
   setSafeImg(imgEl, p.imageUrl);
 
-  // ✅ aplica corte + zoom na miniatura do admin (igual ao site)
-  const x = clampPos(p.imagePosX, 50);
-  const y = clampPos(p.imagePosY, 50);
-  const z = Math.max(50, Math.min(200, Number(p.imageZoom || 100)));
-  if (imgEl) {
-    imgEl.style.objectPosition = `${x}% ${y}%`;
-    imgEl.style.transform = `scale(${z / 100})`;
-    imgEl.style.transformOrigin = "center center";
-  }
+  // ✅ miniatura respeita contain/cover + zoom + checker
+  applyImageView(imgEl, imgContainer, {
+    x: p.imagePosX ?? 50,
+    y: p.imagePosY ?? 50,
+    zoom: p.imageZoom ?? 100
+  });
 
   card.querySelector("[data-edit]").addEventListener("click", () => {
     $("productId").value = p.id;
@@ -332,10 +361,9 @@ function renderProductCard(p){
     $("pFeatured").value = String(!!p.featured);
     $("deleteProductBtn").disabled = false;
 
-    // ✅ carrega corte + zoom no form
     if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX, 50));
     if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY, 50));
-    if (pImageZoom) pImageZoom.value = String(Math.max(50, Math.min(200, Number(p.imageZoom || 100))));
+    if (pImageZoom) pImageZoom.value = String(clampZoom(p.imageZoom, 100));
     updateImagePreview();
 
     window.scrollTo({ top: 0, behavior: "smooth" });

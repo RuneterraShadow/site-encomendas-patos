@@ -65,20 +65,18 @@ function clampZoom(v, fallback=100){
 }
 
 function applyPreviewTransform(){
-  const x = clampPos(pImagePosX?.value, 50);
-  const y = clampPos(pImagePosY?.value, 50);
-  const z = clampZoom(pImageZoom?.value, 100);
+const x = clampPos(pImagePosX?.value, 50);
+const y = clampPos(pImagePosY?.value, 50);
+const z = clampZoom(pImageZoom?.value, 100);
 
-  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
-  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
-  if (pImageZoomVal) pImageZoomVal.textContent = String(z);
+const fit = z < 100 ? "contain" : "cover";
+const scale = z < 100 ? 1 : (z / 100);
 
-  if (pImagePreview) {
-    pImagePreview.style.objectFit = "cover";
-    pImagePreview.style.objectPosition = `${x}% ${y}%`;
-    pImagePreview.style.transformOrigin = `${x}% ${y}%`;
-    pImagePreview.style.transform = `scale(${z / 100})`;
-  }
+if (pImagePreview) {
+  pImagePreview.style.objectFit = fit;
+  pImagePreview.style.objectPosition = `${x}% ${y}%`;
+  pImagePreview.style.transformOrigin = `${x}% ${y}%`;
+  pImagePreview.style.transform = `scale(${scale})`;
 }
 
 function updateImagePreview(){

@@ -143,7 +143,7 @@
           <label>Imagem do produto (URL)</label>
           <input id="pImageUrl" class="input" placeholder="/assets/images/products/produto.jpg" />
 
-          <!-- ✅ CONTROLE DE CORTE + PRÉVIA -->
+          <!-- ✅ CONTROLE DE CORTE + ZOOM + PRÉVIA -->
           <div class="imgPosWrap">
             <div class="small">Posição (corte) da imagem do produto</div>
 
@@ -159,6 +159,13 @@
                 Vertical (Y): <span id="pImagePosYVal">50</span>%
               </label>
               <input id="pImagePosY" type="range" min="0" max="100" value="50" />
+            </div>
+
+            <div class="imgPosRow">
+              <label class="small" for="pImageZoom">
+                Zoom: <span id="pImageZoomVal">100</span>%
+              </label>
+              <input id="pImageZoom" type="range" min="50" max="200" value="100" />
             </div>
 
             <div class="imgPreviewWrap">

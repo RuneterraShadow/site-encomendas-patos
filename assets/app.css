@@ -288,3 +288,8 @@ label{ font-size:12px; color:var(--muted); }
 #resetCropBtn{
   padding: 8px 12px;
 }
+/* deixa o zoom suave e sem “tremido” no preview */
+.imgPreviewBox img{
+  will-change: transform;
+  display: block;
+}

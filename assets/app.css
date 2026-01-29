@@ -251,3 +251,30 @@ label{ font-size:12px; color:var(--muted); }
 @media (max-width:480px){
   #cartPanel{ width: 92vw; }
 }
+/* ================================
+   ADMIN: controle de corte + preview
+   ================================ */
+.imgPosWrap{ margin-top: 10px; }
+.imgPosRow{ margin-top: 8px; }
+.imgPosRow input[type="range"]{ width: 100%; }
+
+.imgPreviewWrap{ margin-top: 10px; }
+
+.imgPreviewBox{
+  margin-top: 6px;
+  width: 100%;
+  max-width: 420px;
+  height: 220px;              /* igual card */
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  overflow: hidden;
+}
+
+.imgPreviewBox img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  display: block;
+}

@@ -96,6 +96,45 @@
           <label>Banner: descrição</label>
           <textarea id="bannerDesc" class="input" rows="2" placeholder="Texto do banner..."></textarea>
 
+          <!-- ✅ EDIÇÃO COMPLETA DO BANNER (corte/zoom) -->
+          <div class="imgPosWrap">
+            <div class="small">Corte / Zoom do Banner (fiel ao site)</div>
+
+            <div class="imgPosRow">
+              <label class="small" for="bImagePosX">
+                Horizontal (X): <span id="bImagePosXVal">50</span>%
+              </label>
+              <input id="bImagePosX" type="range" min="0" max="100" value="50" />
+            </div>
+
+            <div class="imgPosRow">
+              <label class="small" for="bImagePosY">
+                Vertical (Y): <span id="bImagePosYVal">50</span>%
+              </label>
+              <input id="bImagePosY" type="range" min="0" max="100" value="50" />
+            </div>
+
+            <div class="imgPosRow">
+              <label class="small" for="bImageZoom">
+                Zoom: <span id="bImageZoomVal">100</span>%
+              </label>
+              <input id="bImageZoom" type="range" min="50" max="200" value="100" />
+            </div>
+
+            <div class="rowBtns" style="margin-top:10px;">
+              <button class="btn secondary smallBtn" id="resetBannerBtn" type="button">
+                Resetar banner
+              </button>
+            </div>
+
+            <div class="imgPreviewWrap">
+              <div class="small">Prévia do banner (igual ao topo do site)</div>
+              <div class="imgPreviewBox banner" id="bImagePreviewBox">
+                <img id="bImagePreview" alt="Prévia do banner" />
+              </div>
+            </div>
+          </div>
+
           <div class="rowBtns">
             <button class="btn" id="saveSettingsBtn">Salvar configurações</button>
           </div>
@@ -143,7 +182,6 @@
           <label>Imagem do produto (URL)</label>
           <input id="pImageUrl" class="input" placeholder="/assets/images/products/produto.jpg" />
 
-          <!-- ✅ CONTROLE DE CORTE + ZOOM + PRÉVIA -->
           <div class="imgPosWrap">
             <div class="small">Corte / Zoom da imagem (igual ao produto)</div>
 
@@ -206,9 +244,6 @@
           </div>
 
           <p class="small" id="productMsg" style="margin:0;"></p>
-          <p class="small" style="margin:0;">
-            Dica: imagens no GitHub tipo <b>/assets/images/products/foto.jpg</b>
-          </p>
         </div>
       </div>
 

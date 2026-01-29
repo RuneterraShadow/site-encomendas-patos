@@ -21,12 +21,17 @@ const settingsMsg = $("settingsMsg");
 const productMsg = $("productMsg");
 const productsGrid = $("productsGrid");
 
-// ✅ novos elementos (corte/preview)
+// corte/preview
 const pImagePosX = $("pImagePosX");
 const pImagePosY = $("pImagePosY");
+const pImageZoom = $("pImageZoom");
+
 const pImagePosXVal = $("pImagePosXVal");
 const pImagePosYVal = $("pImagePosYVal");
+const pImageZoomVal = $("pImageZoomVal");
+
 const pImagePreview = $("pImagePreview");
+const resetCropBtn = $("resetCropBtn");
 
 // ---------- UI HELPERS ----------
 function setMsg(el, text, ok=true){
@@ -52,8 +57,30 @@ function clampPos(v, fallback=50){
   return Math.max(0, Math.min(100, n));
 }
 
+function clampZoom(v, fallback=100){
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(100, Math.min(200, n));
+}
+
+function applyPreviewTransform(){
+  const x = clampPos(pImagePosX?.value, 50);
+  const y = clampPos(pImagePosY?.value, 50);
+  const z = clampZoom(pImageZoom?.value, 100);
+
+  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
+  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
+  if (pImageZoomVal) pImageZoomVal.textContent = String(z);
+
+  if (pImagePreview) {
+    pImagePreview.style.objectFit = "cover";
+    pImagePreview.style.objectPosition = `${x}% ${y}%`;
+    pImagePreview.style.transformOrigin = `${x}% ${y}%`;
+    pImagePreview.style.transform = `scale(${z / 100})`;
+  }
+}
+
 function updateImagePreview(){
-  // preview da URL
   const url = $("pImageUrl")?.value?.trim() || "";
   if (!url){
     pImagePreview?.removeAttribute("src");
@@ -64,17 +91,7 @@ function updateImagePreview(){
       pImagePreview.src = url;
     }
   }
-
-  const x = clampPos(pImagePosX?.value, 50);
-  const y = clampPos(pImagePosY?.value, 50);
-
-  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
-  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
-
-  if (pImagePreview) {
-    pImagePreview.style.objectFit = "cover";
-    pImagePreview.style.objectPosition = `${x}% ${y}%`;
-  }
+  applyPreviewTransform();
 }
 
 function setSafeImg(imgEl, url){
@@ -90,8 +107,16 @@ function setSafeImg(imgEl, url){
 
 // preview reage em tempo real
 $("pImageUrl")?.addEventListener("input", updateImagePreview);
-pImagePosX?.addEventListener("input", updateImagePreview);
-pImagePosY?.addEventListener("input", updateImagePreview);
+pImagePosX?.addEventListener("input", applyPreviewTransform);
+pImagePosY?.addEventListener("input", applyPreviewTransform);
+pImageZoom?.addEventListener("input", applyPreviewTransform);
+
+resetCropBtn?.addEventListener("click", () => {
+  if (pImagePosX) pImagePosX.value = "50";
+  if (pImagePosY) pImagePosY.value = "50";
+  if (pImageZoom) pImageZoom.value = "100";
+  applyPreviewTransform();
+});
 
 // ---------- AUTH ----------
 $("loginBtn").addEventListener("click", async () => {
@@ -178,9 +203,10 @@ function resetForm(){
   $("pFeatured").value = "false";
   $("deleteProductBtn").disabled = true;
 
-  // ✅ defaults do corte
+  // defaults do corte + zoom
   if (pImagePosX) pImagePosX.value = "50";
   if (pImagePosY) pImagePosY.value = "50";
+  if (pImageZoom) pImageZoom.value = "100";
   updateImagePreview();
 }
 
@@ -199,9 +225,10 @@ $("saveProductBtn").addEventListener("click", async () => {
       sortOrder: parseOptionalNumber($("pOrder").value) ?? 100,
       imageUrl: $("pImageUrl").value.trim(),
 
-      // ✅ NOVO: posição do corte (0–100)
+      // ✅ corte + zoom
       imagePosX: clampPos(pImagePosX?.value, 50),
       imagePosY: clampPos(pImagePosY?.value, 50),
+      imageZoom: clampZoom(pImageZoom?.value, 100),
 
       active: boolFromSelect($("pActive")),
       featured: boolFromSelect($("pFeatured")),
@@ -275,10 +302,15 @@ function renderProductCard(p){
   const imgEl = card.querySelector("img");
   setSafeImg(imgEl, p.imageUrl);
 
-  // ✅ aplica corte também nas miniaturas do admin
+  // aplica corte + zoom na miniatura do admin
   const x = clampPos(p.imagePosX, 50);
   const y = clampPos(p.imagePosY, 50);
-  if (imgEl) imgEl.style.objectPosition = `${x}% ${y}%`;
+  const z = clampZoom(p.imageZoom, 100);
+  if (imgEl) {
+    imgEl.style.objectPosition = `${x}% ${y}%`;
+    imgEl.style.transformOrigin = `${x}% ${y}%`;
+    imgEl.style.transform = `scale(${z / 100})`;
+  }
 
   card.querySelector("[data-edit]").addEventListener("click", () => {
     $("productId").value = p.id;
@@ -293,9 +325,10 @@ function renderProductCard(p){
     $("pFeatured").value = String(!!p.featured);
     $("deleteProductBtn").disabled = false;
 
-    // ✅ carrega corte no form
+    // carrega corte + zoom no form
     if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX, 50));
     if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY, 50));
+    if (pImageZoom) pImageZoom.value = String(clampZoom(p.imageZoom, 100));
     updateImagePreview();
 
     window.scrollTo({ top: 0, behavior: "smooth" });

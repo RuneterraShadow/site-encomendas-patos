@@ -23,14 +23,13 @@ function formatDateTime(d = new Date()) {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
-// GitHub Pages: Admin usa "/assets/..." -> público com <base> usa "./assets/..."
 function fixAssetPath(p) {
   if (!p) return "";
   const s = String(p).trim();
   if (!s) return "";
   if (s.startsWith("http://") || s.startsWith("https://")) return s;
   if (s.startsWith("./")) return s;
-  if (s.startsWith("/")) return "." + s; // "/assets/..." => "./assets/..."
+  if (s.startsWith("/")) return "." + s;
   return "./" + s.replace(/^(\.\/)+/, "");
 }
 
@@ -65,7 +64,7 @@ function clampPos(v, fallback = 50) {
   return Math.max(0, Math.min(100, n));
 }
 
-// ✅ "zoom negativo" = zoom OUT (< 100%). Aqui: 50% a 200%
+// ✅ zoom OUT = abaixo de 100 (50% a 200%)
 function clampZoom(v, fallback = 100) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
@@ -73,31 +72,52 @@ function clampZoom(v, fallback = 100) {
 }
 
 /* ======================
+   MELHORIA TOP (Checkerboard)
+====================== */
+(function injectStyles() {
+  const style = document.createElement("style");
+  style.textContent = `
+    .pay-hint{
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: .85;
+    }
+
+    /* fundo quadriculado quando estiver em zoom OUT (contain) */
+    .img.containMode{
+      background-color: #0f0f0f;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.09) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.09) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.09) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.09) 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+    }
+
+    /* garante que o quadriculado apareça */
+    .card .img img{
+      background: transparent !important;
+      display:block;
+      will-change: transform;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+/* ======================
    ESTADO
 ====================== */
 let cart = []; // { productId, name, price, qty }
 let cartOpen = false;
 
-// mapa do estoque em tempo real: productId -> number|null
+// estoque em tempo real: productId -> number|null
 const stockMap = new Map();
 
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
-
-/* ======================
-   ESTILO DO AVISO (PAGAMENTO)
-====================== */
-const style = document.createElement("style");
-style.textContent = `
-  .pay-hint{
-    margin-top: 4px;
-    font-size: 12px;
-    opacity: .85;
-  }
-`;
-document.head.appendChild(style);
 
 /* ======================
    CARRINHO (painel fixo)
@@ -131,7 +151,6 @@ cartBtn?.addEventListener("click", () => {
 });
 
 function getAvailableStock(productId) {
-  // null/undefined = estoque "não controlado"
   if (!stockMap.has(productId)) return null;
   const v = stockMap.get(productId);
   if (v === null || v === undefined) return null;
@@ -140,13 +159,12 @@ function getAvailableStock(productId) {
 }
 
 function normalizeCartAgainstStock() {
-  // ajusta itens do carrinho se o estoque baixou
   let changed = false;
 
   cart = cart
     .map((i) => {
       const avail = getAvailableStock(i.productId);
-      if (avail === null) return i; // sem controle de estoque
+      if (avail === null) return i;
 
       const newQty = Math.min(i.qty, avail);
       if (newQty !== i.qty) changed = true;
@@ -236,7 +254,6 @@ async function sendOrder() {
     return;
   }
 
-  // valida estoque antes de enviar
   for (const item of cart) {
     const avail = getAvailableStock(item.productId);
     if (avail !== null && item.qty > avail) {
@@ -300,7 +317,6 @@ let configUnsubs = [];
 function applyConfig(data) {
   el("siteTitle").textContent = pick(data, ["siteTitle"], "Loja");
   el("siteSubtitle").textContent = pick(data, ["siteSubtitle"], "—");
-
   el("globalDesc").textContent = pick(data, ["globalDesc"], "—");
 
   el("bannerTitle").textContent = pick(data, ["bannerTitle"], "—");
@@ -335,6 +351,8 @@ function watchGlobalConfig() {
 
 /* ======================
    PRODUTOS + ESTOQUE + CORTE/ZOOM
+   ✅ Zoom OUT = imagem bruta (contain) + checkerboard
+   ✅ Zoom IN  = cover + scale
 ====================== */
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
@@ -361,18 +379,23 @@ function renderProducts(items) {
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
 
-    // ✅ corte + zoom (zoom OUT permitido)
     const px = clampPos(p.imagePosX, 50);
     const py = clampPos(p.imagePosY, 50);
     const pz = clampZoom(p.imageZoom, 100);
 
+    // ✅ lógica “bruta” pro zoom out
+    const fit = pz < 100 ? "contain" : "cover";
+    const scale = pz < 100 ? 1 : (pz / 100);
+    const containClass = pz < 100 ? "containMode" : "";
+
     card.innerHTML = `
-      <div class="img">
+      <div class="img ${containClass}">
         <img src="${img}" alt=""
           style="
+            object-fit:${fit};
             object-position:${px}% ${py}%;
             transform-origin:${px}% ${py}%;
-            transform:scale(${pz / 100});
+            transform:scale(${scale});
           ">
       </div>
 
@@ -403,7 +426,6 @@ function renderProducts(items) {
     const qtyInput = card.querySelector(".qty");
     const addBtn = card.querySelector(".addBtn");
 
-    // limita o input ao estoque
     if (hasStock) {
       qtyInput.max = String(Math.max(1, stock));
       qtyInput.value = String(Math.min(Number(qtyInput.value || 1), stock));
@@ -454,7 +476,6 @@ onSnapshot(qProducts, (snap) => {
     const product = { id: d.id, ...data };
     items.push(product);
 
-    // guarda o estoque (pode ser null/undefined)
     stockMap.set(d.id, data.stock);
   });
 
@@ -463,7 +484,6 @@ onSnapshot(qProducts, (snap) => {
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 
-  // se o estoque mudou, ajusta carrinho
   if (normalizeCartAgainstStock() && cartOpen) {
     renderCart();
   }

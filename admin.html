@@ -145,7 +145,7 @@
 
           <!-- ✅ CONTROLE DE CORTE + ZOOM + PRÉVIA -->
           <div class="imgPosWrap">
-            <div class="small">Posição (corte) da imagem do produto</div>
+            <div class="small">Corte / Zoom da imagem (igual ao produto)</div>
 
             <div class="imgPosRow">
               <label class="small" for="pImagePosX">
@@ -168,9 +168,15 @@
               <input id="pImageZoom" type="range" min="50" max="200" value="100" />
             </div>
 
+            <div class="rowBtns" style="margin-top:10px;">
+              <button class="btn secondary smallBtn" id="resetCropBtn" type="button">
+                Resetar corte
+              </button>
+            </div>
+
             <div class="imgPreviewWrap">
-              <div class="small">Prévia (corte igual no site)</div>
-              <div class="imgPreviewBox product">
+              <div class="small">Prévia (fiel ao site)</div>
+              <div class="imgPreviewBox product" id="pImagePreviewBox">
                 <img id="pImagePreview" alt="Prévia do produto" />
               </div>
             </div>

@@ -21,6 +21,13 @@ const settingsMsg = $("settingsMsg");
 const productMsg = $("productMsg");
 const productsGrid = $("productsGrid");
 
+// ✅ novos elementos (corte/preview)
+const pImagePosX = $("pImagePosX");
+const pImagePosY = $("pImagePosY");
+const pImagePosXVal = $("pImagePosXVal");
+const pImagePosYVal = $("pImagePosYVal");
+const pImagePreview = $("pImagePreview");
+
 // ---------- UI HELPERS ----------
 function setMsg(el, text, ok=true){
   el.textContent = text;
@@ -39,6 +46,37 @@ function boolFromSelect(selectEl){
   return selectEl.value === "true";
 }
 
+function clampPos(v, fallback=50){
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(100, n));
+}
+
+function updateImagePreview(){
+  // preview da URL
+  const url = $("pImageUrl")?.value?.trim() || "";
+  if (!url){
+    pImagePreview?.removeAttribute("src");
+    if (pImagePreview) pImagePreview.style.display = "none";
+  }else{
+    if (pImagePreview) {
+      pImagePreview.style.display = "block";
+      pImagePreview.src = url;
+    }
+  }
+
+  const x = clampPos(pImagePosX?.value, 50);
+  const y = clampPos(pImagePosY?.value, 50);
+
+  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
+  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
+
+  if (pImagePreview) {
+    pImagePreview.style.objectFit = "cover";
+    pImagePreview.style.objectPosition = `${x}% ${y}%`;
+  }
+}
+
 function setSafeImg(imgEl, url){
   imgEl.src = url || "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600">
@@ -49,6 +87,11 @@ function setSafeImg(imgEl, url){
     </svg>`
   );
 }
+
+// preview reage em tempo real
+$("pImageUrl")?.addEventListener("input", updateImagePreview);
+pImagePosX?.addEventListener("input", updateImagePreview);
+pImagePosY?.addEventListener("input", updateImagePreview);
 
 // ---------- AUTH ----------
 $("loginBtn").addEventListener("click", async () => {
@@ -134,6 +177,11 @@ function resetForm(){
   $("pActive").value = "true";
   $("pFeatured").value = "false";
   $("deleteProductBtn").disabled = true;
+
+  // ✅ defaults do corte
+  if (pImagePosX) pImagePosX.value = "50";
+  if (pImagePosY) pImagePosY.value = "50";
+  updateImagePreview();
 }
 
 $("clearFormBtn").addEventListener("click", resetForm);
@@ -150,6 +198,11 @@ $("saveProductBtn").addEventListener("click", async () => {
       stock: parseOptionalNumber($("pStock").value),
       sortOrder: parseOptionalNumber($("pOrder").value) ?? 100,
       imageUrl: $("pImageUrl").value.trim(),
+
+      // ✅ NOVO: posição do corte (0–100)
+      imagePosX: clampPos(pImagePosX?.value, 50),
+      imagePosY: clampPos(pImagePosY?.value, 50),
+
       active: boolFromSelect($("pActive")),
       featured: boolFromSelect($("pFeatured")),
       updatedAt: serverTimestamp()
@@ -219,7 +272,13 @@ function renderProductCard(p){
     </div>
   `;
 
-  setSafeImg(card.querySelector("img"), p.imageUrl);
+  const imgEl = card.querySelector("img");
+  setSafeImg(imgEl, p.imageUrl);
+
+  // ✅ aplica corte também nas miniaturas do admin
+  const x = clampPos(p.imagePosX, 50);
+  const y = clampPos(p.imagePosY, 50);
+  if (imgEl) imgEl.style.objectPosition = `${x}% ${y}%`;
 
   card.querySelector("[data-edit]").addEventListener("click", () => {
     $("productId").value = p.id;
@@ -233,6 +292,11 @@ function renderProductCard(p){
     $("pActive").value = String(!!p.active);
     $("pFeatured").value = String(!!p.featured);
     $("deleteProductBtn").disabled = false;
+
+    // ✅ carrega corte no form
+    if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX, 50));
+    if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY, 50));
+    updateImagePreview();
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   });

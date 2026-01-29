@@ -143,6 +143,32 @@
           <label>Imagem do produto (URL)</label>
           <input id="pImageUrl" class="input" placeholder="/assets/images/products/produto.jpg" />
 
+          <!-- ✅ CONTROLE DE CORTE + PRÉVIA -->
+          <div class="imgPosWrap">
+            <div class="small">Posição (corte) da imagem do produto</div>
+
+            <div class="imgPosRow">
+              <label class="small" for="pImagePosX">
+                Horizontal (X): <span id="pImagePosXVal">50</span>%
+              </label>
+              <input id="pImagePosX" type="range" min="0" max="100" value="50" />
+            </div>
+
+            <div class="imgPosRow">
+              <label class="small" for="pImagePosY">
+                Vertical (Y): <span id="pImagePosYVal">50</span>%
+              </label>
+              <input id="pImagePosY" type="range" min="0" max="100" value="50" />
+            </div>
+
+            <div class="imgPreviewWrap">
+              <div class="small">Prévia (corte igual no site)</div>
+              <div class="imgPreviewBox product">
+                <img id="pImagePreview" alt="Prévia do produto" />
+              </div>
+            </div>
+          </div>
+
           <div class="formGrid">
             <div>
               <label>Ativo</label>
@@ -182,4 +208,3 @@
   <script type="module" src="./assets/admin.js"></script>
 </body>
 </html>
-

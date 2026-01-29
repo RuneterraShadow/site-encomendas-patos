@@ -60,6 +60,12 @@ function pick(obj, keys, fallback = "") {
   return fallback;
 }
 
+function clampPos(v, fallback = 50) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(100, n));
+}
+
 /* ======================
    ESTADO
 ====================== */
@@ -308,9 +314,7 @@ function applyConfig(data) {
 
 function watchGlobalConfig() {
   configUnsubs.forEach((fn) => {
-    try {
-      fn();
-    } catch {}
+    try { fn(); } catch {}
   });
   configUnsubs = [];
 
@@ -350,8 +354,14 @@ function renderProducts(items) {
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
 
+    // ✅ aplica o corte (object-position) vindo do admin
+    const px = clampPos(p.imagePosX, 50);
+    const py = clampPos(p.imagePosY, 50);
+
     card.innerHTML = `
-      <div class="img"><img src="${img}" alt=""></div>
+      <div class="img">
+        <img src="${img}" alt="" style="object-position:${px}% ${py}%;">
+      </div>
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
@@ -368,9 +378,7 @@ function renderProducts(items) {
         <div class="pay-hint">Pagamento em cash do jogo!</div>
 
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
-          <input type="number" min="1" value="1" class="input qty" style="width:90px" ${
-            out ? "disabled" : ""
-          }>
+          <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
           <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>
             ${out ? "Sem estoque" : "Adicionar"}
           </button>

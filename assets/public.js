@@ -66,6 +66,12 @@ function clampPos(v, fallback = 50) {
   return Math.max(0, Math.min(100, n));
 }
 
+function clampZoom(v, fallback = 100) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(50, Math.min(200, n));
+}
+
 /* ======================
    ESTADO
 ====================== */
@@ -354,13 +360,14 @@ function renderProducts(items) {
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
 
-    // ✅ aplica o corte (object-position) vindo do admin
+    // ✅ aplica o corte + zoom (fiel ao admin)
     const px = clampPos(p.imagePosX, 50);
     const py = clampPos(p.imagePosY, 50);
+    const zoom = clampZoom(p.imageZoom, 100);
 
     card.innerHTML = `
       <div class="img">
-        <img src="${img}" alt="" style="object-position:${px}% ${py}%;">
+        <img src="${img}" alt="" style="object-position:${px}% ${py}%; transform:scale(${zoom/100}); transform-origin:center center;">
       </div>
       <div class="body">
         <h3>${p.name || "Produto"}</h3>

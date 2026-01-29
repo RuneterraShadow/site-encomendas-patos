@@ -3,13 +3,21 @@ import { auth, db } from "./firebase.js";
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
-  signOut
+  signOut,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
-  doc, getDoc, setDoc, serverTimestamp,
-  collection, addDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
@@ -33,58 +41,136 @@ const pImageZoomVal = $("pImageZoomVal");
 const pImagePreview = $("pImagePreview");
 const resetCropBtn = $("resetCropBtn");
 
-// ---------- UI HELPERS ----------
-function setMsg(el, text, ok=true){
+/* ======================
+   MELHORIA TOP (Checkerboard no Admin)
+====================== */
+(function injectAdminStyles() {
+  const style = document.createElement("style");
+  style.textContent = `
+    /* checkerboard no preview quando zoom < 100 (contain) */
+    .imgPreviewBox.containMode{
+      background-color: #0f0f0f;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.09) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.09) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.09) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.09) 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+    }
+
+    /* garante que o transform seja suave */
+    .imgPreviewBox img{
+      will-change: transform;
+      display:block;
+    }
+
+    /* miniatura do produto (card) com checkerboard se estiver em contain */
+    .card .img.containMode{
+      background-color: #0f0f0f;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.09) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.09) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.09) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.09) 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+    }
+
+    .card .img img{
+      background: transparent !important;
+      will-change: transform;
+      display:block;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+/* ======================
+   UI HELPERS
+====================== */
+function setMsg(el, text, ok = true) {
+  if (!el) return;
   el.textContent = text;
   el.style.color = ok ? "var(--ok)" : "var(--danger)";
-  setTimeout(() => { el.textContent = ""; }, 3500);
+  setTimeout(() => {
+    if (el) el.textContent = "";
+  }, 3500);
 }
 
-function parseOptionalNumber(value){
+function parseOptionalNumber(value) {
   const v = String(value ?? "").trim();
   if (!v) return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
 
-function boolFromSelect(selectEl){
+function boolFromSelect(selectEl) {
   return selectEl.value === "true";
 }
 
-function clampPos(v, fallback=50){
+function clampPos(v, fallback = 50) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, n));
 }
 
-// ✅ agora permite zoom OUT (50%) até 200%
-function clampZoom(v, fallback=100){
+// ✅ zoom OUT permitido: 50% a 200%
+function clampZoom(v, fallback = 100) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(50, Math.min(200, n));
 }
 
-function applyPreviewTransform(){
-const x = clampPos(pImagePosX?.value, 50);
-const y = clampPos(pImagePosY?.value, 50);
-const z = clampZoom(pImageZoom?.value, 100);
-
-const fit = z < 100 ? "contain" : "cover";
-const scale = z < 100 ? 1 : (z / 100);
-
-if (pImagePreview) {
-  pImagePreview.style.objectFit = fit;
-  pImagePreview.style.objectPosition = `${x}% ${y}%`;
-  pImagePreview.style.transformOrigin = `${x}% ${y}%`;
-  pImagePreview.style.transform = `scale(${scale})`;
+function setSafeImg(imgEl, url) {
+  imgEl.src =
+    url ||
+    "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600">
+          <rect width="100%" height="100%" fill="#111"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#777" font-family="Arial" font-size="26">
+            Sem imagem
+          </text>
+        </svg>`
+      );
 }
 
-function updateImagePreview(){
+/* ======================
+   PREVIEW: contain (zoom<100) / cover (zoom>=100)
+====================== */
+function applyPreviewTransform() {
+  const x = clampPos(pImagePosX?.value, 50);
+  const y = clampPos(pImagePosY?.value, 50);
+  const z = clampZoom(pImageZoom?.value, 100);
+
+  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
+  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
+  if (pImageZoomVal) pImageZoomVal.textContent = String(z);
+
+  const fit = z < 100 ? "contain" : "cover";
+  const scale = z < 100 ? 1 : z / 100;
+
+  // ✅ aplica classe checkerboard no container do preview
+  const previewBox = pImagePreview?.closest(".imgPreviewBox");
+  if (previewBox) {
+    previewBox.classList.toggle("containMode", z < 100);
+  }
+
+  if (pImagePreview) {
+    pImagePreview.style.objectFit = fit;
+    pImagePreview.style.objectPosition = `${x}% ${y}%`;
+    pImagePreview.style.transformOrigin = `${x}% ${y}%`;
+    pImagePreview.style.transform = `scale(${scale})`;
+  }
+}
+
+function updateImagePreview() {
   const url = $("pImageUrl")?.value?.trim() || "";
-  if (!url){
+  if (!url) {
     pImagePreview?.removeAttribute("src");
     if (pImagePreview) pImagePreview.style.display = "none";
-  }else{
+  } else {
     if (pImagePreview) {
       pImagePreview.style.display = "block";
       pImagePreview.src = url;
@@ -93,18 +179,7 @@ function updateImagePreview(){
   applyPreviewTransform();
 }
 
-function setSafeImg(imgEl, url){
-  imgEl.src = url || "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600">
-      <rect width="100%" height="100%" fill="#111"/>
-      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#777" font-family="Arial" font-size="26">
-        Sem imagem
-      </text>
-    </svg>`
-  );
-}
-
-// preview reage em tempo real
+// eventos do preview
 $("pImageUrl")?.addEventListener("input", updateImagePreview);
 pImagePosX?.addEventListener("input", applyPreviewTransform);
 pImagePosY?.addEventListener("input", applyPreviewTransform);
@@ -118,38 +193,42 @@ resetCropBtn?.addEventListener("click", () => {
   applyPreviewTransform();
 });
 
-// ---------- AUTH ----------
-$("loginBtn").addEventListener("click", async () => {
-  loginMsg.textContent = "";
-  const email = $("email").value.trim();
-  const pass = $("pass").value;
+/* ======================
+   AUTH
+====================== */
+$("loginBtn")?.addEventListener("click", async () => {
+  if (loginMsg) loginMsg.textContent = "";
+  const email = $("email")?.value?.trim() || "";
+  const pass = $("pass")?.value || "";
 
-  try{
+  try {
     await signInWithEmailAndPassword(auth, email, pass);
-  }catch(e){
-    loginMsg.textContent = e?.message || "Erro ao entrar.";
+  } catch (e) {
+    if (loginMsg) loginMsg.textContent = e?.message || "Erro ao entrar.";
   }
 });
 
-$("logoutBtn").addEventListener("click", async () => {
+$("logoutBtn")?.addEventListener("click", async () => {
   await signOut(auth);
 });
 
 onAuthStateChanged(auth, (user) => {
-  if (user){
-    loginBox.style.display = "none";
-    adminBox.style.display = "block";
+  if (user) {
+    if (loginBox) loginBox.style.display = "none";
+    if (adminBox) adminBox.style.display = "block";
     boot();
-  }else{
-    adminBox.style.display = "none";
-    loginBox.style.display = "block";
+  } else {
+    if (adminBox) adminBox.style.display = "none";
+    if (loginBox) loginBox.style.display = "block";
   }
 });
 
-// ---------- SETTINGS ----------
+/* ======================
+   SETTINGS
+====================== */
 const settingsRef = doc(db, "site", "settings");
 
-async function loadSettingsOnce(){
+async function loadSettingsOnce() {
   const snap = await getDoc(settingsRef);
   const s = snap.exists() ? snap.data() : {};
 
@@ -164,33 +243,39 @@ async function loadSettingsOnce(){
   $("bannerImageUrl").value = s.bannerImageUrl || "";
 }
 
-$("saveSettingsBtn").addEventListener("click", async () => {
-  try{
-    await setDoc(settingsRef, {
-      siteTitle: $("siteTitle").value.trim(),
-      siteSubtitle: $("siteSubtitle").value.trim(),
-      globalDesc: $("globalDesc").value.trim(),
-      whatsappLink: $("whatsappLink").value.trim(),
-      buyBtnText: $("buyBtnText").value.trim() || "COMPRE AGORA!",
+$("saveSettingsBtn")?.addEventListener("click", async () => {
+  try {
+    await setDoc(
+      settingsRef,
+      {
+        siteTitle: $("siteTitle").value.trim(),
+        siteSubtitle: $("siteSubtitle").value.trim(),
+        globalDesc: $("globalDesc").value.trim(),
+        whatsappLink: $("whatsappLink").value.trim(),
+        buyBtnText: $("buyBtnText").value.trim() || "COMPRE AGORA!",
 
-      bannerTitle: $("bannerTitle").value.trim(),
-      bannerDesc: $("bannerDesc").value.trim(),
-      bannerImageUrl: $("bannerImageUrl").value.trim(),
+        bannerTitle: $("bannerTitle").value.trim(),
+        bannerDesc: $("bannerDesc").value.trim(),
+        bannerImageUrl: $("bannerImageUrl").value.trim(),
 
-      updatedAt: serverTimestamp()
-    }, { merge:true });
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     setMsg(settingsMsg, "Configurações salvas!");
-  }catch(e){
+  } catch (e) {
     setMsg(settingsMsg, e?.message || "Erro ao salvar settings.", false);
   }
 });
 
-// ---------- PRODUCTS ----------
+/* ======================
+   PRODUCTS
+====================== */
 const productsRef = collection(db, "products");
 const qProducts = query(productsRef, orderBy("sortOrder", "asc"));
 
-function resetForm(){
+function resetForm() {
   $("productId").value = "";
   $("pName").value = "";
   $("pDesc").value = "";
@@ -203,17 +288,17 @@ function resetForm(){
   $("pFeatured").value = "false";
   $("deleteProductBtn").disabled = true;
 
-  // defaults do corte + zoom
+  // defaults corte/zoom
   if (pImagePosX) pImagePosX.value = "50";
   if (pImagePosY) pImagePosY.value = "50";
   if (pImageZoom) pImageZoom.value = "100";
   updateImagePreview();
 }
 
-$("clearFormBtn").addEventListener("click", resetForm);
+$("clearFormBtn")?.addEventListener("click", resetForm);
 
-$("saveProductBtn").addEventListener("click", async () => {
-  try{
+$("saveProductBtn")?.addEventListener("click", async () => {
+  try {
     const id = $("productId").value.trim();
 
     const payload = {
@@ -225,58 +310,62 @@ $("saveProductBtn").addEventListener("click", async () => {
       sortOrder: parseOptionalNumber($("pOrder").value) ?? 100,
       imageUrl: $("pImageUrl").value.trim(),
 
-      // ✅ corte + zoom (com zoom OUT)
+      // ✅ corte + zoom
       imagePosX: clampPos(pImagePosX?.value, 50),
       imagePosY: clampPos(pImagePosY?.value, 50),
       imageZoom: clampZoom(pImageZoom?.value, 100),
 
       active: boolFromSelect($("pActive")),
       featured: boolFromSelect($("pFeatured")),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     };
 
-    if (!payload.name){
+    if (!payload.name) {
       setMsg(productMsg, "Coloque um nome no produto.", false);
       return;
     }
 
-    if (!id){
+    if (!id) {
       payload.createdAt = serverTimestamp();
       await addDoc(productsRef, payload);
       setMsg(productMsg, "Produto criado!");
       resetForm();
-    }else{
+    } else {
       await updateDoc(doc(db, "products", id), payload);
       setMsg(productMsg, "Produto atualizado!");
     }
-  }catch(e){
+  } catch (e) {
     setMsg(productMsg, e?.message || "Erro ao salvar produto.", false);
   }
 });
 
-$("deleteProductBtn").addEventListener("click", async () => {
+$("deleteProductBtn")?.addEventListener("click", async () => {
   const id = $("productId").value.trim();
   if (!id) return;
 
   const ok = confirm("Excluir este produto? (não dá pra desfazer)");
   if (!ok) return;
 
-  try{
+  try {
     await deleteDoc(doc(db, "products", id));
     setMsg(productMsg, "Produto excluído!");
     resetForm();
-  }catch(e){
+  } catch (e) {
     setMsg(productMsg, e?.message || "Erro ao excluir.", false);
   }
 });
 
-function moneyBRL(v){
+function moneyBRL(v) {
   const n = Number(v || 0);
-  return n.toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function renderProductCard(p){
-  const promo = p.promoPrice && Number(p.promoPrice) > 0 && Number(p.promoPrice) < Number(p.price || 0);
+function renderProductCard(p) {
+  const promo =
+    p.promoPrice &&
+    Number(p.promoPrice) > 0 &&
+    Number(p.promoPrice) < Number(p.price || 0);
+
   const price = promo ? moneyBRL(p.promoPrice) : moneyBRL(p.price);
 
   const card = document.createElement("div");
@@ -286,33 +375,47 @@ function renderProductCard(p){
     <div class="body">
       <h3>${p.name || "Produto"}</h3>
       <p>${(p.description || "").slice(0, 120) || "—"}</p>
+
       <div class="badges">
         <div class="badge">${p.active ? "Ativo" : "Inativo"}</div>
         ${p.featured ? `<div class="badge">Destaque</div>` : ``}
-        ${(p.stock === null || p.stock === undefined) ? `` : `<div class="badge">Estoque: ${p.stock}</div>`}
+        ${
+          p.stock === null || p.stock === undefined
+            ? ``
+            : `<div class="badge">Estoque: ${p.stock}</div>`
+        }
       </div>
+
       <div class="priceRow">
         <div class="price">${price}</div>
         ${promo ? `<div class="old">${moneyBRL(p.price)}</div>` : ``}
       </div>
+
       <button class="btn secondary" data-edit>Editar</button>
     </div>
   `;
 
+  const imgWrap = card.querySelector(".img");
   const imgEl = card.querySelector("img");
   setSafeImg(imgEl, p.imageUrl);
 
-  // aplica corte + zoom na miniatura do admin
   const x = clampPos(p.imagePosX, 50);
   const y = clampPos(p.imagePosY, 50);
   const z = clampZoom(p.imageZoom, 100);
+
+  const fit = z < 100 ? "contain" : "cover";
+  const scale = z < 100 ? 1 : z / 100;
+
+  if (imgWrap) imgWrap.classList.toggle("containMode", z < 100);
+
   if (imgEl) {
+    imgEl.style.objectFit = fit;
     imgEl.style.objectPosition = `${x}% ${y}%`;
     imgEl.style.transformOrigin = `${x}% ${y}%`;
-    imgEl.style.transform = `scale(${z / 100})`;
+    imgEl.style.transform = `scale(${scale})`;
   }
 
-  card.querySelector("[data-edit]").addEventListener("click", () => {
+  card.querySelector("[data-edit]")?.addEventListener("click", () => {
     $("productId").value = p.id;
     $("pName").value = p.name || "";
     $("pDesc").value = p.description || "";
@@ -325,7 +428,6 @@ function renderProductCard(p){
     $("pFeatured").value = String(!!p.featured);
     $("deleteProductBtn").disabled = false;
 
-    // carrega corte + zoom no form
     if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX, 50));
     if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY, 50));
     if (pImageZoom) pImageZoom.value = String(clampZoom(p.imageZoom, 100));
@@ -337,20 +439,23 @@ function renderProductCard(p){
   return card;
 }
 
-function watchProducts(){
+function watchProducts() {
   onSnapshot(qProducts, (snap) => {
+    if (!productsGrid) return;
     productsGrid.innerHTML = "";
     const items = [];
     snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-    for (const p of items){
+    for (const p of items) {
       productsGrid.appendChild(renderProductCard(p));
     }
   });
 }
 
-// ---------- BOOT ----------
+/* ======================
+   BOOT
+====================== */
 let booted = false;
-async function boot(){
+async function boot() {
   if (booted) return;
   booted = true;
 

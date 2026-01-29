@@ -12,8 +12,12 @@ import {
 ====================== */
 const el = (id) => document.getElementById(id);
 
+// ✅ Sem "R$" — apenas número
 const money = (v) =>
-  Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  Number(v || 0).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 function formatDateTime(d = new Date()) {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -46,7 +50,8 @@ function pick(obj, keys, fallback = "") {
       const parts = k.split(".");
       let cur = obj;
       for (const p of parts) cur = cur?.[p];
-      if (cur !== undefined && cur !== null && String(cur).trim() !== "") return cur;
+      if (cur !== undefined && cur !== null && String(cur).trim() !== "")
+        return cur;
     } else {
       const v = obj?.[k];
       if (v !== undefined && v !== null && String(v).trim() !== "") return v;
@@ -91,6 +96,17 @@ cartPanel.style.border = "1px solid rgba(255,255,255,.08)";
 cartPanel.style.borderRadius = "14px";
 cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
+
+// ✅ estilo do texto "Pagamento em cash..."
+const style = document.createElement("style");
+style.textContent = `
+  .pay-hint{
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: .85;
+  }
+`;
+document.head.appendChild(style);
 
 document.body.appendChild(cartPanel);
 
@@ -138,12 +154,17 @@ function renderCart() {
       <button id="closeCart" class="btn secondary" type="button" style="padding:6px 10px">Fechar</button>
     </div>
 
-    ${cart.length === 0 ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>` : ""}
+    ${
+      cart.length === 0
+        ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>`
+        : ""
+    }
 
     ${cart
       .map((i, idx) => {
         const avail = getAvailableStock(i.productId);
-        const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+        const stockLine =
+          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
         return `
           <div class="hr" style="margin:10px 0"></div>
           <div>
@@ -151,6 +172,7 @@ function renderCart() {
             ${stockLine}
             <span class="small">Qtd: ${i.qty}</span><br>
             <strong>${money(i.price * i.qty)}</strong>
+            <div class="pay-hint">Pagamento em cash do jogo!</div>
             <div style="margin-top:8px">
               <button class="btn danger" data-remove="${idx}" type="button">Remover</button>
             </div>
@@ -161,6 +183,7 @@ function renderCart() {
 
     <div class="hr" style="margin:12px 0"></div>
     <strong>Total: ${money(total)}</strong>
+    <div class="pay-hint">Pagamento em cash do jogo!</div>
 
     <div class="hr" style="margin:12px 0"></div>
 
@@ -285,7 +308,9 @@ function applyConfig(data) {
 
 function watchGlobalConfig() {
   configUnsubs.forEach((fn) => {
-    try { fn(); } catch {}
+    try {
+      fn();
+    } catch {}
   });
   configUnsubs = [];
 
@@ -340,9 +365,12 @@ function renderProducts(items) {
           <div class="price">${money(shownPrice)}</div>
           ${promo ? `<div class="old">${money(p.price)}</div>` : ``}
         </div>
+        <div class="pay-hint">Pagamento em cash do jogo!</div>
 
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
-          <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
+          <input type="number" min="1" value="1" class="input qty" style="width:90px" ${
+            out ? "disabled" : ""
+          }>
           <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>
             ${out ? "Sem estoque" : "Adicionar"}
           </button>

@@ -16,6 +16,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 
+// ---------- ELEMENTS ----------
 const loginBox = $("loginBox");
 const adminBox = $("adminBox");
 const loginMsg = $("loginMsg");
@@ -27,52 +28,33 @@ const productsGrid = $("productsGrid");
 (async () => {
   try {
     await setPersistence(auth, inMemoryPersistence);
-    await signOut(auth); // garante que não entra automaticamente
+    await signOut(auth); // garante que não entra automaticamente ao abrir o admin
   } catch (e) {
     console.warn("Persistência/Logout falhou:", e);
   }
 })();
 
-
-// ✅ novos elementos (corte/preview)
+// ---------- IMAGE CUT PREVIEW (seu admin já usa isso) ----------
 const pImagePosX = $("pImagePosX");
 const pImagePosY = $("pImagePosY");
 const pImagePosXVal = $("pImagePosXVal");
 const pImagePosYVal = $("pImagePosYVal");
 const pImagePreview = $("pImagePreview");
 
-// ---------- UI HELPERS ----------
-function setMsg(el, text, ok=true){
-  el.textContent = text;
-  el.style.color = ok ? "var(--ok)" : "var(--danger)";
-  setTimeout(() => { el.textContent = ""; }, 3500);
-}
-
-function parseOptionalNumber(value){
-  const v = String(value ?? "").trim();
-  if (!v) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function boolFromSelect(selectEl){
-  return selectEl.value === "true";
-}
-
-function clampPos(v, fallback=50){
+function clampPos(v, fallback = 50) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, n));
 }
 
 function updateImagePreview(){
-  // preview da URL
   const url = $("pImageUrl")?.value?.trim() || "";
-  if (!url){
-    pImagePreview?.removeAttribute("src");
-    if (pImagePreview) pImagePreview.style.display = "none";
-  }else{
-    if (pImagePreview) {
+
+  if (pImagePreview) {
+    if (!url) {
+      pImagePreview.removeAttribute("src");
+      pImagePreview.style.display = "none";
+    } else {
       pImagePreview.style.display = "block";
       pImagePreview.src = url;
     }
@@ -85,17 +67,36 @@ function updateImagePreview(){
   if (pImagePosYVal) pImagePosYVal.textContent = String(y);
 }
 
-// ---------- AUTH UI ----------
-$("loginForm").addEventListener("submit", async (ev) => {
-  ev.preventDefault();
+$("pImageUrl")?.addEventListener("input", updateImagePreview);
+pImagePosX?.addEventListener("input", updateImagePreview);
+pImagePosY?.addEventListener("input", updateImagePreview);
+
+// ---------- HELPERS ----------
+function setMsg(el, text, ok = true){
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = ok ? "var(--ok)" : "var(--danger)";
+  setTimeout(() => { el.textContent = ""; }, 3500);
+}
+
+function parseOptionalNumber(value){
+  const v = String(value ?? "").trim();
+  if (!v) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+// ---------- AUTH ----------
+$("loginBtn").addEventListener("click", async (ev) => {
+  ev.preventDefault?.();
+
   loginMsg.textContent = "";
+  const email = $("email").value.trim();
+  const pass = $("pass").value;
 
-  const email = $("loginEmail").value.trim();
-  const pass = $("loginPass").value.trim();
-
-  try{
+  try {
     await signInWithEmailAndPassword(auth, email, pass);
-  }catch(e){
+  } catch (e) {
     loginMsg.textContent = e?.message || "Erro ao entrar.";
   }
 });
@@ -105,11 +106,11 @@ $("logoutBtn").addEventListener("click", async () => {
 });
 
 onAuthStateChanged(auth, (user) => {
-  if (user){
+  if (user) {
     loginBox.style.display = "none";
     adminBox.style.display = "block";
     boot();
-  }else{
+  } else {
     adminBox.style.display = "none";
     loginBox.style.display = "block";
   }
@@ -122,45 +123,33 @@ async function loadSettingsOnce(){
   const snap = await getDoc(settingsRef);
   const s = snap.exists() ? snap.data() : {};
 
-  // topo
-  $("sTitle").value = s.title || "";
-  $("sSubtitle").value = s.subtitle || "";
-  $("sGlobalDesc").value = s.globalDesc || "";
+  $("siteTitle").value = s.title || "";
+  $("siteSubtitle").value = s.subtitle || "";
+  $("globalDesc").value = s.globalDesc || "";
 
-  // banner
-  $("sBannerTitle").value = s.bannerTitle || "";
-  $("sBannerDesc").value = s.bannerDesc || "";
-  $("sBannerImg").value = s.bannerImg || "";
-  $("sWhatsLink").value = s.whatsLink || "";
+  $("bannerTitle").value = s.bannerTitle || "";
+  $("bannerDesc").value = s.bannerDesc || "";
+  $("bannerImageUrl").value = s.bannerImg || s.bannerImageUrl || "";
+  $("whatsappLink").value = s.whatsLink || "";
+  $("buyBtnText").value = s.buyBtnText || "COMPRE AGORA!";
 
-  // extras
-  $("sShowPrices").value = String(!!s.showPrices);
-  $("sAllowCart").value = String(!!s.allowCart);
-
-  // produtos label
-  $("sProductsTitle").value = s.productsTitle || "Produtos";
-
-  // atualizar prévia
   updateImagePreview();
 }
 
-$("settingsForm").addEventListener("submit", async (ev) => {
-  ev.preventDefault();
+$("saveSettingsBtn").addEventListener("click", async (ev) => {
+  ev.preventDefault?.();
 
   const payload = {
-    title: $("sTitle").value.trim(),
-    subtitle: $("sSubtitle").value.trim(),
-    globalDesc: $("sGlobalDesc").value.trim(),
+    title: $("siteTitle").value.trim(),
+    subtitle: $("siteSubtitle").value.trim(),
+    globalDesc: $("globalDesc").value.trim(),
 
-    bannerTitle: $("sBannerTitle").value.trim(),
-    bannerDesc: $("sBannerDesc").value.trim(),
-    bannerImg: $("sBannerImg").value.trim(),
-    whatsLink: $("sWhatsLink").value.trim(),
+    bannerTitle: $("bannerTitle").value.trim(),
+    bannerDesc: $("bannerDesc").value.trim(),
+    bannerImg: $("bannerImageUrl").value.trim(),
+    whatsLink: $("whatsappLink").value.trim(),
+    buyBtnText: $("buyBtnText").value.trim() || "COMPRE AGORA!",
 
-    showPrices: boolFromSelect($("sShowPrices")),
-    allowCart: boolFromSelect($("sAllowCart")),
-
-    productsTitle: $("sProductsTitle").value.trim() || "Produtos",
     updatedAt: serverTimestamp()
   };
 
@@ -197,7 +186,7 @@ function renderProductCard(p){
       <h3>${p.name || "Sem nome"}</h3>
       <div class="row" style="justify-content:space-between; gap:10px; align-items:center;">
         <div class="price">${money(p.price)}</div>
-        <div class="badge">${p.available === false ? "Indisponível" : "Disponível"}</div>
+        <div class="badge">${p.active === false ? "Inativo" : "Ativo"}</div>
       </div>
       <p class="desc">${p.desc || ""}</p>
       <div class="actions">
@@ -230,10 +219,7 @@ function listenProducts(){
 }
 
 async function addProduct(payload){
-  await addDoc(productsCol, {
-    ...payload,
-    createdAt: serverTimestamp()
-  });
+  await addDoc(productsCol, { ...payload, createdAt: serverTimestamp() });
 }
 
 async function saveProduct(id, payload){
@@ -248,11 +234,15 @@ async function removeProduct(id){
 
 // ---------- PRODUCT FORM ----------
 function clearProductForm(){
-  $("pId").value = "";
+  $("productId").value = "";
   $("pName").value = "";
   $("pPrice").value = "";
   $("pDesc").value = "";
-  $("pAvailable").value = "true";
+  $("pOrder").value = "";
+  $("pStock").value = "";
+  $("pPromo").value = "";
+  $("pActive").value = "true";
+  $("pFeatured").value = "false";
   $("pImageUrl").value = "";
   if (pImagePosX) pImagePosX.value = "50";
   if (pImagePosY) pImagePosY.value = "50";
@@ -260,36 +250,39 @@ function clearProductForm(){
 }
 
 function fillProductForm(p){
-  $("pId").value = p.id || "";
+  $("productId").value = p.id || "";
   $("pName").value = p.name || "";
   $("pPrice").value = p.price ?? "";
   $("pDesc").value = p.desc || "";
-  $("pAvailable").value = String(p.available !== false);
+  $("pOrder").value = p.order ?? "";
+  $("pStock").value = p.stock ?? "";
+  $("pPromo").value = p.promo ?? "";
+  $("pActive").value = String(p.active !== false);
+  $("pFeatured").value = String(!!p.featured);
   $("pImageUrl").value = p.imageUrl || "";
   if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX, 50));
   if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY, 50));
   updateImagePreview();
 }
 
-$("pImageUrl")?.addEventListener("input", updateImagePreview);
-pImagePosX?.addEventListener("input", updateImagePreview);
-pImagePosY?.addEventListener("input", updateImagePreview);
-
-$("clearProductBtn").addEventListener("click", (ev) => {
-  ev.preventDefault();
+$("clearFormBtn")?.addEventListener("click", (ev) => {
+  ev.preventDefault?.();
   clearProductForm();
 });
 
-$("productForm").addEventListener("submit", async (ev) => {
-  ev.preventDefault();
+$("saveProductBtn")?.addEventListener("click", async (ev) => {
+  ev.preventDefault?.();
 
-  const id = $("pId").value.trim();
-
+  const id = $("productId").value.trim();
   const payload = {
     name: $("pName").value.trim(),
     price: parseOptionalNumber($("pPrice").value),
     desc: $("pDesc").value.trim(),
-    available: boolFromSelect($("pAvailable")),
+    order: parseOptionalNumber($("pOrder").value),
+    stock: parseOptionalNumber($("pStock").value),
+    promo: $("pPromo").value.trim(),
+    active: $("pActive").value === "true",
+    featured: $("pFeatured").value === "true",
     imageUrl: $("pImageUrl").value.trim(),
     imagePosX: clampPos(pImagePosX?.value, 50),
     imagePosY: clampPos(pImagePosY?.value, 50),
@@ -297,10 +290,10 @@ $("productForm").addEventListener("submit", async (ev) => {
   };
 
   try{
-    if (id){
+    if (id) {
       await saveProduct(id, payload);
       setMsg(productMsg, "Produto atualizado ✅", true);
-    }else{
+    } else {
       await addProduct(payload);
       setMsg(productMsg, "Produto criado ✅", true);
     }
@@ -310,7 +303,23 @@ $("productForm").addEventListener("submit", async (ev) => {
   }
 });
 
-// ---------- DELEGATED BUTTONS ----------
+$("deleteProductBtn")?.addEventListener("click", async (ev) => {
+  ev.preventDefault?.();
+  const id = $("productId").value.trim();
+  if (!id) return setMsg(productMsg, "Selecione um produto para excluir.", false);
+
+  const ok = confirm("Excluir este produto?");
+  if (!ok) return;
+
+  try{
+    await removeProduct(id);
+    setMsg(productMsg, "Produto excluído ✅", true);
+    clearProductForm();
+  }catch(e){
+    setMsg(productMsg, e?.message || "Erro ao excluir.", false);
+  }
+});
+
 productsGrid.addEventListener("click", async (ev) => {
   const btn = ev.target.closest("button");
   if (!btn) return;
@@ -324,12 +333,12 @@ productsGrid.addEventListener("click", async (ev) => {
       if (p) fillProductForm(p);
       return;
     }
-
     if (delId){
       const ok = confirm("Excluir este produto?");
       if (!ok) return;
       await removeProduct(delId);
       setMsg(productMsg, "Produto excluído ✅", true);
+      clearProductForm();
       return;
     }
   }catch(e){

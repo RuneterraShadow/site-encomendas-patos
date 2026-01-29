@@ -5,6 +5,7 @@ import {
   orderBy,
   onSnapshot,
   doc,
+  onSnapshot as onDocSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ======================
@@ -12,7 +13,6 @@ import {
 ====================== */
 const el = (id) => document.getElementById(id);
 
-// ✅ Sem "R$" — apenas número
 const money = (v) =>
   Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
@@ -23,14 +23,13 @@ function formatDateTime(d = new Date()) {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
-// GitHub Pages: Admin usa "/assets/..." -> público com <base> usa "./assets/..."
 function fixAssetPath(p) {
   if (!p) return "";
   const s = String(p).trim();
   if (!s) return "";
   if (s.startsWith("http://") || s.startsWith("https://")) return s;
   if (s.startsWith("./")) return s;
-  if (s.startsWith("/")) return "." + s; // "/assets/..." => "./assets/..."
+  if (s.startsWith("/")) return "." + s;
   return "./" + s.replace(/^(\.\/)+/, "");
 }
 
@@ -45,17 +44,8 @@ function makeWhatsLink(raw) {
 
 function pick(obj, keys, fallback = "") {
   for (const k of keys) {
-    if (!obj) continue;
-    if (k.includes(".")) {
-      const parts = k.split(".");
-      let cur = obj;
-      for (const p of parts) cur = cur?.[p];
-      if (cur !== undefined && cur !== null && String(cur).trim() !== "")
-        return cur;
-    } else {
-      const v = obj?.[k];
-      if (v !== undefined && v !== null && String(v).trim() !== "") return v;
-    }
+    const v = obj?.[k];
+    if (v !== undefined && v !== null && String(v).trim() !== "") return v;
   }
   return fallback;
 }
@@ -65,7 +55,6 @@ function clampPos(v, fallback = 50) {
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, n));
 }
-
 function clampZoom(v, fallback = 100) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
@@ -81,9 +70,7 @@ function applyImageView(imgEl, containerEl, { x=50, y=50, zoom=100 } = {}) {
   const z = clampZoom(zoom, 100);
   const fit = z < 100 ? "contain" : "cover";
 
-  if (containerEl) {
-    containerEl.classList.toggle("checker", z < 100);
-  }
+  if (containerEl) containerEl.classList.toggle("checker", z < 100);
   if (imgEl) {
     imgEl.style.objectFit = fit;
     imgEl.style.objectPosition = `${clampPos(x, 50)}% ${clampPos(y, 50)}%`;
@@ -93,27 +80,19 @@ function applyImageView(imgEl, containerEl, { x=50, y=50, zoom=100 } = {}) {
 }
 
 /* ======================
-   ESTADO
+   ESTADO / CARRINHO (mantido)
 ====================== */
-let cart = []; // { productId, name, price, qty }
+let cart = [];
 let cartOpen = false;
-
-// mapa do estoque em tempo real: productId -> number|null
 const stockMap = new Map();
-
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
 
-/* ======================
-   CARRINHO (painel fixo)
-====================== */
 const cartPanel = document.createElement("div");
 cartPanel.id = "cartPanel";
 cartPanel.style.display = "none";
-
-// canto esquerdo fixo
 cartPanel.style.position = "fixed";
 cartPanel.style.left = "16px";
 cartPanel.style.top = "78px";
@@ -121,25 +100,15 @@ cartPanel.style.width = "320px";
 cartPanel.style.maxHeight = "calc(100vh - 110px)";
 cartPanel.style.overflow = "auto";
 cartPanel.style.zIndex = "99999";
-
-// visual
 cartPanel.style.background = "#141414";
 cartPanel.style.border = "1px solid rgba(255,255,255,.08)";
 cartPanel.style.borderRadius = "14px";
 cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
 
-// ✅ estilo do texto "Pagamento em cash..."
 const style = document.createElement("style");
-style.textContent = `
-  .pay-hint{
-    margin-top: 4px;
-    font-size: 12px;
-    opacity: .85;
-  }
-`;
+style.textContent = `.pay-hint{margin-top:4px;font-size:12px;opacity:.85;}`;
 document.head.appendChild(style);
-
 document.body.appendChild(cartPanel);
 
 cartBtn?.addEventListener("click", () => {
@@ -158,25 +127,20 @@ function getAvailableStock(productId) {
 
 function normalizeCartAgainstStock() {
   let changed = false;
-
   cart = cart
     .map((i) => {
       const avail = getAvailableStock(i.productId);
       if (avail === null) return i;
-
       const newQty = Math.min(i.qty, avail);
       if (newQty !== i.qty) changed = true;
-
       return { ...i, qty: newQty };
     })
     .filter((i) => i.qty > 0);
-
   return changed;
 }
 
 function renderCart() {
   normalizeCartAgainstStock();
-
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
   cartCount.textContent = cart.length;
 
@@ -185,49 +149,32 @@ function renderCart() {
       <h3 style="margin:0">Carrinho</h3>
       <button id="closeCart" class="btn secondary" type="button" style="padding:6px 10px">Fechar</button>
     </div>
-
-    ${
-      cart.length === 0
-        ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>`
-        : ""
-    }
-
-    ${cart
-      .map((i, idx) => {
-        const avail = getAvailableStock(i.productId);
-        const stockLine =
-          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
-        return `
-          <div class="hr" style="margin:10px 0"></div>
-          <div>
-            <strong>${i.name}</strong><br>
-            ${stockLine}
-            <span class="small">Qtd: ${i.qty}</span><br>
-            <strong>${money(i.price * i.qty)}</strong>
-            <div class="pay-hint">Pagamento em cash do jogo!</div>
-            <div style="margin-top:8px">
-              <button class="btn danger" data-remove="${idx}" type="button">Remover</button>
-            </div>
+    ${cart.length === 0 ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>` : ""}
+    ${cart.map((i, idx) => {
+      const avail = getAvailableStock(i.productId);
+      const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+      return `
+        <div class="hr" style="margin:10px 0"></div>
+        <div>
+          <strong>${i.name}</strong><br>
+          ${stockLine}
+          <span class="small">Qtd: ${i.qty}</span><br>
+          <strong>${money(i.price * i.qty)}</strong>
+          <div class="pay-hint">Pagamento em cash do jogo!</div>
+          <div style="margin-top:8px">
+            <button class="btn danger" data-remove="${idx}" type="button">Remover</button>
           </div>
-        `;
-      })
-      .join("")}
-
+        </div>`;
+    }).join("")}
     <div class="hr" style="margin:12px 0"></div>
     <strong>Total: ${money(total)}</strong>
     <div class="pay-hint">Pagamento em cash do jogo!</div>
-
     <div class="hr" style="margin:12px 0"></div>
-
     <label class="small">Nick no jogo</label>
     <input id="nickInput" class="input" placeholder="">
-
     <label class="small" style="margin-top:10px;display:block">@ do Discord</label>
     <input id="discordInput" class="input" placeholder="">
-
-    <button class="btn" style="width:100%;margin-top:12px" id="sendOrder" type="button">
-      Finalizar pedido
-    </button>
+    <button class="btn" style="width:100%;margin-top:12px" id="sendOrder" type="button">Finalizar pedido</button>
   `;
 
   el("closeCart")?.addEventListener("click", () => {
@@ -245,45 +192,23 @@ function renderCart() {
   el("sendOrder")?.addEventListener("click", sendOrder);
 }
 
-/* ======================
-   ENVIA PEDIDO
-====================== */
 async function sendOrder() {
   const nick = el("nickInput").value.trim();
   const discord = el("discordInput").value.trim();
+  if (!nick || !discord) return alert("Preencha Nick e Discord");
 
-  if (!nick || !discord) {
-    alert("Preencha Nick e Discord");
-    return;
-  }
-
-  // valida estoque antes de enviar
   for (const item of cart) {
     const avail = getAvailableStock(item.productId);
-    if (avail !== null && item.qty > avail) {
-      alert(`"${item.name}" tem só ${avail} em estoque. Ajuste a quantidade.`);
-      renderCart();
-      return;
-    }
-    if (avail !== null && avail <= 0) {
-      alert(`"${item.name}" está sem estoque.`);
-      renderCart();
-      return;
-    }
+    if (avail !== null && item.qty > avail) return alert(`"${item.name}" tem só ${avail} em estoque.`);
+    if (avail !== null && avail <= 0) return alert(`"${item.name}" está sem estoque.`);
   }
 
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
-
   const payload = {
-    nick,
-    discord,
+    nick, discord,
     items: cart.map((i) => ({
-      productId: i.productId,
-      name: i.name,
-      qty: i.qty,
-      unitPrice: i.price,
-      unitPriceText: money(i.price),
-      subtotalText: money(i.price * i.qty),
+      productId: i.productId, name: i.name, qty: i.qty, unitPrice: i.price,
+      unitPriceText: money(i.price), subtotalText: money(i.price * i.qty),
     })),
     totalText: money(total),
     createdAt: new Date().toISOString(),
@@ -295,14 +220,8 @@ async function sendOrder() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status} :: ${txt}`);
-    }
-
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     alert("Pedido recebido! Entraremos em contato.");
-
     cart = [];
     renderCart();
     cartOpen = false;
@@ -314,47 +233,44 @@ async function sendOrder() {
 }
 
 /* ======================
-   CONFIG GLOBAL
+   CONFIG GLOBAL + BANNER
 ====================== */
-let configUnsubs = [];
-
-function applyConfig(data) {
-  el("siteTitle").textContent = pick(data, ["siteTitle"], "Loja");
-  el("siteSubtitle").textContent = pick(data, ["siteSubtitle"], "—");
-  el("globalDesc").textContent = pick(data, ["globalDesc"], "—");
-
-  el("bannerTitle").textContent = pick(data, ["bannerTitle"], "—");
-  el("bannerDesc").textContent = pick(data, ["bannerDesc"], "—");
-
-  const bannerUrl = fixAssetPath(pick(data, ["bannerImageUrl"], ""));
-  if (bannerUrl) el("bannerImg").src = bannerUrl;
-
-  const whatsRaw = pick(data, ["whatsappLink"], "");
-  el("whatsBtn").href = makeWhatsLink(whatsRaw);
-
-  const btnText = pick(data, ["buyBtnText"], "");
-  if (btnText) el("whatsBtn").textContent = btnText;
-
-  el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
-}
-
 function watchGlobalConfig() {
-  configUnsubs.forEach((fn) => {
-    try { fn(); } catch {}
-  });
-  configUnsubs = [];
-
   const ref = doc(db, "site", "settings");
-  const unsub = onSnapshot(ref, (snap) => {
+  onDocSnapshot(ref, (snap) => {
     if (!snap.exists()) return;
-    applyConfig(snap.data());
-  });
+    const data = snap.data();
 
-  configUnsubs.push(unsub);
+    el("siteTitle").textContent = pick(data, ["siteTitle"], "Loja");
+    el("siteSubtitle").textContent = pick(data, ["siteSubtitle"], "—");
+    el("globalDesc").textContent = pick(data, ["globalDesc"], "—");
+
+    el("bannerTitle").textContent = pick(data, ["bannerTitle"], "—");
+    el("bannerDesc").textContent = pick(data, ["bannerDesc"], "—");
+
+    const bannerUrl = fixAssetPath(pick(data, ["bannerImageUrl"], ""));
+    if (bannerUrl) el("bannerImg").src = bannerUrl;
+
+    // ✅ aplica corte/zoom do banner no site
+    const bannerContainer = el("bannerImg")?.parentElement;
+    applyImageView(el("bannerImg"), bannerContainer, {
+      x: data.bannerPosX ?? 50,
+      y: data.bannerPosY ?? 50,
+      zoom: data.bannerZoom ?? 100
+    });
+
+    const whatsRaw = pick(data, ["whatsappLink"], "");
+    el("whatsBtn").href = makeWhatsLink(whatsRaw);
+
+    const btnText = pick(data, ["buyBtnText"], "");
+    if (btnText) el("whatsBtn").textContent = btnText;
+
+    el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+  });
 }
 
 /* ======================
-   PRODUTOS + ESTOQUE
+   PRODUTOS
 ====================== */
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
@@ -364,7 +280,7 @@ function renderProducts(items) {
     card.className = "card";
 
     const img = fixAssetPath(p.imageUrl || "");
-    const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
+    const stock = (p.stock === null || p.stock === undefined) ? null : Number(p.stock);
     const hasStock = Number.isFinite(stock);
     const out = hasStock && stock <= 0;
 
@@ -381,24 +297,19 @@ function renderProducts(items) {
       : `<div class="badge">Estoque: ∞</div>`;
 
     card.innerHTML = `
-      <div class="img">
-        <img src="${img}" alt="">
-      </div>
+      <div class="img"><img src="${img}" alt=""></div>
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
-
         <div class="badges">
           ${stockBadge}
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
         </div>
-
         <div class="priceRow">
           <div class="price">${money(shownPrice)}</div>
           ${promo ? `<div class="old">${money(p.price)}</div>` : ``}
         </div>
         <div class="pay-hint">Pagamento em cash do jogo!</div>
-
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
           <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
           <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>
@@ -420,7 +331,6 @@ function renderProducts(items) {
     const qtyInput = card.querySelector(".qty");
     const addBtn = card.querySelector(".addBtn");
 
-    // limita o input ao estoque
     if (hasStock) {
       qtyInput.max = String(Math.max(1, stock));
       qtyInput.value = String(Math.min(Number(qtyInput.value || 1), stock));
@@ -432,25 +342,11 @@ function renderProducts(items) {
 
     addBtn.addEventListener("click", () => {
       const wanted = Math.max(1, Number(qtyInput.value || 1));
-
       const avail = getAvailableStock(p.id);
-      if (avail !== null && wanted > avail) {
-        alert(`Só tem ${avail} em estoque.`);
-        qtyInput.value = String(avail);
-        return;
-      }
-      if (avail !== null && avail <= 0) {
-        alert("Sem estoque.");
-        return;
-      }
+      if (avail !== null && wanted > avail) return alert(`Só tem ${avail} em estoque.`);
+      if (avail !== null && avail <= 0) return alert("Sem estoque.");
 
-      cart.push({
-        productId: p.id,
-        name: p.name,
-        price: shownPrice,
-        qty: wanted,
-      });
-
+      cart.push({ productId: p.id, name: p.name, price: shownPrice, qty: wanted });
       renderCart();
     });
 
@@ -459,7 +355,6 @@ function renderProducts(items) {
 }
 
 const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
-
 onSnapshot(qProducts, (snap) => {
   const items = [];
   stockMap.clear();
@@ -467,24 +362,16 @@ onSnapshot(qProducts, (snap) => {
   snap.forEach((d) => {
     const data = d.data();
     if (!data?.active) return;
-
     const product = { id: d.id, ...data };
     items.push(product);
-
     stockMap.set(d.id, data.stock);
   });
 
   renderProducts(items);
-
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 
-  if (normalizeCartAgainstStock() && cartOpen) {
-    renderCart();
-  }
+  if (normalizeCartAgainstStock() && cartOpen) renderCart();
 });
 
-/* ======================
-   START
-====================== */
 watchGlobalConfig();

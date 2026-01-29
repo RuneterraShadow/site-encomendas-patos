@@ -12,7 +12,7 @@ import {
 ====================== */
 const el = (id) => document.getElementById(id);
 
-// ✅ Sem "R$" — apenas número (ex: 1.234,00)
+// ✅ Sem "R$" — apenas número
 const money = (v) =>
   Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
@@ -23,13 +23,14 @@ function formatDateTime(d = new Date()) {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
+// GitHub Pages: Admin usa "/assets/..." -> público com <base> usa "./assets/..."
 function fixAssetPath(p) {
   if (!p) return "";
   const s = String(p).trim();
   if (!s) return "";
   if (s.startsWith("http://") || s.startsWith("https://")) return s;
   if (s.startsWith("./")) return s;
-  if (s.startsWith("/")) return "." + s;
+  if (s.startsWith("/")) return "." + s; // "/assets/..." => "./assets/..."
   return "./" + s.replace(/^(\.\/)+/, "");
 }
 
@@ -49,7 +50,8 @@ function pick(obj, keys, fallback = "") {
       const parts = k.split(".");
       let cur = obj;
       for (const p of parts) cur = cur?.[p];
-      if (cur !== undefined && cur !== null && String(cur).trim() !== "") return cur;
+      if (cur !== undefined && cur !== null && String(cur).trim() !== "")
+        return cur;
     } else {
       const v = obj?.[k];
       if (v !== undefined && v !== null && String(v).trim() !== "") return v;
@@ -64,54 +66,13 @@ function clampPos(v, fallback = 50) {
   return Math.max(0, Math.min(100, n));
 }
 
-// ✅ zoom OUT = abaixo de 100 (50% a 200%)
-function clampZoom(v, fallback = 100) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(50, Math.min(200, n));
-}
-
-/* ======================
-   MELHORIA TOP (Checkerboard)
-====================== */
-(function injectStyles() {
-  const style = document.createElement("style");
-  style.textContent = `
-    .pay-hint{
-      margin-top: 4px;
-      font-size: 12px;
-      opacity: .85;
-    }
-
-    /* fundo quadriculado quando estiver em zoom OUT (contain) */
-    .img.containMode{
-      background-color: #0f0f0f;
-      background-image:
-        linear-gradient(45deg, rgba(255,255,255,.09) 25%, transparent 25%),
-        linear-gradient(-45deg, rgba(255,255,255,.09) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.09) 75%),
-        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.09) 75%);
-      background-size: 18px 18px;
-      background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
-    }
-
-    /* garante que o quadriculado apareça */
-    .card .img img{
-      background: transparent !important;
-      display:block;
-      will-change: transform;
-    }
-  `;
-  document.head.appendChild(style);
-})();
-
 /* ======================
    ESTADO
 ====================== */
 let cart = []; // { productId, name, price, qty }
 let cartOpen = false;
 
-// estoque em tempo real: productId -> number|null
+// mapa do estoque em tempo real: productId -> number|null
 const stockMap = new Map();
 
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
@@ -141,6 +102,17 @@ cartPanel.style.border = "1px solid rgba(255,255,255,.08)";
 cartPanel.style.borderRadius = "14px";
 cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
+
+// ✅ estilo do texto "Pagamento em cash..."
+const style = document.createElement("style");
+style.textContent = `
+  .pay-hint{
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: .85;
+  }
+`;
+document.head.appendChild(style);
 
 document.body.appendChild(cartPanel);
 
@@ -180,7 +152,7 @@ function renderCart() {
   normalizeCartAgainstStock();
 
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
-  if (cartCount) cartCount.textContent = String(cart.length);
+  cartCount.textContent = cart.length;
 
   cartPanel.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -188,12 +160,17 @@ function renderCart() {
       <button id="closeCart" class="btn secondary" type="button" style="padding:6px 10px">Fechar</button>
     </div>
 
-    ${cart.length === 0 ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>` : ""}
+    ${
+      cart.length === 0
+        ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>`
+        : ""
+    }
 
     ${cart
       .map((i, idx) => {
         const avail = getAvailableStock(i.productId);
-        const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+        const stockLine =
+          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
         return `
           <div class="hr" style="margin:10px 0"></div>
           <div>
@@ -246,14 +223,15 @@ function renderCart() {
    ENVIA PEDIDO
 ====================== */
 async function sendOrder() {
-  const nick = el("nickInput")?.value?.trim() || "";
-  const discord = el("discordInput")?.value?.trim() || "";
+  const nick = el("nickInput").value.trim();
+  const discord = el("discordInput").value.trim();
 
   if (!nick || !discord) {
     alert("Preencha Nick e Discord");
     return;
   }
 
+  // valida estoque antes de enviar
   for (const item of cart) {
     const avail = getAvailableStock(item.productId);
     if (avail !== null && item.qty > avail) {
@@ -350,9 +328,7 @@ function watchGlobalConfig() {
 }
 
 /* ======================
-   PRODUTOS + ESTOQUE + CORTE/ZOOM
-   ✅ Zoom OUT = imagem bruta (contain) + checkerboard
-   ✅ Zoom IN  = cover + scale
+   PRODUTOS + ESTOQUE
 ====================== */
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
@@ -362,7 +338,6 @@ function renderProducts(items) {
     card.className = "card";
 
     const img = fixAssetPath(p.imageUrl || "");
-
     const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
     const hasStock = Number.isFinite(stock);
     const out = hasStock && stock <= 0;
@@ -379,26 +354,14 @@ function renderProducts(items) {
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
 
+    // ✅ aplica o corte (object-position) vindo do admin
     const px = clampPos(p.imagePosX, 50);
     const py = clampPos(p.imagePosY, 50);
-    const pz = clampZoom(p.imageZoom, 100);
-
-    // ✅ lógica “bruta” pro zoom out
-    const fit = pz < 100 ? "contain" : "cover";
-    const scale = pz < 100 ? 1 : (pz / 100);
-    const containClass = pz < 100 ? "containMode" : "";
 
     card.innerHTML = `
-      <div class="img ${containClass}">
-        <img src="${img}" alt=""
-          style="
-            object-fit:${fit};
-            object-position:${px}% ${py}%;
-            transform-origin:${px}% ${py}%;
-            transform:scale(${scale});
-          ">
+      <div class="img">
+        <img src="${img}" alt="" style="object-position:${px}% ${py}%;">
       </div>
-
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
@@ -426,6 +389,7 @@ function renderProducts(items) {
     const qtyInput = card.querySelector(".qty");
     const addBtn = card.querySelector(".addBtn");
 
+    // limita o input ao estoque
     if (hasStock) {
       qtyInput.max = String(Math.max(1, stock));
       qtyInput.value = String(Math.min(Number(qtyInput.value || 1), stock));

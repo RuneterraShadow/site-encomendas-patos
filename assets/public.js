@@ -12,7 +12,7 @@ import {
 ====================== */
 const el = (id) => document.getElementById(id);
 
-// ✅ Sem "R$" — apenas número
+// ✅ Sem "R$" — apenas número (ex: 1.234,00)
 const money = (v) =>
   Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
@@ -50,8 +50,7 @@ function pick(obj, keys, fallback = "") {
       const parts = k.split(".");
       let cur = obj;
       for (const p of parts) cur = cur?.[p];
-      if (cur !== undefined && cur !== null && String(cur).trim() !== "")
-        return cur;
+      if (cur !== undefined && cur !== null && String(cur).trim() !== "") return cur;
     } else {
       const v = obj?.[k];
       if (v !== undefined && v !== null && String(v).trim() !== "") return v;
@@ -66,10 +65,11 @@ function clampPos(v, fallback = 50) {
   return Math.max(0, Math.min(100, n));
 }
 
+// ✅ "zoom negativo" = zoom OUT (< 100%). Aqui: 50% a 200%
 function clampZoom(v, fallback = 100) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
-  return Math.max(100, Math.min(200, n));
+  return Math.max(50, Math.min(200, n));
 }
 
 /* ======================
@@ -85,6 +85,19 @@ const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
+
+/* ======================
+   ESTILO DO AVISO (PAGAMENTO)
+====================== */
+const style = document.createElement("style");
+style.textContent = `
+  .pay-hint{
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: .85;
+  }
+`;
+document.head.appendChild(style);
 
 /* ======================
    CARRINHO (painel fixo)
@@ -109,17 +122,6 @@ cartPanel.style.borderRadius = "14px";
 cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
 
-// ✅ estilo do texto "Pagamento em cash..."
-const style = document.createElement("style");
-style.textContent = `
-  .pay-hint{
-    margin-top: 4px;
-    font-size: 12px;
-    opacity: .85;
-  }
-`;
-document.head.appendChild(style);
-
 document.body.appendChild(cartPanel);
 
 cartBtn?.addEventListener("click", () => {
@@ -129,6 +131,7 @@ cartBtn?.addEventListener("click", () => {
 });
 
 function getAvailableStock(productId) {
+  // null/undefined = estoque "não controlado"
   if (!stockMap.has(productId)) return null;
   const v = stockMap.get(productId);
   if (v === null || v === undefined) return null;
@@ -137,12 +140,13 @@ function getAvailableStock(productId) {
 }
 
 function normalizeCartAgainstStock() {
+  // ajusta itens do carrinho se o estoque baixou
   let changed = false;
 
   cart = cart
     .map((i) => {
       const avail = getAvailableStock(i.productId);
-      if (avail === null) return i;
+      if (avail === null) return i; // sem controle de estoque
 
       const newQty = Math.min(i.qty, avail);
       if (newQty !== i.qty) changed = true;
@@ -158,7 +162,7 @@ function renderCart() {
   normalizeCartAgainstStock();
 
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
-  cartCount.textContent = cart.length;
+  if (cartCount) cartCount.textContent = String(cart.length);
 
   cartPanel.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -166,17 +170,12 @@ function renderCart() {
       <button id="closeCart" class="btn secondary" type="button" style="padding:6px 10px">Fechar</button>
     </div>
 
-    ${
-      cart.length === 0
-        ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>`
-        : ""
-    }
+    ${cart.length === 0 ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>` : ""}
 
     ${cart
       .map((i, idx) => {
         const avail = getAvailableStock(i.productId);
-        const stockLine =
-          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+        const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
         return `
           <div class="hr" style="margin:10px 0"></div>
           <div>
@@ -229,8 +228,8 @@ function renderCart() {
    ENVIA PEDIDO
 ====================== */
 async function sendOrder() {
-  const nick = el("nickInput").value.trim();
-  const discord = el("discordInput").value.trim();
+  const nick = el("nickInput")?.value?.trim() || "";
+  const discord = el("discordInput")?.value?.trim() || "";
 
   if (!nick || !discord) {
     alert("Preencha Nick e Discord");
@@ -301,6 +300,7 @@ let configUnsubs = [];
 function applyConfig(data) {
   el("siteTitle").textContent = pick(data, ["siteTitle"], "Loja");
   el("siteSubtitle").textContent = pick(data, ["siteSubtitle"], "—");
+
   el("globalDesc").textContent = pick(data, ["globalDesc"], "—");
 
   el("bannerTitle").textContent = pick(data, ["bannerTitle"], "—");
@@ -334,7 +334,7 @@ function watchGlobalConfig() {
 }
 
 /* ======================
-   PRODUTOS + ESTOQUE
+   PRODUTOS + ESTOQUE + CORTE/ZOOM
 ====================== */
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
@@ -344,6 +344,7 @@ function renderProducts(items) {
     card.className = "card";
 
     const img = fixAssetPath(p.imageUrl || "");
+
     const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
     const hasStock = Number.isFinite(stock);
     const out = hasStock && stock <= 0;
@@ -360,7 +361,7 @@ function renderProducts(items) {
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
 
-    // ✅ corte + zoom vindos do admin
+    // ✅ corte + zoom (zoom OUT permitido)
     const px = clampPos(p.imagePosX, 50);
     const py = clampPos(p.imagePosY, 50);
     const pz = clampZoom(p.imageZoom, 100);
@@ -374,6 +375,7 @@ function renderProducts(items) {
             transform:scale(${pz / 100});
           ">
       </div>
+
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
@@ -452,6 +454,7 @@ onSnapshot(qProducts, (snap) => {
     const product = { id: d.id, ...data };
     items.push(product);
 
+    // guarda o estoque (pode ser null/undefined)
     stockMap.set(d.id, data.stock);
   });
 
@@ -460,6 +463,7 @@ onSnapshot(qProducts, (snap) => {
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 
+  // se o estoque mudou, ajusta carrinho
   if (normalizeCartAgainstStock() && cartOpen) {
     renderCart();
   }

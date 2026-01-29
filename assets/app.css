@@ -278,3 +278,13 @@ label{ font-size:12px; color:var(--muted); }
   object-position: 50% 50%;
   display: block;
 }
+/* Zoom/transform precisa ser visível e cortar no box */
+.imgPreviewBox img{
+  will-change: transform;
+  display: block;
+}
+
+/* opcional: deixar botão reset bem alinhado */
+#resetCropBtn{
+  padding: 8px 12px;
+}

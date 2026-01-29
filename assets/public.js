@@ -72,6 +72,26 @@ function clampZoom(v, fallback = 100) {
   return Math.max(50, Math.min(200, n));
 }
 
+/**
+ * ✅ Mesma regra do admin:
+ * - zoom < 100: contain + checker + scale(z/100)
+ * - zoom >= 100: cover + scale(z/100)
+ */
+function applyImageView(imgEl, containerEl, { x=50, y=50, zoom=100 } = {}) {
+  const z = clampZoom(zoom, 100);
+  const fit = z < 100 ? "contain" : "cover";
+
+  if (containerEl) {
+    containerEl.classList.toggle("checker", z < 100);
+  }
+  if (imgEl) {
+    imgEl.style.objectFit = fit;
+    imgEl.style.objectPosition = `${clampPos(x, 50)}% ${clampPos(y, 50)}%`;
+    imgEl.style.transform = `scale(${z / 100})`;
+    imgEl.style.transformOrigin = "center center";
+  }
+}
+
 /* ======================
    ESTADO
 ====================== */
@@ -360,14 +380,9 @@ function renderProducts(items) {
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
 
-    // ✅ aplica o corte + zoom (fiel ao admin)
-    const px = clampPos(p.imagePosX, 50);
-    const py = clampPos(p.imagePosY, 50);
-    const zoom = clampZoom(p.imageZoom, 100);
-
     card.innerHTML = `
       <div class="img">
-        <img src="${img}" alt="" style="object-position:${px}% ${py}%; transform:scale(${zoom/100}); transform-origin:center center;">
+        <img src="${img}" alt="">
       </div>
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
@@ -392,6 +407,15 @@ function renderProducts(items) {
         </div>
       </div>
     `;
+
+    const imgContainer = card.querySelector(".img");
+    const imgEl = card.querySelector("img");
+
+    applyImageView(imgEl, imgContainer, {
+      x: p.imagePosX ?? 50,
+      y: p.imagePosY ?? 50,
+      zoom: p.imageZoom ?? 100
+    });
 
     const qtyInput = card.querySelector(".qty");
     const addBtn = card.querySelector(".addBtn");

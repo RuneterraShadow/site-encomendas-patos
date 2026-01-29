@@ -32,43 +32,24 @@ const productsGrid = $("productsGrid");
   }
 })();
 
-// ---------- ELEMENTOS IMAGEM (corte/preview + zoom) ----------
-const pImagePosX = $("pImagePosX");
-const pImagePosY = $("pImagePosY");
-const pImageZoom = $("pImageZoom");
-
-const pImagePosXVal = $("pImagePosXVal");
-const pImagePosYVal = $("pImagePosYVal");
-const pImageZoomVal = $("pImageZoomVal");
-
-const pImagePreview = $("pImagePreview");
-const pImagePreviewBox = $("pImagePreviewBox");
-const resetCropBtn = $("resetCropBtn");
-
 // ---------- HELPERS ----------
 function setMsg(el, text, ok=true){
   el.textContent = text;
   el.style.color = ok ? "var(--ok)" : "var(--danger)";
   setTimeout(() => { el.textContent = ""; }, 3500);
 }
-
 function parseOptionalNumber(value){
   const v = String(value ?? "").trim();
   if (!v) return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
-
-function boolFromSelect(selectEl){
-  return selectEl.value === "true";
-}
-
+function boolFromSelect(selectEl){ return selectEl.value === "true"; }
 function clampPos(v, fallback=50){
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, n));
 }
-
 function clampZoom(v, fallback=100){
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
@@ -76,7 +57,7 @@ function clampZoom(v, fallback=100){
 }
 
 /**
- * ✅ Regra pedida:
+ * ✅ Regra pedida (zoom “antigo”):
  * - zoom < 100: contain + checker + scale(z/100)
  * - zoom >= 100: cover + scale(z/100)
  */
@@ -95,29 +76,6 @@ function applyImageView(imgEl, containerEl, { x=50, y=50, zoom=100 } = {}){
   }
 }
 
-function updateImagePreview(){
-  const url = $("pImageUrl")?.value?.trim() || "";
-  if (!url){
-    pImagePreview?.removeAttribute("src");
-    if (pImagePreview) pImagePreview.style.display = "none";
-  }else{
-    if (pImagePreview) {
-      pImagePreview.style.display = "block";
-      pImagePreview.src = url;
-    }
-  }
-
-  const x = clampPos(pImagePosX?.value, 50);
-  const y = clampPos(pImagePosY?.value, 50);
-  const z = clampZoom(pImageZoom?.value, 100);
-
-  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
-  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
-  if (pImageZoomVal) pImageZoomVal.textContent = String(z);
-
-  applyImageView(pImagePreview, pImagePreviewBox, { x, y, zoom: z });
-}
-
 function setSafeImg(imgEl, url){
   imgEl.src = url || "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600">
@@ -128,21 +86,6 @@ function setSafeImg(imgEl, url){
     </svg>`
   );
 }
-
-// listeners (preview em tempo real)
-$("pImageUrl")?.addEventListener("input", updateImagePreview);
-pImagePosX?.addEventListener("input", updateImagePreview);
-pImagePosY?.addEventListener("input", updateImagePreview);
-pImageZoom?.addEventListener("input", updateImagePreview);
-
-// ✅ reset corte
-resetCropBtn?.addEventListener("click", (ev) => {
-  ev?.preventDefault?.();
-  if (pImagePosX) pImagePosX.value = "50";
-  if (pImagePosY) pImagePosY.value = "50";
-  if (pImageZoom) pImageZoom.value = "100";
-  updateImagePreview();
-});
 
 // ---------- AUTH ----------
 $("loginBtn").addEventListener("click", async (ev) => {
@@ -174,6 +117,100 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+// ---------- BANNER (corte/zoom) ----------
+const bImagePosX = $("bImagePosX");
+const bImagePosY = $("bImagePosY");
+const bImageZoom = $("bImageZoom");
+const bImagePosXVal = $("bImagePosXVal");
+const bImagePosYVal = $("bImagePosYVal");
+const bImageZoomVal = $("bImageZoomVal");
+const bImagePreview = $("bImagePreview");
+const bImagePreviewBox = $("bImagePreviewBox");
+const resetBannerBtn = $("resetBannerBtn");
+
+function updateBannerPreview(){
+  const url = $("bannerImageUrl")?.value?.trim() || "";
+  if (bImagePreview){
+    if (!url){
+      bImagePreview.removeAttribute("src");
+      bImagePreview.style.display = "none";
+    }else{
+      bImagePreview.style.display = "block";
+      bImagePreview.src = url;
+    }
+  }
+
+  const x = clampPos(bImagePosX?.value, 50);
+  const y = clampPos(bImagePosY?.value, 50);
+  const z = clampZoom(bImageZoom?.value, 100);
+
+  if (bImagePosXVal) bImagePosXVal.textContent = String(x);
+  if (bImagePosYVal) bImagePosYVal.textContent = String(y);
+  if (bImageZoomVal) bImageZoomVal.textContent = String(z);
+
+  applyImageView(bImagePreview, bImagePreviewBox, { x, y, zoom: z });
+}
+
+$("bannerImageUrl")?.addEventListener("input", updateBannerPreview);
+bImagePosX?.addEventListener("input", updateBannerPreview);
+bImagePosY?.addEventListener("input", updateBannerPreview);
+bImageZoom?.addEventListener("input", updateBannerPreview);
+
+resetBannerBtn?.addEventListener("click", (ev) => {
+  ev?.preventDefault?.();
+  if (bImagePosX) bImagePosX.value = "50";
+  if (bImagePosY) bImagePosY.value = "50";
+  if (bImageZoom) bImageZoom.value = "100";
+  updateBannerPreview();
+});
+
+// ---------- PRODUCT (corte/zoom) ----------
+const pImagePosX = $("pImagePosX");
+const pImagePosY = $("pImagePosY");
+const pImageZoom = $("pImageZoom");
+const pImagePosXVal = $("pImagePosXVal");
+const pImagePosYVal = $("pImagePosYVal");
+const pImageZoomVal = $("pImageZoomVal");
+const pImagePreview = $("pImagePreview");
+const pImagePreviewBox = $("pImagePreviewBox");
+const resetCropBtn = $("resetCropBtn");
+
+function updateProductPreview(){
+  const url = $("pImageUrl")?.value?.trim() || "";
+  if (pImagePreview){
+    if (!url){
+      pImagePreview.removeAttribute("src");
+      pImagePreview.style.display = "none";
+    }else{
+      pImagePreview.style.display = "block";
+      pImagePreview.src = url;
+    }
+  }
+
+  const x = clampPos(pImagePosX?.value, 50);
+  const y = clampPos(pImagePosY?.value, 50);
+  const z = clampZoom(pImageZoom?.value, 100);
+
+  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
+  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
+  if (pImageZoomVal) pImageZoomVal.textContent = String(z);
+
+  applyImageView(pImagePreview, pImagePreviewBox, { x, y, zoom: z });
+}
+
+$("pImageUrl")?.addEventListener("input", updateProductPreview);
+pImagePosX?.addEventListener("input", updateProductPreview);
+pImagePosY?.addEventListener("input", updateProductPreview);
+pImageZoom?.addEventListener("input", updateProductPreview);
+
+resetCropBtn?.addEventListener("click", (ev) => {
+  ev?.preventDefault?.();
+  if (pImagePosX) pImagePosX.value = "50";
+  if (pImagePosY) pImagePosY.value = "50";
+  if (pImageZoom) pImageZoom.value = "100";
+  updateProductPreview();
+});
+
 // ---------- SETTINGS ----------
 const settingsRef = doc(db, "site", "settings");
 
@@ -191,7 +228,14 @@ async function loadSettingsOnce(){
   $("bannerDesc").value = s.bannerDesc || "";
   $("bannerImageUrl").value = s.bannerImageUrl || "";
 
-  updateImagePreview();
+  // ✅ carrega corte/zoom do banner
+  if (bImagePosX) bImagePosX.value = String(clampPos(s.bannerPosX ?? 50, 50));
+  if (bImagePosY) bImagePosY.value = String(clampPos(s.bannerPosY ?? 50, 50));
+  if (bImageZoom) bImageZoom.value = String(clampZoom(s.bannerZoom ?? 100, 100));
+  updateBannerPreview();
+
+  // garante preview do produto (caso o usuário mexa antes)
+  updateProductPreview();
 }
 
 $("saveSettingsBtn").addEventListener("click", async (ev) => {
@@ -208,6 +252,11 @@ $("saveSettingsBtn").addEventListener("click", async (ev) => {
       bannerTitle: $("bannerTitle").value.trim(),
       bannerDesc: $("bannerDesc").value.trim(),
       bannerImageUrl: $("bannerImageUrl").value.trim(),
+
+      // ✅ salva o corte/zoom do banner
+      bannerPosX: clampPos(bImagePosX?.value, 50),
+      bannerPosY: clampPos(bImagePosY?.value, 50),
+      bannerZoom: clampZoom(bImageZoom?.value, 100),
 
       updatedAt: serverTimestamp()
     }, { merge:true });
@@ -238,7 +287,7 @@ function resetForm(){
   if (pImagePosX) pImagePosX.value = "50";
   if (pImagePosY) pImagePosY.value = "50";
   if (pImageZoom) pImageZoom.value = "100";
-  updateImagePreview();
+  updateProductPreview();
 }
 
 $("clearFormBtn").addEventListener("click", (ev) => {
@@ -261,7 +310,7 @@ $("saveProductBtn").addEventListener("click", async (ev) => {
       sortOrder: parseOptionalNumber($("pOrder").value) ?? 100,
       imageUrl: $("pImageUrl").value.trim(),
 
-      // ✅ salva exatamente o que você pediu
+      // ✅ salva produto
       imagePosX: clampPos(pImagePosX?.value, 50),
       imagePosY: clampPos(pImagePosY?.value, 50),
       imageZoom: clampZoom(pImageZoom?.value, 100),
@@ -292,7 +341,6 @@ $("saveProductBtn").addEventListener("click", async (ev) => {
 
 $("deleteProductBtn").addEventListener("click", async (ev) => {
   ev?.preventDefault?.();
-
   const id = $("productId").value.trim();
   if (!id) return;
 
@@ -341,7 +389,6 @@ function renderProductCard(p){
   const imgEl = card.querySelector("img");
   setSafeImg(imgEl, p.imageUrl);
 
-  // ✅ miniatura respeita contain/cover + zoom + checker
   applyImageView(imgEl, imgContainer, {
     x: p.imagePosX ?? 50,
     y: p.imagePosY ?? 50,
@@ -361,10 +408,10 @@ function renderProductCard(p){
     $("pFeatured").value = String(!!p.featured);
     $("deleteProductBtn").disabled = false;
 
-    if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX, 50));
-    if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY, 50));
-    if (pImageZoom) pImageZoom.value = String(clampZoom(p.imageZoom, 100));
-    updateImagePreview();
+    if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX ?? 50, 50));
+    if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY ?? 50, 50));
+    if (pImageZoom) pImageZoom.value = String(clampZoom(p.imageZoom ?? 100, 100));
+    updateProductPreview();
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   });

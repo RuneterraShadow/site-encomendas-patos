@@ -5,7 +5,7 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  onSnapshot as onDocSnapshot
+  onSnapshot as onDocSnapshot,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ======================
@@ -62,7 +62,7 @@ function clampZoom(v, fallback = 100) {
 }
 
 /**
- * ✅ Mesma regra do admin:
+ * ✅ Regra de zoom fiel:
  * - zoom < 100: contain + checker + scale(z/100)
  * - zoom >= 100: cover + scale(z/100)
  */
@@ -80,7 +80,7 @@ function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {})
 }
 
 /* ======================
-   ESTADO / CARRINHO (mantido)
+   ESTADO / CARRINHO
 ====================== */
 let cart = [];
 let cartOpen = false;
@@ -153,7 +153,8 @@ function renderCart() {
     ${cart
       .map((i, idx) => {
         const avail = getAvailableStock(i.productId);
-        const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+        const stockLine =
+          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
         return `
         <div class="hr" style="margin:10px 0"></div>
         <div>
@@ -201,7 +202,8 @@ async function sendOrder() {
 
   for (const item of cart) {
     const avail = getAvailableStock(item.productId);
-    if (avail !== null && item.qty > avail) return alert(`"${item.name}" tem só ${avail} em estoque.`);
+    if (avail !== null && item.qty > avail)
+      return alert(`"${item.name}" tem só ${avail} em estoque.`);
     if (avail !== null && avail <= 0) return alert(`"${item.name}" está sem estoque.`);
   }
 
@@ -313,9 +315,11 @@ function renderProducts(items) {
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
         </div>
 
-        <!-- ✅ NOVO LAYOUT DE PREÇO (mais claro) -->
+        <!-- ✅ NOVO LAYOUT DE PREÇO -->
         <div class="priceBlock">
-          ${promo ? `
+          ${
+            promo
+              ? `
             <div class="priceLine">
               <div class="priceLabel">Preço atual na trade</div>
               <div class="priceValue trade">${money(p.price)}</div>
@@ -324,17 +328,23 @@ function renderProducts(items) {
               <div class="priceLabel">Preço casamata</div>
               <div class="priceValue casamata">${money(shownPrice)}</div>
             </div>
-          ` : `
+          `
+              : `
             <div class="priceLine">
               <div class="priceLabel">Preço casamata</div>
               <div class="priceValue casamata">${money(shownPrice)}</div>
             </div>
-          `}
+          `
+          }
         </div>
 
         <div class="pay-hint">Pagamento em cash do jogo!</div>
-        <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
-          <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
+
+        <!-- ✅ linha de compra padronizada (alinhamento via CSS) -->
+        <div class="buyRow">
+          <input type="number" min="1" value="1" class="input qty" ${
+            out ? "disabled" : ""
+          }>
           <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>
             ${out ? "Sem estoque" : "Adicionar"}
           </button>

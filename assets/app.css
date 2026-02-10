@@ -211,3 +211,29 @@ textarea{ resize:vertical; }
 .buyRow .addBtn{
   flex:1;
 }
+
+/* =========================
+   PADRONIZAÇÃO DO BLOCO DE PREÇO
+   - Sempre mesma altura
+   - 1 ou 2 preços ficam iguais visualmente
+========================= */
+
+.priceBlock{
+  display:grid;
+  gap:8px;
+  min-height:104px; /* altura fixa para 2 linhas */
+}
+
+/* quando só existe 1 linha, cria um "espaço fantasma" */
+.priceBlock::after{
+  content:"";
+  display:block;
+}
+
+/* garante que cada linha tenha altura fixa */
+.priceLine{
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}

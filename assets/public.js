@@ -66,7 +66,7 @@ function clampZoom(v, fallback = 100) {
  * - zoom < 100: contain + checker + scale(z/100)
  * - zoom >= 100: cover + scale(z/100)
  */
-function applyImageView(imgEl, containerEl, { x=50, y=50, zoom=100 } = {}) {
+function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {}) {
   const z = clampZoom(zoom, 100);
   const fit = z < 100 ? "contain" : "cover";
 
@@ -107,10 +107,7 @@ cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
 
 const style = document.createElement("style");
-style.textContent = `
-  .pay-hint{margin-top:4px;font-size:12px;opacity:.85;}
-  .trade-hint{margin-top:4px;font-size:12px;opacity:.95;}
-`;
+style.textContent = `.pay-hint{margin-top:4px;font-size:12px;opacity:.85;}`;
 document.head.appendChild(style);
 document.body.appendChild(cartPanel);
 
@@ -153,10 +150,11 @@ function renderCart() {
       <button id="closeCart" class="btn secondary" type="button" style="padding:6px 10px">Fechar</button>
     </div>
     ${cart.length === 0 ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>` : ""}
-    ${cart.map((i, idx) => {
-      const avail = getAvailableStock(i.productId);
-      const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
-      return `
+    ${cart
+      .map((i, idx) => {
+        const avail = getAvailableStock(i.productId);
+        const stockLine = avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
+        return `
         <div class="hr" style="margin:10px 0"></div>
         <div>
           <strong>${i.name}</strong><br>
@@ -168,7 +166,8 @@ function renderCart() {
             <button class="btn danger" data-remove="${idx}" type="button">Remover</button>
           </div>
         </div>`;
-    }).join("")}
+      })
+      .join("")}
     <div class="hr" style="margin:12px 0"></div>
     <strong>Total: ${money(total)}</strong>
     <div class="pay-hint">Pagamento em cash do jogo!</div>
@@ -208,10 +207,15 @@ async function sendOrder() {
 
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
   const payload = {
-    nick, discord,
+    nick,
+    discord,
     items: cart.map((i) => ({
-      productId: i.productId, name: i.name, qty: i.qty, unitPrice: i.price,
-      unitPriceText: money(i.price), subtotalText: money(i.price * i.qty),
+      productId: i.productId,
+      name: i.name,
+      qty: i.qty,
+      unitPrice: i.price,
+      unitPriceText: money(i.price),
+      subtotalText: money(i.price * i.qty),
     })),
     totalText: money(total),
     createdAt: new Date().toISOString(),
@@ -259,7 +263,7 @@ function watchGlobalConfig() {
     applyImageView(el("bannerImg"), bannerContainer, {
       x: data.bannerPosX ?? 50,
       y: data.bannerPosY ?? 50,
-      zoom: data.bannerZoom ?? 100
+      zoom: data.bannerZoom ?? 100,
     });
 
     const whatsRaw = pick(data, ["whatsappLink"], "");
@@ -283,7 +287,7 @@ function renderProducts(items) {
     card.className = "card";
 
     const img = fixAssetPath(p.imageUrl || "");
-    const stock = (p.stock === null || p.stock === undefined) ? null : Number(p.stock);
+    const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
     const hasStock = Number.isFinite(stock);
     const out = hasStock && stock <= 0;
 
@@ -309,15 +313,26 @@ function renderProducts(items) {
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
         </div>
 
-        <div class="priceRow">
-          <div class="price">${money(shownPrice)}</div>
-          ${promo ? `<div class="old">${money(p.price)}</div>` : ``}
+        <!-- ✅ NOVO LAYOUT DE PREÇO (mais claro) -->
+        <div class="priceBlock">
+          ${promo ? `
+            <div class="priceLine">
+              <div class="priceLabel">Preço atual na trade</div>
+              <div class="priceValue trade">${money(p.price)}</div>
+            </div>
+            <div class="priceLine">
+              <div class="priceLabel">Preço casamata</div>
+              <div class="priceValue casamata">${money(shownPrice)}</div>
+            </div>
+          ` : `
+            <div class="priceLine">
+              <div class="priceLabel">Preço casamata</div>
+              <div class="priceValue casamata">${money(shownPrice)}</div>
+            </div>
+          `}
         </div>
 
-        ${promo ? `<div class="trade-hint">(Preço atual na trade)</div>` : ``}
-
         <div class="pay-hint">Pagamento em cash do jogo!</div>
-
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
           <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
           <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>
@@ -333,7 +348,7 @@ function renderProducts(items) {
     applyImageView(imgEl, imgContainer, {
       x: p.imagePosX ?? 50,
       y: p.imagePosY ?? 50,
-      zoom: p.imageZoom ?? 100
+      zoom: p.imageZoom ?? 100,
     });
 
     const qtyInput = card.querySelector(".qty");

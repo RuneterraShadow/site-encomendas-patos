@@ -6,7 +6,7 @@ import {
   signOut,
   setPersistence,
   browserSessionPersistence
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
   doc, getDoc, setDoc, serverTimestamp,
@@ -23,7 +23,7 @@ const settingsMsg = $("settingsMsg");
 const productMsg = $("productMsg");
 const productsGrid = $("productsGrid");
 
-// ✅ Pede senha de novo SOMENTE depois que fechar o navegador
+// ✅ Pede login de novo ao fechar o navegador (sessão)
 (async () => {
   try {
     await setPersistence(auth, browserSessionPersistence);
@@ -89,10 +89,12 @@ function setSafeImg(imgEl, url) {
 /* ======================
    AUTH UI
 ====================== */
-$("loginBtn")?.addEventListener("click", async () => {
+$("loginBtn")?.addEventListener("click", async (ev) => {
+  ev?.preventDefault?.();
+
   loginMsg.textContent = "";
   const email = $("email").value.trim();
-  const pass = $("password").value;
+  const pass = $("pass").value; // ✅ ID correto do admin.html
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
@@ -292,7 +294,6 @@ function renderProductsGrid(items) {
           ${(p.stock === null || p.stock === undefined) ? `` : `<div class="badge">Estoque: ${p.stock}</div>`}
         </div>
 
-        <!-- ✅ NOVO LAYOUT DE PREÇO NO ADMIN -->
         <div class="priceBlock">
           ${promo ? `
             <div class="priceLine">
@@ -345,7 +346,6 @@ function clearProductForm() {
   $("imagePosY").value = 50;
   $("imageZoom").value = 100;
 
-  // preview
   const previewImg = $("previewImg");
   const previewBox = previewImg?.closest(".imgPreviewBox");
   if (previewImg) {
@@ -374,7 +374,6 @@ function openEdit(p) {
   $("imagePosY").value = p.imagePosY ?? 50;
   $("imageZoom").value = p.imageZoom ?? 100;
 
-  // preview
   const previewImg = $("previewImg");
   const previewBox = previewImg?.closest(".imgPreviewBox");
   if (previewImg) {

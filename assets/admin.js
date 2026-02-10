@@ -5,36 +5,28 @@ import {
   onAuthStateChanged,
   signOut,
   setPersistence,
-  browserSessionPersistence
+  browserSessionPersistence,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 import {
-  doc, getDoc, setDoc, serverTimestamp,
-  collection, addDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-const $ = (id) => document.getElementById(id);
-
-const loginBox = $("loginBox");
-const adminBox = $("adminBox");
-const loginMsg = $("loginMsg");
-const settingsMsg = $("settingsMsg");
-const productMsg = $("productMsg");
-const productsGrid = $("productsGrid");
-
-// ✅ Pede login de novo ao fechar o navegador (sessão)
-(async () => {
-  try {
-    await setPersistence(auth, browserSessionPersistence);
-  } catch (e) {
-    console.warn("Persistence error", e);
-  }
-})();
 
 /* ======================
    HELPERS
 ====================== */
+const $ = (id) => document.getElementById(id);
+
 const moneyBRL = (v) =>
   Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
@@ -63,9 +55,9 @@ function clampZoom(v, fallback = 100) {
 }
 
 /**
- * ✅ Mesma regra do site:
- * - zoom < 100: contain + checker + scale(z/100)
- * - zoom >= 100: cover + scale(z/100)
+ * ✅ Regra fiel:
+ * - zoom < 100: contain + checker + scale
+ * - zoom >= 100: cover + scale
  */
 function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {}) {
   const z = clampZoom(zoom, 100);
@@ -82,19 +74,54 @@ function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {})
 
 function setSafeImg(imgEl, url) {
   const u = fixAssetPath(url);
-  if (!u) return;
+  if (!u) {
+    imgEl?.removeAttribute("src");
+    return;
+  }
   imgEl.src = u;
 }
 
+function setText(id, value) {
+  const n = $(id);
+  if (n) n.textContent = String(value);
+}
+
+function toBoolFromSelect(selId) {
+  return $(selId).value === "true";
+}
+
+function numOrNull(v) {
+  if (v === "" || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 /* ======================
-   AUTH UI
+   AUTH
 ====================== */
+const loginBox = $("loginBox");
+const adminBox = $("adminBox");
+const loginMsg = $("loginMsg");
+
+const settingsMsg = $("settingsMsg");
+const productMsg = $("productMsg");
+const productsGrid = $("productsGrid");
+
+(async () => {
+  // sessão: fecha o browser => pede login de novo
+  try {
+    await setPersistence(auth, browserSessionPersistence);
+  } catch (e) {
+    console.warn("Persistence error", e);
+  }
+})();
+
 $("loginBtn")?.addEventListener("click", async (ev) => {
   ev?.preventDefault?.();
-
   loginMsg.textContent = "";
+
   const email = $("email").value.trim();
-  const pass = $("pass").value; // ✅ ID correto do admin.html
+  const pass = $("pass").value;
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
@@ -124,46 +151,37 @@ onAuthStateChanged(auth, (user) => {
 /* ======================
    SETTINGS (site/settings)
 ====================== */
+let settingsBound = false;
+
 async function initSettings() {
   const ref = doc(db, "site", "settings");
-  const snap = await getDoc(ref);
-  if (snap.exists()) fillSettingsForm(snap.data());
 
-  $("saveSettingsBtn")?.addEventListener("click", async () => {
-    settingsMsg.textContent = "";
-    const data = readSettingsForm();
-    try {
-      await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
-      settingsMsg.textContent = "Configurações salvas.";
-    } catch (e) {
-      console.error(e);
-      settingsMsg.textContent = "Erro ao salvar configurações.";
-    }
-  });
+  // Carrega uma vez
+  try {
+    const snap = await getDoc(ref);
+    if (snap.exists()) fillSettingsForm(snap.data());
+  } catch (e) {
+    console.error(e);
+  }
 
-  // Preview banner com zoom/pos
-  const bannerPreview = $("bannerPreviewImg");
-  const bannerPreviewBox = bannerPreview?.closest(".imgPreviewBox");
-  const updateBannerPreview = () => {
-    if (!bannerPreview) return;
-    setSafeImg(bannerPreview, $("bannerImageUrl").value);
-    applyImageView(bannerPreview, bannerPreviewBox, {
-      x: $("bannerPosX").value,
-      y: $("bannerPosY").value,
-      zoom: $("bannerZoom").value
+  // Bind só 1 vez
+  if (!settingsBound) {
+    settingsBound = true;
+
+    $("saveSettingsBtn")?.addEventListener("click", saveSettings);
+
+    // Banner sliders + preview
+    ["bImagePosX", "bImagePosY", "bImageZoom", "bannerImageUrl"].forEach((id) => {
+      $(id)?.addEventListener("input", updateBannerPreview);
     });
-  };
 
-  ["bannerImageUrl", "bannerPosX", "bannerPosY", "bannerZoom"].forEach((id) => {
-    $(id)?.addEventListener("input", updateBannerPreview);
-  });
-
-  $("bannerResetBtn")?.addEventListener("click", () => {
-    $("bannerPosX").value = 50;
-    $("bannerPosY").value = 50;
-    $("bannerZoom").value = 100;
-    updateBannerPreview();
-  });
+    $("resetBannerBtn")?.addEventListener("click", () => {
+      $("bImagePosX").value = 50;
+      $("bImagePosY").value = 50;
+      $("bImageZoom").value = 100;
+      updateBannerPreview();
+    });
+  }
 
   updateBannerPreview();
 }
@@ -173,28 +191,19 @@ function fillSettingsForm(d) {
   $("siteSubtitle").value = d.siteSubtitle || "";
   $("globalDesc").value = d.globalDesc || "";
 
+  $("whatsappLink").value = d.whatsappLink || "";
+  $("buyBtnText").value = d.buyBtnText || "";
+
   $("bannerTitle").value = d.bannerTitle || "";
   $("bannerDesc").value = d.bannerDesc || "";
   $("bannerImageUrl").value = d.bannerImageUrl || "";
 
-  $("whatsappLink").value = d.whatsappLink || "";
-  $("buyBtnText").value = d.buyBtnText || "";
+  // Firestore usa bannerPosX/Y/Zoom (o site usa esses campos)
+  $("bImagePosX").value = d.bannerPosX ?? 50;
+  $("bImagePosY").value = d.bannerPosY ?? 50;
+  $("bImageZoom").value = d.bannerZoom ?? 100;
 
-  $("bannerPosX").value = d.bannerPosX ?? 50;
-  $("bannerPosY").value = d.bannerPosY ?? 50;
-  $("bannerZoom").value = d.bannerZoom ?? 100;
-
-  // Preview banner
-  const bannerPreview = $("bannerPreviewImg");
-  const bannerPreviewBox = bannerPreview?.closest(".imgPreviewBox");
-  if (bannerPreview) {
-    setSafeImg(bannerPreview, d.bannerImageUrl || "");
-    applyImageView(bannerPreview, bannerPreviewBox, {
-      x: d.bannerPosX ?? 50,
-      y: d.bannerPosY ?? 50,
-      zoom: d.bannerZoom ?? 100
-    });
-  }
+  updateBannerPreview();
 }
 
 function readSettingsForm() {
@@ -203,71 +212,226 @@ function readSettingsForm() {
     siteSubtitle: $("siteSubtitle").value.trim(),
     globalDesc: $("globalDesc").value.trim(),
 
+    whatsappLink: $("whatsappLink").value.trim(),
+    buyBtnText: $("buyBtnText").value.trim(),
+
     bannerTitle: $("bannerTitle").value.trim(),
     bannerDesc: $("bannerDesc").value.trim(),
     bannerImageUrl: $("bannerImageUrl").value.trim(),
 
-    whatsappLink: $("whatsappLink").value.trim(),
-    buyBtnText: $("buyBtnText").value.trim(),
-
-    bannerPosX: Number($("bannerPosX").value),
-    bannerPosY: Number($("bannerPosY").value),
-    bannerZoom: Number($("bannerZoom").value),
+    // ✅ salva nos campos que o public.js lê
+    bannerPosX: Number($("bImagePosX").value),
+    bannerPosY: Number($("bImagePosY").value),
+    bannerZoom: Number($("bImageZoom").value),
   };
+}
+
+async function saveSettings() {
+  settingsMsg.textContent = "";
+  const ref = doc(db, "site", "settings");
+  const data = readSettingsForm();
+
+  try {
+    await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+    settingsMsg.textContent = "Configurações salvas.";
+  } catch (e) {
+    console.error(e);
+    settingsMsg.textContent = "Erro ao salvar configurações.";
+  }
+}
+
+function updateBannerPreview() {
+  setText("bImagePosXVal", $("bImagePosX")?.value ?? 50);
+  setText("bImagePosYVal", $("bImagePosY")?.value ?? 50);
+  setText("bImageZoomVal", $("bImageZoom")?.value ?? 100);
+
+  const img = $("bImagePreview");
+  const box = $("bImagePreviewBox");
+  if (!img || !box) return;
+
+  setSafeImg(img, $("bannerImageUrl").value);
+  applyImageView(img, box, {
+    x: $("bImagePosX").value,
+    y: $("bImagePosY").value,
+    zoom: $("bImageZoom").value,
+  });
 }
 
 /* ======================
    PRODUCTS
 ====================== */
-let editingId = null;
+let productsBound = false;
 
 function initProducts() {
+  // listeners/binds 1 vez
+  if (!productsBound) {
+    productsBound = true;
+
+    $("saveProductBtn")?.addEventListener("click", saveProduct);
+    $("clearFormBtn")?.addEventListener("click", (ev) => {
+      ev?.preventDefault?.();
+      clearProductForm();
+    });
+    $("deleteProductBtn")?.addEventListener("click", deleteProduct);
+
+    ["pImagePosX", "pImagePosY", "pImageZoom", "pImageUrl"].forEach((id) => {
+      $(id)?.addEventListener("input", updateProductPreview);
+    });
+
+    $("resetCropBtn")?.addEventListener("click", (ev) => {
+      ev?.preventDefault?.();
+      $("pImagePosX").value = 50;
+      $("pImagePosY").value = 50;
+      $("pImageZoom").value = 100;
+      updateProductPreview();
+    });
+  }
+
+  updateProductPreview();
+
+  // realtime listagem
   const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
   onSnapshot(qProducts, (snap) => {
     const items = [];
     snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
     renderProductsGrid(items);
   });
+}
 
-  $("newProductBtn")?.addEventListener("click", () => {
-    editingId = null;
-    productMsg.textContent = "";
-    clearProductForm();
-    $("productModal").style.display = "block";
+function updateProductPreview() {
+  setText("pImagePosXVal", $("pImagePosX")?.value ?? 50);
+  setText("pImagePosYVal", $("pImagePosY")?.value ?? 50);
+  setText("pImageZoomVal", $("pImageZoom")?.value ?? 100);
+
+  const img = $("pImagePreview");
+  const box = $("pImagePreviewBox");
+  if (!img || !box) return;
+
+  setSafeImg(img, $("pImageUrl").value);
+  applyImageView(img, box, {
+    x: $("pImagePosX").value,
+    y: $("pImagePosY").value,
+    zoom: $("pImageZoom").value,
   });
+}
 
-  $("closeModalBtn")?.addEventListener("click", () => {
-    $("productModal").style.display = "none";
-  });
+function clearProductForm() {
+  $("productId").value = "";
 
-  $("saveProductBtn")?.addEventListener("click", saveProduct);
-  $("deleteProductBtn")?.addEventListener("click", deleteProduct);
+  $("pName").value = "";
+  $("pDesc").value = "";
+  $("pPrice").value = "";
+  $("pPromo").value = "";
+  $("pStock").value = "";
+  $("pOrder").value = 100;
 
-  // Preview produto com zoom/pos
-  const previewImg = $("previewImg");
-  const previewBox = previewImg?.closest(".imgPreviewBox");
-  const updatePreview = () => {
-    if (!previewImg) return;
-    setSafeImg(previewImg, $("imageUrl").value);
-    applyImageView(previewImg, previewBox, {
-      x: $("imagePosX").value,
-      y: $("imagePosY").value,
-      zoom: $("imageZoom").value
-    });
+  $("pImageUrl").value = "";
+  $("pImagePosX").value = 50;
+  $("pImagePosY").value = 50;
+  $("pImageZoom").value = 100;
+
+  $("pActive").value = "true";
+  $("pFeatured").value = "false";
+
+  $("deleteProductBtn").disabled = true;
+  productMsg.textContent = "";
+
+  updateProductPreview();
+}
+
+function openEdit(p) {
+  $("productId").value = p.id;
+
+  $("pName").value = p.name || "";
+  $("pDesc").value = p.description || "";
+  $("pPrice").value = p.price ?? "";
+  $("pPromo").value = p.promoPrice ?? "";
+  $("pStock").value = p.stock ?? "";
+  $("pOrder").value = p.sortOrder ?? 100;
+
+  $("pImageUrl").value = p.imageUrl || "";
+  $("pImagePosX").value = p.imagePosX ?? 50;
+  $("pImagePosY").value = p.imagePosY ?? 50;
+  $("pImageZoom").value = p.imageZoom ?? 100;
+
+  $("pActive").value = String(!!p.active);
+  $("pFeatured").value = String(!!p.featured);
+
+  $("deleteProductBtn").disabled = false;
+  productMsg.textContent = "";
+
+  updateProductPreview();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function readProductForm() {
+  const price = Number($("pPrice").value || 0);
+  const promoPrice = numOrNull($("pPromo").value);
+  const stock = numOrNull($("pStock").value);
+
+  return {
+    name: $("pName").value.trim(),
+    description: $("pDesc").value.trim(),
+    price: Number.isFinite(price) ? price : 0,
+    promoPrice: promoPrice,
+    stock: stock,
+
+    sortOrder: Number($("pOrder").value || 100),
+
+    imageUrl: $("pImageUrl").value.trim(),
+    imagePosX: Number($("pImagePosX").value),
+    imagePosY: Number($("pImagePosY").value),
+    imageZoom: Number($("pImageZoom").value),
+
+    active: toBoolFromSelect("pActive"),
+    featured: toBoolFromSelect("pFeatured"),
+  };
+}
+
+async function saveProduct(ev) {
+  ev?.preventDefault?.();
+  productMsg.textContent = "";
+
+  const data = {
+    ...readProductForm(),
+    updatedAt: serverTimestamp(),
   };
 
-  ["imageUrl", "imagePosX", "imagePosY", "imageZoom"].forEach((id) => {
-    $(id)?.addEventListener("input", updatePreview);
-  });
+  const id = $("productId").value.trim();
 
-  $("resetCropBtn")?.addEventListener("click", () => {
-    $("imagePosX").value = 50;
-    $("imagePosY").value = 50;
-    $("imageZoom").value = 100;
-    updatePreview();
-  });
+  try {
+    if (!id) {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db, "products"), data);
+      productMsg.textContent = "Produto criado.";
+      clearProductForm();
+    } else {
+      await updateDoc(doc(db, "products", id), data);
+      productMsg.textContent = "Produto atualizado.";
+    }
+  } catch (e) {
+    console.error(e);
+    productMsg.textContent = "Erro ao salvar produto.";
+  }
+}
 
-  updatePreview();
+async function deleteProduct(ev) {
+  ev?.preventDefault?.();
+
+  const id = $("productId").value.trim();
+  if (!id) return;
+
+  if (!confirm("Excluir este produto?")) return;
+
+  productMsg.textContent = "";
+  try {
+    await deleteDoc(doc(db, "products", id));
+    productMsg.textContent = "Produto excluído.";
+    clearProductForm();
+  } catch (e) {
+    console.error(e);
+    productMsg.textContent = "Erro ao excluir produto.";
+  }
 }
 
 function renderProductsGrid(items) {
@@ -282,6 +446,7 @@ function renderProductsGrid(items) {
 
     const card = document.createElement("div");
     card.className = "card";
+
     card.innerHTML = `
       <div class="img"><img alt=""></div>
       <div class="body">
@@ -294,6 +459,7 @@ function renderProductsGrid(items) {
           ${(p.stock === null || p.stock === undefined) ? `` : `<div class="badge">Estoque: ${p.stock}</div>`}
         </div>
 
+        <!-- ✅ Layout novo de preço -->
         <div class="priceBlock">
           ${promo ? `
             <div class="priceLine">
@@ -312,12 +478,13 @@ function renderProductsGrid(items) {
           `}
         </div>
 
-        <button class="btn secondary" data-edit>Editar</button>
+        <button class="btn secondary" type="button" data-edit>Editar</button>
       </div>
     `;
 
     const imgContainer = card.querySelector(".img");
     const imgEl = card.querySelector("img");
+
     setSafeImg(imgEl, p.imageUrl);
 
     applyImageView(imgEl, imgContainer, {
@@ -331,113 +498,5 @@ function renderProductsGrid(items) {
   });
 }
 
-function clearProductForm() {
-  $("pName").value = "";
-  $("pDesc").value = "";
-  $("pPrice").value = "";
-  $("pPromoPrice").value = "";
-  $("pStock").value = "";
-  $("pSort").value = "";
-  $("pActive").checked = true;
-  $("pFeatured").checked = false;
-
-  $("imageUrl").value = "";
-  $("imagePosX").value = 50;
-  $("imagePosY").value = 50;
-  $("imageZoom").value = 100;
-
-  const previewImg = $("previewImg");
-  const previewBox = previewImg?.closest(".imgPreviewBox");
-  if (previewImg) {
-    previewImg.removeAttribute("src");
-    applyImageView(previewImg, previewBox, { x: 50, y: 50, zoom: 100 });
-  }
-
-  $("deleteProductBtn").style.display = "none";
-}
-
-function openEdit(p) {
-  editingId = p.id;
-  productMsg.textContent = "";
-
-  $("pName").value = p.name || "";
-  $("pDesc").value = p.description || "";
-  $("pPrice").value = p.price ?? "";
-  $("pPromoPrice").value = p.promoPrice ?? "";
-  $("pStock").value = (p.stock === null || p.stock === undefined) ? "" : p.stock;
-  $("pSort").value = p.sortOrder ?? "";
-  $("pActive").checked = !!p.active;
-  $("pFeatured").checked = !!p.featured;
-
-  $("imageUrl").value = p.imageUrl || "";
-  $("imagePosX").value = p.imagePosX ?? 50;
-  $("imagePosY").value = p.imagePosY ?? 50;
-  $("imageZoom").value = p.imageZoom ?? 100;
-
-  const previewImg = $("previewImg");
-  const previewBox = previewImg?.closest(".imgPreviewBox");
-  if (previewImg) {
-    setSafeImg(previewImg, p.imageUrl || "");
-    applyImageView(previewImg, previewBox, {
-      x: p.imagePosX ?? 50,
-      y: p.imagePosY ?? 50,
-      zoom: p.imageZoom ?? 100
-    });
-  }
-
-  $("deleteProductBtn").style.display = "inline-block";
-  $("productModal").style.display = "block";
-}
-
-async function saveProduct() {
-  productMsg.textContent = "";
-
-  const data = {
-    name: $("pName").value.trim(),
-    description: $("pDesc").value.trim(),
-    price: Number($("pPrice").value || 0),
-    promoPrice: $("pPromoPrice").value === "" ? null : Number($("pPromoPrice").value),
-    stock: $("pStock").value === "" ? null : Number($("pStock").value),
-    sortOrder: Number($("pSort").value || 0),
-    active: $("pActive").checked,
-    featured: $("pFeatured").checked,
-
-    imageUrl: $("imageUrl").value.trim(),
-    imagePosX: Number($("imagePosX").value),
-    imagePosY: Number($("imagePosY").value),
-    imageZoom: Number($("imageZoom").value),
-
-    updatedAt: serverTimestamp(),
-  };
-
-  try {
-    if (!editingId) {
-      data.createdAt = serverTimestamp();
-      await addDoc(collection(db, "products"), data);
-      productMsg.textContent = "Produto criado.";
-    } else {
-      await updateDoc(doc(db, "products", editingId), data);
-      productMsg.textContent = "Produto atualizado.";
-    }
-    $("productModal").style.display = "none";
-  } catch (e) {
-    console.error(e);
-    productMsg.textContent = "Erro ao salvar produto.";
-  }
-}
-
-async function deleteProduct() {
-  if (!editingId) return;
-  if (!confirm("Excluir este produto?")) return;
-
-  productMsg.textContent = "";
-  try {
-    await deleteDoc(doc(db, "products", editingId));
-    productMsg.textContent = "Produto excluído.";
-    $("productModal").style.display = "none";
-    editingId = null;
-  } catch (e) {
-    console.error(e);
-    productMsg.textContent = "Erro ao excluir produto.";
-  }
-}
+// Inicializa form zerado quando abrir admin
+clearProductForm();

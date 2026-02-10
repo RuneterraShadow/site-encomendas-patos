@@ -161,3 +161,53 @@ textarea{ resize:vertical; }
   border-radius:10px;
   font-size:12px;
 }
+
+/* =========================
+   ALINHAMENTO DOS CARDS
+   - Preço com altura padrão
+   - Botão "Adicionar" alinhado em todos
+========================= */
+
+/* o card vira coluna */
+.card{
+  display:flex;
+  flex-direction:column;
+}
+
+/* o body ocupa o “resto” e vira coluna também */
+.card .body{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-height:0;
+}
+
+/* deixa descrição com altura parecida entre cards */
+.card p{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+}
+
+/* ✅ reserva espaço do preço (1 linha ou 2 linhas) */
+.priceBlock{
+  min-height: 104px; /* suficiente para 2 priceLine + gap */
+}
+
+/* ✅ “rodapé” do card: empurra para baixo e alinha botões */
+.buyRow{
+  margin-top:auto;
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin-top:10px; /* espaçamento do bloco acima */
+}
+
+.buyRow .qty{
+  width:90px;
+}
+
+.buyRow .addBtn{
+  flex:1;
+}

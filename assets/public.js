@@ -107,7 +107,10 @@ cartPanel.style.padding = "14px";
 cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
 
 const style = document.createElement("style");
-style.textContent = `.pay-hint{margin-top:4px;font-size:12px;opacity:.85;}`;
+style.textContent = `
+  .pay-hint{margin-top:4px;font-size:12px;opacity:.85;}
+  .trade-hint{margin-top:4px;font-size:12px;opacity:.95;}
+`;
 document.head.appendChild(style);
 document.body.appendChild(cartPanel);
 
@@ -305,11 +308,16 @@ function renderProducts(items) {
           ${stockBadge}
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
         </div>
+
         <div class="priceRow">
           <div class="price">${money(shownPrice)}</div>
           ${promo ? `<div class="old">${money(p.price)}</div>` : ``}
         </div>
+
+        ${promo ? `<div class="trade-hint">(Preço atual na trade)</div>` : ``}
+
         <div class="pay-hint">Pagamento em cash do jogo!</div>
+
         <div style="display:flex;gap:6px;align-items:center;margin-top:10px">
           <input type="number" min="1" value="1" class="input qty" style="width:90px" ${out ? "disabled" : ""}>
           <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>

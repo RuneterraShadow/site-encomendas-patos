@@ -8,9 +8,6 @@ import {
   onSnapshot as onDocSnapshot,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-/* ======================
-   HELPERS
-====================== */
 const el = (id) => document.getElementById(id);
 
 const money = (v) =>
@@ -61,15 +58,11 @@ function clampZoom(v, fallback = 100) {
   return Math.max(50, Math.min(200, n));
 }
 
-/**
- * zoom < 100: contain + checker + scale
- * zoom >= 100: cover + scale
- */
 function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {}) {
   const z = clampZoom(zoom, 100);
   const fit = z < 100 ? "contain" : "cover";
-
   if (containerEl) containerEl.classList.toggle("checker", z < 100);
+
   if (imgEl) {
     imgEl.style.objectFit = fit;
     imgEl.style.objectPosition = `${clampPos(x, 50)}% ${clampPos(y, 50)}%`;
@@ -85,9 +78,7 @@ function normalizeStr(s) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-/* ======================
-   TOAST
-====================== */
+/* TOAST */
 function showToast(message) {
   const t = document.createElement("div");
   t.className = "toast";
@@ -100,9 +91,20 @@ function showToast(message) {
   }, 1800);
 }
 
-/* ======================
-   MODAL PRODUTO
-====================== */
+/* PROMO */
+function isPromo(p) {
+  return (
+    p.promoPrice !== null &&
+    p.promoPrice !== undefined &&
+    Number(p.promoPrice) > 0 &&
+    Number(p.promoPrice) < Number(p.price || 0)
+  );
+}
+function shownPrice(p) {
+  return isPromo(p) ? Number(p.promoPrice) : Number(p.price || 0);
+}
+
+/* MODAL */
 const modalOverlay = document.createElement("div");
 modalOverlay.className = "productModalOverlay";
 modalOverlay.innerHTML = `
@@ -141,18 +143,6 @@ document.addEventListener("keydown", (e) => {
 
 let modalCurrentProduct = null;
 
-function isPromo(p) {
-  return (
-    p.promoPrice !== null &&
-    p.promoPrice !== undefined &&
-    Number(p.promoPrice) > 0 &&
-    Number(p.promoPrice) < Number(p.price || 0)
-  );
-}
-function shownPrice(p) {
-  return isPromo(p) ? Number(p.promoPrice) : Number(p.price || 0);
-}
-
 function openProductModal(p) {
   modalCurrentProduct = p;
 
@@ -172,6 +162,7 @@ function openProductModal(p) {
   const badges = [];
   const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
   const hasStock = Number.isFinite(stock);
+
   badges.push(hasStock ? `Estoque: ${stock}` : "Estoque: ∞");
   badges.push((p.category || "Outros").toString());
   if (p.featured) badges.push("Destaque");
@@ -212,17 +203,14 @@ function openProductModal(p) {
 el("modalAddBtn").addEventListener("click", () => {
   const p = modalCurrentProduct;
   if (!p) return;
-
   const qty = Math.max(1, Number(el("modalQty").value || 1));
   addToCart(p, qty);
   showToast("Produto adicionado ao carrinho!");
   closeModal();
 });
 
-/* ======================
-   CARRINHO (ESQUERDA)
-====================== */
-let cart = []; // { productId, name, price, qty }
+/* CARRINHO */
+let cart = [];
 let cartOpen = false;
 
 const stockMap = new Map();
@@ -267,17 +255,13 @@ function getAvailableStock(productId) {
 }
 
 function normalizeCartAgainstStock() {
-  let changed = false;
   cart = cart
     .map((i) => {
       const avail = getAvailableStock(i.productId);
       if (avail === null) return i;
-      const newQty = Math.min(i.qty, avail);
-      if (newQty !== i.qty) changed = true;
-      return { ...i, qty: newQty };
+      return { ...i, qty: Math.min(i.qty, avail) };
     })
     .filter((i) => i.qty > 0);
-  return changed;
 }
 
 function addToCart(p, qty) {
@@ -285,14 +269,8 @@ function addToCart(p, qty) {
   const price = shownPrice(p);
   const avail = getAvailableStock(id);
 
-  if (avail !== null && avail <= 0) {
-    alert("Sem estoque.");
-    return;
-  }
-  if (avail !== null && qty > avail) {
-    alert(`Só tem ${avail} em estoque.`);
-    return;
-  }
+  if (avail !== null && avail <= 0) return alert("Sem estoque.");
+  if (avail !== null && qty > avail) return alert(`Só tem ${avail} em estoque.`);
 
   const existing = cart.find((x) => x.productId === id && x.price === price);
   if (existing) {
@@ -327,9 +305,7 @@ function renderCart() {
           : cart
               .map((i, idx) => {
                 const avail = getAvailableStock(i.productId);
-                const stockLine =
-                  avail === null ? "" : `<div class="small">Estoque: ${avail}</div>`;
-
+                const stockLine = avail === null ? "" : `<div class="small">Estoque: ${avail}</div>`;
                 return `
                   <div class="cartItem">
                     <strong>${i.name}</strong>
@@ -402,10 +378,8 @@ async function sendOrder() {
 
   for (const item of cart) {
     const avail = getAvailableStock(item.productId);
-    if (avail !== null && item.qty > avail)
-      return alert(`"${item.name}" tem só ${avail} em estoque.`);
-    if (avail !== null && avail <= 0)
-      return alert(`"${item.name}" está sem estoque.`);
+    if (avail !== null && item.qty > avail) return alert(`"${item.name}" tem só ${avail} em estoque.`);
+    if (avail !== null && avail <= 0) return alert(`"${item.name}" está sem estoque.`);
   }
 
   const payload = {
@@ -430,7 +404,6 @@ async function sendOrder() {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
     alert("Pedido recebido! Entraremos em contato.");
     cart = [];
     renderCart();
@@ -441,9 +414,7 @@ async function sendOrder() {
   }
 }
 
-/* ======================
-   CONFIG GLOBAL + BANNER
-====================== */
+/* CONFIG GLOBAL + BANNER + ✅ RODAPÉ */
 function watchGlobalConfig() {
   const ref = doc(db, "site", "settings");
   onDocSnapshot(ref, (snap) => {
@@ -469,19 +440,41 @@ function watchGlobalConfig() {
 
     const whatsRaw = pick(data, ["whatsappLink"], "");
     el("whatsBtn").href = makeWhatsLink(whatsRaw);
-
     const btnText = pick(data, ["buyBtnText"], "");
     if (btnText) el("whatsBtn").textContent = btnText;
 
     el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
+
+    /* ✅ RODAPÉ */
+    const ft = pick(data, ["footerTitle"], "CASAMATA");
+    const ftxt = pick(data, ["footerText"], "");
+    const fcopy = pick(data, ["footerCopy"], "");
+
+    const footerTitleEl = document.getElementById("footerTitle");
+    const footerTextEl = document.getElementById("footerText");
+    const footerCopyEl = document.getElementById("footerCopy");
+    const footerLinksEl = document.getElementById("footerLinks");
+
+    if (footerTitleEl) footerTitleEl.textContent = ft;
+    if (footerTextEl) footerTextEl.textContent = ftxt;
+    if (footerCopyEl) footerCopyEl.textContent = fcopy;
+
+    const raw = (data.footerLinksRaw || "").toString();
+    const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+
+    if (footerLinksEl) {
+      footerLinksEl.innerHTML = lines.map(line => {
+        const parts = line.split("|").map(p => p.trim());
+        const text = parts[0] || "Link";
+        const url = parts[1] || "#";
+        return `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
+      }).join("");
+    }
   });
 }
 
-/* ======================
-   FILTROS: CATEGORIA + BUSCA
-====================== */
+/* FILTROS */
 const CATEGORIES = ["Todos", "Armas", "Munição", "Recursos", "Equipamentos", "Outros"];
-
 const catChips = el("catChips");
 const searchInput = el("searchInput");
 const clearBtn = el("clearFilters");
@@ -509,7 +502,6 @@ function buildCategoryChips() {
 
 function applyFiltersAndRender() {
   const q = normalizeStr(searchInput.value);
-
   let filtered = allProducts.slice();
 
   if (selectedCategory !== "Todos") {
@@ -530,7 +522,6 @@ function applyFiltersAndRender() {
 }
 
 searchInput.addEventListener("input", applyFiltersAndRender);
-
 clearBtn.addEventListener("click", () => {
   searchInput.value = "";
   selectedCategory = "Todos";
@@ -538,9 +529,7 @@ clearBtn.addEventListener("click", () => {
   applyFiltersAndRender();
 });
 
-/* ======================
-   PRODUTOS
-====================== */
+/* PRODUTOS */
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
 
@@ -569,9 +558,7 @@ function renderProducts(items) {
         <p>${p.description || ""}</p>
 
         <div class="badges">
-          ${badges
-            .map((b) => `<div class="badge ${b === "Mais vendido" ? "best" : ""}">${b}</div>`)
-            .join("")}
+          ${badges.map((b) => `<div class="badge ${b === "Mais vendido" ? "best" : ""}">${b}</div>`).join("")}
         </div>
 
         <div class="priceBlock">
@@ -643,9 +630,7 @@ function renderProducts(items) {
   });
 }
 
-/* ======================
-   FIRESTORE LISTENERS
-====================== */
+/* FIRESTORE LISTENERS */
 const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
 onSnapshot(qProducts, (snap) => {
   const items = [];
@@ -654,25 +639,21 @@ onSnapshot(qProducts, (snap) => {
   snap.forEach((d) => {
     const data = d.data();
     if (!data?.active) return;
-
     const product = { id: d.id, ...data };
-
     if (!product.category) product.category = "Outros";
     if (product.bestSeller === undefined) product.bestSeller = false;
-
     items.push(product);
     stockMap.set(d.id, data.stock);
   });
 
   allProducts = items;
-
   buildCategoryChips();
   applyFiltersAndRender();
 
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 
-  if (normalizeCartAgainstStock() && cartOpen) renderCart();
+  if (cartOpen) renderCart();
   updateCartCount();
 });
 

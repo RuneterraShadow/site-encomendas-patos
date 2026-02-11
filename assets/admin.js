@@ -400,23 +400,3 @@ function fillProductForm(p) {
   showMsg("productMsg", "Editando produto. Altere e clique em Salvar.", true);
 }
 
-import { db } from "./firebase.js";
-import {
-  collection,
-  addDoc,
-  setDoc,
-  doc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  getDoc,
-  updateDoc,
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"; // ✅ mantém como estava no seu projeto? (se o seu firebase-auth já estava correto, troque para firebase-auth)

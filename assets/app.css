@@ -820,3 +820,8 @@ label{
   gap: 18px !important;
 }
 
+/* Remove checker no modal */
+.productModal .checker {
+  background: none !important;
+}
+

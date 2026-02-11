@@ -391,17 +391,44 @@ async function sendOrder() {
   const discord = (el("discordInput")?.value || "").trim();
   if (!nick || !discord) return showToast("Preencha Nick e Discord.");
 
+  const totalNum = cartTotal();
+  const createdAt = new Date().toISOString();
+  const siteTitle = (el("siteTitle")?.textContent || "").trim();
+
+  const items = cart.map((i) => {
+    const qty = Number(i.qty || 0);
+    const unit = Number(i.price || 0);
+    const sub = qty * unit;
+    return {
+      productId: i.productId,
+      name: i.name,
+      qty,
+      quantity: qty,
+      unit,
+      price: unit,
+      unitPrice: unit,
+      unitText: money(unit),
+      unitPriceText: money(unit),
+      subtotal: sub,
+      lineTotal: sub,
+      total: sub,
+      subtotalText: money(sub),
+      totalText: money(sub),
+    };
+  });
+
   const payload = {
     nick,
     discord,
-    total: cartTotal(),
-    items: cart.map((i) => ({
-      productId: i.productId,
-      name: i.name,
-      qty: i.qty,
-      unit: i.price,
-      total: i.price * i.qty,
-    })),
+    siteTitle: siteTitle || undefined,
+    createdAt,
+    items,
+    quantity: items.reduce((s, it) => s + Number(it.qty || 0), 0),
+    subtotal: totalNum,
+    total: totalNum,
+    grandTotal: totalNum,
+    amount: totalNum,
+    totalText: money(totalNum),
   };
 
   try {
@@ -422,6 +449,7 @@ async function sendOrder() {
     showToast("Erro ao enviar pedido.");
   }
 }
+
 
 /* TOAST */
 const toast = document.createElement("div");

@@ -466,16 +466,6 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   gap:10px;
 }
 
-/* =========================
-   BADGE "MAIS VENDIDO"
-========================= */
-.badge.best{
-  background: rgba(255,122,0,.18);
-  border-color: rgba(255,122,0,.35);
-  color: #ffd7b0;
-  font-weight:900;
-}
-
 /* filtros simples */
 .filtersWrap{ margin:10px 0 16px; }
 

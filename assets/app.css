@@ -825,3 +825,25 @@ label{
   background: none !important;
 }
 
+/* ===== Modal: corrigir imagens com zoom (scale) ===== */
+/* no HTML do modal: button + (div da imagem) + (div do conteúdo)
+   então a caixa da imagem é o 2º filho */
+.productModal > div:nth-child(2){
+  aspect-ratio: 16/10;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #232323;
+  background: #0b0f0d;
+}
+
+/* a imagem precisa preencher a caixa pra o scale funcionar direito */
+.productModal > div:nth-child(2) > img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  /* não deixa o aspecto da img mandar na altura */
+  aspect-ratio: auto !important;
+}

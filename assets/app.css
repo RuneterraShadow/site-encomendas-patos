@@ -475,3 +475,65 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   color: #ffd7b0;
   font-weight:900;
 }
+
+/* filtros simples */
+.filtersWrap{ margin:10px 0 16px; }
+
+.chipsRow{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.chip{
+  border:1px solid #2a2a2a;
+  background:#141414;
+  color:#fff;
+  padding:8px 12px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:.15s;
+  font-weight:700;
+  font-size:13px;
+}
+.chip:hover{ filter:brightness(1.06); }
+.chip.active{
+  background:var(--brand);
+  color:#111;
+  border-color:transparent;
+}
+
+.filtersBarSimple{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:10px;
+  align-items:center;
+}
+@media (max-width:900px){
+  .filtersBarSimple{ grid-template-columns: 1fr; }
+}
+
+.searchBox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 10px;
+  border-radius:12px;
+  border:1px solid #2a2a2a;
+  background:#0d0d0d;
+}
+.searchBox .icon{ opacity:.8; }
+.searchBox .input{
+  border:none;
+  background:transparent;
+  padding:10px 2px;
+}
+
+/* badge mais vendido */
+.badge.best{
+  background: rgba(255,122,0,.18);
+  border-color: rgba(255,122,0,.35);
+  color: #ffd7b0;
+  font-weight:900;
+}

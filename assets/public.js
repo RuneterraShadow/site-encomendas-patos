@@ -214,6 +214,9 @@ let cartOpen = false;
 
 const stockMap = new Map();
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
+let LOW_STOCK_ALERTS_ENABLED = true;
+let LOW_STOCK_THRESHOLD = 5;
+
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
@@ -412,6 +415,25 @@ async function sendOrder() {
 
   const total = items.reduce((sum, it) => sum + Number(it.total || 0), 0);
 
+  // ✅ Detecta estoque baixo no momento do envio (com base no estoque atual carregado do Firestore)
+  const lowStockItems = [];
+  if (LOW_STOCK_ALERTS_ENABLED) {
+    for (const it of items) {
+      const availNow = getAvailableStock(it.productId);
+      if (availNow !== null) {
+        const remaining = Math.max(0, Number(availNow) - Number(it.qty || 0));
+        if (remaining <= LOW_STOCK_THRESHOLD) {
+          lowStockItems.push({
+            productId: it.productId,
+            name: it.name,
+            remaining,
+            threshold: LOW_STOCK_THRESHOLD,
+          });
+        }
+      }
+    }
+  }
+
   const payload = {
     nick,
     discord,
@@ -432,6 +454,10 @@ async function sendOrder() {
     // infos extras úteis (não atrapalham se o Worker ignorar)
     createdAt: new Date().toISOString(),
     channel: "site",
+
+    // alerta de estoque baixo (para o Worker enviar notificação)
+    lowStockThreshold: LOW_STOCK_THRESHOLD,
+    lowStockItems,
   };
 
   try {
@@ -618,6 +644,11 @@ function watchGlobalConfig() {
     const showFooter = data.showFooter ?? true;
     const footerEl = document.querySelector(".footer");
     if (footerEl) footerEl.style.display = showFooter ? "" : "none";
+
+    // ✅ Alertas de estoque baixo (opcional no Firestore)
+    LOW_STOCK_ALERTS_ENABLED = data.lowStockAlertsEnabled ?? true;
+    LOW_STOCK_THRESHOLD = Number.isFinite(Number(data.lowStockThreshold)) ? Number(data.lowStockThreshold) : 5;
+
 
     el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 

@@ -379,17 +379,32 @@ async function sendOrder() {
   const discord = (el("discordInput")?.value || "").trim();
   if (!nick || !discord) return showToast("Preencha Nick e Discord.");
 
+  const total = cartTotal();
   const payload = {
     nick,
     discord,
-    total: cartTotal(),
-    items: cart.map((i) => ({
-      productId: i.productId,
-      name: i.name,
-      qty: i.qty,
-      unit: i.price,
-      total: i.price * i.qty,
-    })),
+    total,
+    quantity: cart.reduce((s, i) => s + Number(i.qty || 0), 0),
+    items: cart.map((i) => {
+      const unit = Number(i.price || 0);
+      const qty = Number(i.qty || 0);
+      const lineTotal = unit * qty;
+
+      // Compat: envia vários nomes de campo porque o Worker/Webhook pode estar lendo chaves antigas
+      return {
+        productId: i.productId,
+        name: i.name,
+        qty,
+
+        unit,                 // novo
+        price: unit,          // compat (muito comum)
+        unitPrice: unit,      // compat
+
+        subtotal: lineTotal,  // compat
+        lineTotal,            // novo
+        total: lineTotal,     // compat
+      };
+    }),
   };
 
   try {

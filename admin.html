@@ -4,6 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin</title>
+
+  <!-- GITHUB PAGES -->
+  <base href="/site-encomendas-patos/">
+
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="./assets/app.css" />
 </head>
 <body>
@@ -91,7 +100,6 @@
           <label>Banner: imagem (URL)</label>
           <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
 
-          <!-- ✅ EDIÇÃO COMPLETA DO BANNER (corte/zoom) -->
           <div class="imgPosWrap">
             <div class="small">Corte / Zoom do Banner (fiel ao site)</div>
 
@@ -135,9 +143,6 @@
           </div>
 
           <p class="small" id="settingsMsg" style="margin:0;"></p>
-          <p class="small" style="margin:0;">
-            Dica: use imagem no GitHub tipo <b>/assets/images/banner/banner.jpg</b>
-          </p>
         </div>
 
         <!-- PRODUCT FORM -->
@@ -174,7 +179,6 @@
             </div>
           </div>
 
-          <!-- ✅ NOVOS CAMPOS -->
           <div class="formGrid">
             <div>
               <label>Categoria</label>
@@ -265,7 +269,6 @@
 
       <h2 style="margin:18px 0 10px;">Produtos cadastrados</h2>
       <div id="productsGrid" class="grid"></div>
-
     </div>
   </div>
 

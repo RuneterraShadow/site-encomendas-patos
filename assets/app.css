@@ -800,13 +800,23 @@ label{
 /* Modal image column: avoid stretching (prevents checker area showing below image) */
 .productModal > div:first-child{ align-self:start; }
 
+/* ===== Ajuste fino imagem do modal ===== */
+
 .productModal > div:first-child{
-  padding: 4px !important;
-  background: transparent !important;
-  border: none !important;
+  padding: 8px !important;
 }
 
 .productModal img{
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   box-shadow: none !important;
+  border: none !important;
 }
+
+.productModal .checker{
+  background-size: 12px 12px !important;
+}
+
+.productModal{
+  gap: 18px !important;
+}
+

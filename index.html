@@ -83,6 +83,20 @@
       </div>
     </div>
 
+    <!-- ✅ FILTROS -->
+    <div class="filtersWrap">
+      <div id="catChips" class="chipsRow"></div>
+
+      <div class="filtersBarSimple">
+        <div class="searchBox">
+          <span class="icon">🔎</span>
+          <input id="searchInput" class="input" placeholder="Buscar produto..." />
+        </div>
+        <button id="clearFilters" class="btn secondary" type="button">Limpar</button>
+      </div>
+
+      <div id="filterHint" class="small" style="margin-top:8px;"></div>
+    </div>
 
     <h2 style="margin:18px 0 10px;">Produtos</h2>
     <div id="productsGrid" class="grid"></div>
@@ -90,6 +104,20 @@
     <p class="small" style="margin-top:18px;">
       * Preços e disponibilidade podem mudar em tempo real.
     </p>
+  </div>
+
+  <!-- ✅ RODAPÉ (EDITÁVEL NO ADMIN) -->
+  <div class="footer">
+    <div class="footerGrid container" style="max-width:1100px;">
+      <div>
+        <div id="footerTitle" class="footerTitle">CASAMATA</div>
+        <div id="footerText" class="footerText"></div>
+      </div>
+
+      <div class="footerLinks" id="footerLinks"></div>
+
+      <div id="footerCopy" class="footerCopy"></div>
+    </div>
   </div>
 
   <script type="module" src="./assets/public.js"></script>

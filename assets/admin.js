@@ -1,457 +1,401 @@
-import { auth, db } from "./firebase.js";
-
+import { db } from "./firebase.js";
 import {
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut,
-  setPersistence,
-  browserSessionPersistence
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-
-import {
-  doc, getDoc, setDoc, serverTimestamp,
-  collection, addDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy
+  collection,
+  addDoc,
+  setDoc,
+  doc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  getDoc,
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-const $ = (id) => document.getElementById(id);
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-const loginBox = $("loginBox");
-const adminBox = $("adminBox");
-const loginMsg = $("loginMsg");
-const settingsMsg = $("settingsMsg");
-const productMsg = $("productMsg");
-const productsGrid = $("productsGrid");
+/* ======================
+   HELPERS
+====================== */
+const el = (id) => document.getElementById(id);
 
-// banner controls
-const bImagePosX = $("bImagePosX");
-const bImagePosY = $("bImagePosY");
-const bImageZoom = $("bImageZoom");
-const bImagePosXVal = $("bImagePosXVal");
-const bImagePosYVal = $("bImagePosYVal");
-const bImageZoomVal = $("bImageZoomVal");
-const bImagePreview = $("bImagePreview");
-const bImagePreviewBox = $("bImagePreviewBox");
-const resetBannerBtn = $("resetBannerBtn");
-
-// product controls
-const pImagePosX = $("pImagePosX");
-const pImagePosY = $("pImagePosY");
-const pImageZoom = $("pImageZoom");
-const pImagePosXVal = $("pImagePosXVal");
-const pImagePosYVal = $("pImagePosYVal");
-const pImageZoomVal = $("pImageZoomVal");
-const pImagePreview = $("pImagePreview");
-const pImagePreviewBox = $("pImagePreviewBox");
-const resetCropBtn = $("resetCropBtn");
-
-// ✅ Pede senha de novo SOMENTE depois que fechar o navegador
-(async () => {
-  try {
-    await setPersistence(auth, browserSessionPersistence);
-  } catch (e) {
-    console.warn("Persistência de sessão falhou:", e);
-  }
-})();
-
-// ---------- HELPERS ----------
-function setMsg(el, text, ok=true){
-  el.textContent = text;
-  el.style.color = ok ? "var(--ok)" : "var(--danger)";
-  setTimeout(() => { el.textContent = ""; }, 3500);
+function showMsg(targetId, msg, ok = true) {
+  const node = el(targetId);
+  if (!node) return;
+  node.textContent = msg || "";
+  node.style.color = ok ? "#bdbdbd" : "#ff4d4d";
 }
-function parseOptionalNumber(value){
-  const v = String(value ?? "").trim();
-  if (!v) return null;
+
+function toNum(v, fallback = null) {
+  if (v === "" || v === null || v === undefined) return fallback;
   const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+  return Number.isFinite(n) ? n : fallback;
 }
-function boolFromSelect(selectEl){ return selectEl.value === "true"; }
-function clampPos(v, fallback=50){
+
+function fixAssetPath(p) {
+  if (!p) return "";
+  const s = String(p).trim();
+  if (!s) return "";
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+  if (s.startsWith("./")) return s;
+  if (s.startsWith("/")) return "." + s;
+  return "./" + s.replace(/^(\.\/)+/, "");
+}
+
+function clampPos(v, fallback = 50) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, n));
 }
-function clampZoom(v, fallback=100){
+function clampZoom(v, fallback = 100) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(50, Math.min(200, n));
 }
 
-/**
- * ✅ Regra pedida (zoom “antigo”):
- * - zoom < 100: contain + checker + scale(z/100)
- * - zoom >= 100: cover + scale(z/100)
- */
-function applyImageView(imgEl, containerEl, { x=50, y=50, zoom=100 } = {}){
+function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {}) {
   const z = clampZoom(zoom, 100);
   const fit = z < 100 ? "contain" : "cover";
 
-  if (containerEl){
-    containerEl.classList.toggle("checker", z < 100);
-  }
-  if (imgEl){
+  if (containerEl) containerEl.classList.toggle("checker", z < 100);
+  if (imgEl) {
     imgEl.style.objectFit = fit;
-    imgEl.style.objectPosition = `${clampPos(x,50)}% ${clampPos(y,50)}%`;
-    imgEl.style.transform = `scale(${z/100})`;
+    imgEl.style.objectPosition = `${clampPos(x, 50)}% ${clampPos(y, 50)}%`;
+    imgEl.style.transform = `scale(${z / 100})`;
     imgEl.style.transformOrigin = "center center";
   }
 }
 
-function setSafeImg(imgEl, url){
-  imgEl.src = url || "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600">
-      <rect width="100%" height="100%" fill="#111"/>
-      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#777" font-family="Arial" font-size="26">
-        Sem imagem
-      </text>
-    </svg>`
-  );
+/* ======================
+   AUTH
+====================== */
+const auth = getAuth();
+
+const loginBox = el("loginBox");
+const adminBox = el("adminBox");
+
+function showAdmin(isAuthed) {
+  loginBox.style.display = isAuthed ? "none" : "block";
+  adminBox.style.display = isAuthed ? "block" : "none";
 }
 
-function moneyBRL(v){
-  const n = Number(v || 0);
-  return n.toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
-}
+el("loginBtn").addEventListener("click", async () => {
+  const email = el("email").value.trim();
+  const pass = el("pass").value;
+  if (!email || !pass) return showMsg("loginMsg", "Preencha email e senha.", false);
 
-// ---------- AUTH ----------
-$("loginBtn").addEventListener("click", async (ev) => {
-  ev?.preventDefault?.();
-  loginMsg.textContent = "";
-
-  const email = $("email").value.trim();
-  const pass = $("pass").value;
-
-  try{
+  try {
     await signInWithEmailAndPassword(auth, email, pass);
-  }catch(e){
-    loginMsg.textContent = e?.message || "Erro ao entrar.";
+    showMsg("loginMsg", "Logado com sucesso ✅", true);
+  } catch (e) {
+    showMsg("loginMsg", "Falha no login. Confira email/senha.", false);
+    console.error(e);
   }
 });
 
-$("logoutBtn").addEventListener("click", async () => {
+el("logoutBtn").addEventListener("click", async () => {
   await signOut(auth);
 });
 
 onAuthStateChanged(auth, (user) => {
-  if (user){
-    loginBox.style.display = "none";
-    adminBox.style.display = "block";
-    boot();
-  }else{
-    adminBox.style.display = "none";
-    loginBox.style.display = "block";
+  showAdmin(!!user);
+  if (user) {
+    loadSettings();
+    watchProducts();
   }
 });
 
-// ---------- BANNER (corte/zoom) ----------
-function updateBannerPreview(){
-  const url = $("bannerImageUrl")?.value?.trim() || "";
-  if (bImagePreview){
-    if (!url){
-      bImagePreview.removeAttribute("src");
-      bImagePreview.style.display = "none";
-    }else{
-      bImagePreview.style.display = "block";
-      bImagePreview.src = url;
-    }
-  }
-
-  const x = clampPos(bImagePosX?.value, 50);
-  const y = clampPos(bImagePosY?.value, 50);
-  const z = clampZoom(bImageZoom?.value, 100);
-
-  if (bImagePosXVal) bImagePosXVal.textContent = String(x);
-  if (bImagePosYVal) bImagePosYVal.textContent = String(y);
-  if (bImageZoomVal) bImageZoomVal.textContent = String(z);
-
-  applyImageView(bImagePreview, bImagePreviewBox, { x, y, zoom: z });
-}
-
-[bImagePosX, bImagePosY, bImageZoom, $("bannerImageUrl")].forEach((node) => {
-  node?.addEventListener("input", updateBannerPreview);
-});
-
-resetBannerBtn?.addEventListener("click", (ev) => {
-  ev?.preventDefault?.();
-  if (bImagePosX) bImagePosX.value = "50";
-  if (bImagePosY) bImagePosY.value = "50";
-  if (bImageZoom) bImageZoom.value = "100";
-  updateBannerPreview();
-});
-
-// ---------- PRODUCT PREVIEW (corte/zoom) ----------
-function updateProductPreview(){
-  const url = $("pImageUrl")?.value?.trim() || "";
-  if (pImagePreview){
-    if (!url){
-      pImagePreview.removeAttribute("src");
-      pImagePreview.style.display = "none";
-    }else{
-      pImagePreview.style.display = "block";
-      pImagePreview.src = url;
-    }
-  }
-
-  const x = clampPos(pImagePosX?.value, 50);
-  const y = clampPos(pImagePosY?.value, 50);
-  const z = clampZoom(pImageZoom?.value, 100);
-
-  if (pImagePosXVal) pImagePosXVal.textContent = String(x);
-  if (pImagePosYVal) pImagePosYVal.textContent = String(y);
-  if (pImageZoomVal) pImageZoomVal.textContent = String(z);
-
-  applyImageView(pImagePreview, pImagePreviewBox, { x, y, zoom: z });
-}
-
-[pImagePosX, pImagePosY, pImageZoom, $("pImageUrl")].forEach((node) => {
-  node?.addEventListener("input", updateProductPreview);
-});
-
-resetCropBtn?.addEventListener("click", (ev) => {
-  ev?.preventDefault?.();
-  if (pImagePosX) pImagePosX.value = "50";
-  if (pImagePosY) pImagePosY.value = "50";
-  if (pImageZoom) pImageZoom.value = "100";
-  updateProductPreview();
-});
-
-// ---------- SETTINGS ----------
+/* ======================
+   SETTINGS (site/settings)
+====================== */
 const settingsRef = doc(db, "site", "settings");
 
-async function loadSettingsOnce(){
+async function loadSettings() {
   const snap = await getDoc(settingsRef);
-  const s = snap.exists() ? snap.data() : {};
+  if (!snap.exists()) return;
 
-  $("siteTitle").value = s.siteTitle || "";
-  $("siteSubtitle").value = s.siteSubtitle || "";
-  $("globalDesc").value = s.globalDesc || "";
-  $("whatsappLink").value = s.whatsappLink || "";
-  $("buyBtnText").value = s.buyBtnText || "COMPRE AGORA!";
+  const s = snap.data();
 
-  $("bannerTitle").value = s.bannerTitle || "";
-  $("bannerDesc").value = s.bannerDesc || "";
-  $("bannerImageUrl").value = s.bannerImageUrl || "";
+  el("siteTitle").value = s.siteTitle || "";
+  el("siteSubtitle").value = s.siteSubtitle || "";
+  el("globalDesc").value = s.globalDesc || "";
+  el("whatsappLink").value = s.whatsappLink || "";
+  el("buyBtnText").value = s.buyBtnText || "";
 
-  if (bImagePosX) bImagePosX.value = String(clampPos(s.bannerPosX ?? 50, 50));
-  if (bImagePosY) bImagePosY.value = String(clampPos(s.bannerPosY ?? 50, 50));
-  if (bImageZoom) bImageZoom.value = String(clampZoom(s.bannerZoom ?? 100, 100));
+  el("bannerTitle").value = s.bannerTitle || "";
+  el("bannerDesc").value = s.bannerDesc || "";
+  el("bannerImageUrl").value = s.bannerImageUrl || "";
+
+  const bx = clampPos(s.bannerPosX ?? 50);
+  const by = clampPos(s.bannerPosY ?? 50);
+  const bz = clampZoom(s.bannerZoom ?? 100);
+
+  el("bImagePosX").value = String(bx);
+  el("bImagePosY").value = String(by);
+  el("bImageZoom").value = String(bz);
+
+  el("bImagePosXVal").textContent = String(bx);
+  el("bImagePosYVal").textContent = String(by);
+  el("bImageZoomVal").textContent = String(bz);
+
   updateBannerPreview();
-
-  updateProductPreview();
 }
 
-$("saveSettingsBtn").addEventListener("click", async (ev) => {
-  ev?.preventDefault?.();
-  try{
-    await setDoc(settingsRef, {
-      siteTitle: $("siteTitle").value.trim(),
-      siteSubtitle: $("siteSubtitle").value.trim(),
-      globalDesc: $("globalDesc").value.trim(),
-      whatsappLink: $("whatsappLink").value.trim(),
-      buyBtnText: $("buyBtnText").value.trim() || "COMPRE AGORA!",
+function updateBannerPreview() {
+  const url = fixAssetPath(el("bannerImageUrl").value);
+  const img = el("bImagePreview");
+  if (url) img.src = url;
 
-      bannerTitle: $("bannerTitle").value.trim(),
-      bannerDesc: $("bannerDesc").value.trim(),
-      bannerImageUrl: $("bannerImageUrl").value.trim(),
+  const x = clampPos(el("bImagePosX").value, 50);
+  const y = clampPos(el("bImagePosY").value, 50);
+  const z = clampZoom(el("bImageZoom").value, 100);
 
-      bannerPosX: clampPos(bImagePosX?.value, 50),
-      bannerPosY: clampPos(bImagePosY?.value, 50),
-      bannerZoom: clampZoom(bImageZoom?.value, 100),
+  el("bImagePosXVal").textContent = String(x);
+  el("bImagePosYVal").textContent = String(y);
+  el("bImageZoomVal").textContent = String(z);
 
-      updatedAt: serverTimestamp()
-    }, { merge:true });
-
-    setMsg(settingsMsg, "Configurações salvas!");
-  }catch(e){
-    setMsg(settingsMsg, e?.message || "Erro ao salvar settings.", false);
-  }
-});
-
-// ---------- PRODUCTS ----------
-const productsRef = collection(db, "products");
-const qProducts = query(productsRef, orderBy("sortOrder", "asc"));
-
-function resetForm(){
-  $("productId").value = "";
-  $("pName").value = "";
-  $("pDesc").value = "";
-  $("pPrice").value = "";
-  $("pPromo").value = "";
-  $("pStock").value = "";
-  $("pOrder").value = "100";
-  $("pImageUrl").value = "";
-  $("pActive").value = "true";
-  $("pFeatured").value = "false";
-
-  // ✅ novos defaults
-  $("pCategory").value = "Recursos";
-  $("pBestSeller").value = "false";
-
-  $("deleteProductBtn").disabled = true;
-
-  if (pImagePosX) pImagePosX.value = "50";
-  if (pImagePosY) pImagePosY.value = "50";
-  if (pImageZoom) pImageZoom.value = "100";
-  updateProductPreview();
+  applyImageView(img, el("bImagePreviewBox"), { x, y, zoom: z });
 }
 
-$("clearFormBtn").addEventListener("click", (ev) => {
-  ev?.preventDefault?.();
-  resetForm();
+["bannerImageUrl", "bImagePosX", "bImagePosY", "bImageZoom"].forEach((id) => {
+  el(id).addEventListener("input", updateBannerPreview);
 });
 
-$("saveProductBtn").addEventListener("click", async (ev) => {
-  ev?.preventDefault?.();
+el("resetBannerBtn").addEventListener("click", () => {
+  el("bImagePosX").value = "50";
+  el("bImagePosY").value = "50";
+  el("bImageZoom").value = "100";
+  updateBannerPreview();
+});
 
-  const id = $("productId").value.trim();
-
+el("saveSettingsBtn").addEventListener("click", async () => {
   const payload = {
-    name: $("pName").value.trim(),
-    description: $("pDesc").value.trim(),
+    siteTitle: el("siteTitle").value.trim(),
+    siteSubtitle: el("siteSubtitle").value.trim(),
+    globalDesc: el("globalDesc").value.trim(),
+    whatsappLink: el("whatsappLink").value.trim(),
+    buyBtnText: el("buyBtnText").value.trim(),
 
-    price: Number($("pPrice").value || 0),
-    promoPrice: parseOptionalNumber($("pPromo").value),
+    bannerTitle: el("bannerTitle").value.trim(),
+    bannerDesc: el("bannerDesc").value.trim(),
+    bannerImageUrl: el("bannerImageUrl").value.trim(),
 
-    stock: parseOptionalNumber($("pStock").value),
-    sortOrder: Number($("pOrder").value || 100),
-
-    imageUrl: $("pImageUrl").value.trim(),
-    imagePosX: clampPos(pImagePosX?.value, 50),
-    imagePosY: clampPos(pImagePosY?.value, 50),
-    imageZoom: clampZoom(pImageZoom?.value, 100),
-
-    active: boolFromSelect($("pActive")),
-    featured: boolFromSelect($("pFeatured")),
-
-    // ✅ novos campos
-    category: ($("pCategory").value || "Recursos").trim(),
-    bestSeller: boolFromSelect($("pBestSeller")),
-
-    updatedAt: serverTimestamp(),
+    bannerPosX: clampPos(el("bImagePosX").value, 50),
+    bannerPosY: clampPos(el("bImagePosY").value, 50),
+    bannerZoom: clampZoom(el("bImageZoom").value, 100),
   };
 
-  try{
-    if (!id){
-      payload.createdAt = serverTimestamp();
-      await addDoc(productsRef, payload);
-      setMsg(productMsg, "Produto criado!");
-      resetForm();
-    }else{
-      await updateDoc(doc(db, "products", id), payload);
-      setMsg(productMsg, "Produto atualizado!");
-    }
-  }catch(e){
-    setMsg(productMsg, e?.message || "Erro ao salvar produto.", false);
+  try {
+    await setDoc(settingsRef, payload, { merge: true });
+    showMsg("settingsMsg", "Configurações salvas ✅", true);
+  } catch (e) {
+    showMsg("settingsMsg", "Erro ao salvar configurações.", false);
+    console.error(e);
   }
 });
 
-$("deleteProductBtn").addEventListener("click", async (ev) => {
-  ev?.preventDefault?.();
-  const id = $("productId").value.trim();
+/* ======================
+   PRODUCT FORM
+====================== */
+function clearProductForm() {
+  el("productId").value = "";
+  el("pName").value = "";
+  el("pDesc").value = "";
+  el("pPrice").value = "";
+  el("pPromo").value = "";
+  el("pStock").value = "";
+  el("pOrder").value = "100";
+  el("pCategory").value = "Outros";
+  el("pBestSeller").value = "false";
+  el("pImageUrl").value = "";
+
+  el("pImagePosX").value = "50";
+  el("pImagePosY").value = "50";
+  el("pImageZoom").value = "100";
+
+  el("pImagePosXVal").textContent = "50";
+  el("pImagePosYVal").textContent = "50";
+  el("pImageZoomVal").textContent = "100";
+
+  el("pActive").value = "true";
+  el("pFeatured").value = "false";
+
+  el("deleteProductBtn").disabled = true;
+  showMsg("productMsg", "");
+  updateProductPreview();
+}
+
+function updateProductPreview() {
+  const url = fixAssetPath(el("pImageUrl").value);
+  const img = el("pImagePreview");
+  if (url) img.src = url;
+
+  const x = clampPos(el("pImagePosX").value, 50);
+  const y = clampPos(el("pImagePosY").value, 50);
+  const z = clampZoom(el("pImageZoom").value, 100);
+
+  el("pImagePosXVal").textContent = String(x);
+  el("pImagePosYVal").textContent = String(y);
+  el("pImageZoomVal").textContent = String(z);
+
+  applyImageView(img, el("pImagePreviewBox"), { x, y, zoom: z });
+}
+
+["pImageUrl", "pImagePosX", "pImagePosY", "pImageZoom"].forEach((id) => {
+  el(id).addEventListener("input", updateProductPreview);
+});
+
+el("resetCropBtn").addEventListener("click", () => {
+  el("pImagePosX").value = "50";
+  el("pImagePosY").value = "50";
+  el("pImageZoom").value = "100";
+  updateProductPreview();
+});
+
+el("clearFormBtn").addEventListener("click", clearProductForm);
+
+el("saveProductBtn").addEventListener("click", async () => {
+  const id = el("productId").value.trim();
+  const payload = {
+    name: el("pName").value.trim(),
+    description: el("pDesc").value.trim(),
+    price: toNum(el("pPrice").value, 0),
+    promoPrice: toNum(el("pPromo").value, null),
+    stock: toNum(el("pStock").value, null),
+    sortOrder: toNum(el("pOrder").value, 100),
+    category: el("pCategory").value,
+    bestSeller: el("pBestSeller").value === "true",
+    imageUrl: el("pImageUrl").value.trim(),
+
+    imagePosX: clampPos(el("pImagePosX").value, 50),
+    imagePosY: clampPos(el("pImagePosY").value, 50),
+    imageZoom: clampZoom(el("pImageZoom").value, 100),
+
+    active: el("pActive").value === "true",
+    featured: el("pFeatured").value === "true",
+  };
+
+  if (!payload.name) return showMsg("productMsg", "Nome é obrigatório.", false);
+
+  try {
+    if (id) {
+      await updateDoc(doc(db, "products", id), payload);
+      showMsg("productMsg", "Produto atualizado ✅", true);
+    } else {
+      await addDoc(collection(db, "products"), payload);
+      showMsg("productMsg", "Produto criado ✅", true);
+      clearProductForm();
+    }
+  } catch (e) {
+    showMsg("productMsg", "Erro ao salvar produto.", false);
+    console.error(e);
+  }
+});
+
+el("deleteProductBtn").addEventListener("click", async () => {
+  const id = el("productId").value.trim();
   if (!id) return;
 
   if (!confirm("Excluir este produto?")) return;
 
-  try{
+  try {
     await deleteDoc(doc(db, "products", id));
-    setMsg(productMsg, "Produto excluído!");
-    resetForm();
-  }catch(e){
-    setMsg(productMsg, e?.message || "Erro ao excluir.", false);
+    showMsg("productMsg", "Produto excluído ✅", true);
+    clearProductForm();
+  } catch (e) {
+    showMsg("productMsg", "Erro ao excluir produto.", false);
+    console.error(e);
   }
 });
 
-function renderProductCard(p){
-  const promo = p.promoPrice && Number(p.promoPrice) > 0 && Number(p.promoPrice) < Number(p.price || 0);
-  const price = promo ? moneyBRL(p.promoPrice) : moneyBRL(p.price);
+/* ======================
+   PRODUCTS LIST (GRID)
+====================== */
+let stopProducts = null;
 
-  const card = document.createElement("div");
-  card.className = "card";
+function watchProducts() {
+  if (stopProducts) return;
 
-  const cat = (p.category || "Recursos").toString();
-  const best = !!p.bestSeller;
-
-  card.innerHTML = `
-    <div class="img"><img alt=""></div>
-    <div class="body">
-      <h3>${p.name || "Produto"}</h3>
-      <p>${(p.description || "").slice(0, 120) || "—"}</p>
-
-      <div class="badges">
-        <div class="badge">${p.active ? "Ativo" : "Inativo"}</div>
-        <div class="badge">${cat}</div>
-        ${p.featured ? `<div class="badge">Destaque</div>` : ``}
-        ${best ? `<div class="badge best">Mais vendido</div>` : ``}
-        ${(p.stock === null || p.stock === undefined) ? `` : `<div class="badge">Estoque: ${p.stock}</div>`}
-      </div>
-
-      <div class="priceRow">
-        <div class="price">${price}</div>
-        ${promo ? `<div class="old">${moneyBRL(p.price)}</div>` : ``}
-      </div>
-
-      <button class="btn secondary" data-edit>Editar</button>
-    </div>
-  `;
-
-  const imgContainer = card.querySelector(".img");
-  const imgEl = card.querySelector("img");
-  setSafeImg(imgEl, p.imageUrl);
-
-  applyImageView(imgEl, imgContainer, {
-    x: p.imagePosX ?? 50,
-    y: p.imagePosY ?? 50,
-    zoom: p.imageZoom ?? 100
-  });
-
-  card.querySelector("[data-edit]").addEventListener("click", () => {
-    $("productId").value = p.id;
-    $("pName").value = p.name || "";
-    $("pDesc").value = p.description || "";
-    $("pPrice").value = p.price ?? "";
-    $("pPromo").value = p.promoPrice ?? "";
-    $("pStock").value = p.stock ?? "";
-    $("pOrder").value = p.sortOrder ?? 100;
-    $("pImageUrl").value = p.imageUrl || "";
-    $("pActive").value = String(!!p.active);
-    $("pFeatured").value = String(!!p.featured);
-
-    // ✅ novos campos
-    $("pCategory").value = (p.category || "Recursos").toString();
-    $("pBestSeller").value = String(!!p.bestSeller);
-
-    $("deleteProductBtn").disabled = false;
-
-    if (pImagePosX) pImagePosX.value = String(clampPos(p.imagePosX ?? 50, 50));
-    if (pImagePosY) pImagePosY.value = String(clampPos(p.imagePosY ?? 50, 50));
-    if (pImageZoom) pImageZoom.value = String(clampZoom(p.imageZoom ?? 100, 100));
-    updateProductPreview();
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  return card;
-}
-
-function watchProducts(){
-  onSnapshot(qProducts, (snap) => {
-    productsGrid.innerHTML = "";
+  const qy = query(collection(db, "products"), orderBy("sortOrder", "asc"));
+  stopProducts = onSnapshot(qy, (snap) => {
     const items = [];
     snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-    for (const p of items){
-      productsGrid.appendChild(renderProductCard(p));
-    }
+    renderAdminProducts(items);
+  });
+
+  clearProductForm();
+  updateBannerPreview();
+}
+
+function renderAdminProducts(items) {
+  const grid = el("productsGrid");
+  grid.innerHTML = "";
+
+  items.forEach((p) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const img = fixAssetPath(p.imageUrl || "");
+    const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
+    const hasStock = Number.isFinite(stock);
+
+    card.innerHTML = `
+      <div class="img"><img src="${img}" alt=""></div>
+      <div class="body">
+        <h3>${p.name || "Produto"}</h3>
+        <p>${p.description || ""}</p>
+        <div class="badges">
+          <div class="badge">${(p.category || "Outros")}</div>
+          ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ``}
+          ${p.featured ? `<div class="badge">Destaque</div>` : ``}
+          <div class="badge">${p.active ? "Ativo" : "Inativo"}</div>
+          <div class="badge">${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}</div>
+        </div>
+      </div>
+    `;
+
+    const imgContainer = card.querySelector(".img");
+    const imgEl = card.querySelector("img");
+    applyImageView(imgEl, imgContainer, {
+      x: p.imagePosX ?? 50,
+      y: p.imagePosY ?? 50,
+      zoom: p.imageZoom ?? 100,
+    });
+
+    card.addEventListener("click", () => fillProductForm(p));
+    grid.appendChild(card);
   });
 }
 
-// ---------- BOOT ----------
-let booted = false;
-async function boot(){
-  if (booted) return;
-  booted = true;
+function fillProductForm(p) {
+  el("productId").value = p.id || "";
 
-  await loadSettingsOnce();
-  watchProducts();
-  resetForm();
+  el("pName").value = p.name || "";
+  el("pDesc").value = p.description || "";
+  el("pPrice").value = p.price ?? "";
+  el("pPromo").value = p.promoPrice ?? "";
+  el("pStock").value = p.stock ?? "";
+  el("pOrder").value = p.sortOrder ?? 100;
+
+  el("pCategory").value = p.category || "Outros";
+  el("pBestSeller").value = String(!!p.bestSeller);
+
+  el("pImageUrl").value = p.imageUrl || "";
+
+  el("pImagePosX").value = String(clampPos(p.imagePosX ?? 50));
+  el("pImagePosY").value = String(clampPos(p.imagePosY ?? 50));
+  el("pImageZoom").value = String(clampZoom(p.imageZoom ?? 100));
+
+  el("pActive").value = String(!!p.active);
+  el("pFeatured").value = String(!!p.featured);
+
+  el("deleteProductBtn").disabled = false;
+
+  updateProductPreview();
+  showMsg("productMsg", "Editando produto. Altere e clique em Salvar.", true);
 }

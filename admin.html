@@ -82,19 +82,14 @@
 
           <h3 style="margin:0;">Banner</h3>
 
-          <div class="formGrid">
-            <div>
-              <label>Banner: título</label>
-              <input id="bannerTitle" class="input" placeholder="Promoções!" />
-            </div>
-            <div>
-              <label>Banner: URL da imagem</label>
-              <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
-            </div>
-          </div>
+          <label>Banner: título</label>
+          <input id="bannerTitle" class="input" placeholder="Título do banner..." />
 
           <label>Banner: descrição</label>
           <textarea id="bannerDesc" class="input" rows="2" placeholder="Texto do banner..."></textarea>
+
+          <label>Banner: imagem (URL)</label>
+          <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
 
           <!-- ✅ EDIÇÃO COMPLETA DO BANNER (corte/zoom) -->
           <div class="imgPosWrap">
@@ -176,6 +171,27 @@
             <div>
               <label>Ordem (menor = primeiro)</label>
               <input id="pOrder" class="input" type="number" step="1" value="100" />
+            </div>
+          </div>
+
+          <!-- ✅ NOVOS CAMPOS -->
+          <div class="formGrid">
+            <div>
+              <label>Categoria</label>
+              <select id="pCategory" class="input">
+                <option value="Recursos">Recursos</option>
+                <option value="Equipamentos">Equipamentos</option>
+                <option value="Armas">Armas</option>
+                <option value="Munição">Munição</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+            <div>
+              <label>Mais vendido</label>
+              <select id="pBestSeller" class="input">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
             </div>
           </div>
 

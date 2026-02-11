@@ -62,9 +62,8 @@ function clampZoom(v, fallback = 100) {
 }
 
 /**
- * ✅ Regra de zoom fiel:
- * - zoom < 100: contain + checker + scale(z/100)
- * - zoom >= 100: cover + scale(z/100)
+ * zoom < 100: contain + checker + scale
+ * zoom >= 100: cover + scale
  */
 function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {}) {
   const z = clampZoom(zoom, 100);
@@ -87,7 +86,7 @@ function normalizeStr(s) {
 }
 
 /* ======================
-   ESTOQUE / CARRINHO (mantém o seu elegante na esquerda)
+   CARRINHO (ELEGANTE NA ESQUERDA)
 ====================== */
 let cart = [];
 let cartOpen = false;
@@ -298,74 +297,45 @@ function watchGlobalConfig() {
 }
 
 /* ======================
-   FILTROS (UI)
+   FILTROS: CATEGORIA + BUSCA
 ====================== */
+const CATEGORIES = ["Todos", "Armas", "Recursos", "Equipamentos", "Munição", "Outros"];
+
 const catChips = el("catChips");
 const searchInput = el("searchInput");
-const minPriceEl = el("minPrice");
-const maxPriceEl = el("maxPrice");
-const sortPriceEl = el("sortPrice");
 const clearBtn = el("clearFilters");
 const filterHint = el("filterHint");
 
 let allProducts = [];
 let selectedCategory = "Todos";
 
-function getShownPrice(p) {
-  const promo =
-    p.promoPrice !== null &&
-    p.promoPrice !== undefined &&
-    Number(p.promoPrice) > 0 &&
-    Number(p.promoPrice) < Number(p.price || 0);
-  return promo ? Number(p.promoPrice) : Number(p.price || 0);
-}
-
-function rebuildCategories(items) {
-  const baseOrder = ["Recursos", "Equipamentos", "Armas", "Munição", "Outros"];
-  const set = new Set();
-  for (const p of items) {
-    const c = (p.category || "Recursos").toString().trim() || "Recursos";
-    set.add(c);
-  }
-
-  const cats = ["Todos", ...baseOrder.filter((c) => set.has(c)), ...[...set].filter((c) => !baseOrder.includes(c))];
-
+function buildCategoryChips() {
   catChips.innerHTML = "";
-  for (const c of cats) {
+  for (const c of CATEGORIES) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chip" + (c === selectedCategory ? " active" : "");
     btn.textContent = c;
     btn.addEventListener("click", () => {
       selectedCategory = c;
-      // re-render chips active state
       [...catChips.querySelectorAll(".chip")].forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       applyFiltersAndRender();
     });
     catChips.appendChild(btn);
   }
-
-  // se categoria selecionada não existe mais, volta pra Todos
-  if (!cats.includes(selectedCategory)) {
-    selectedCategory = "Todos";
-    catChips.querySelector(".chip")?.classList.add("active");
-  }
 }
 
 function applyFiltersAndRender() {
   const q = normalizeStr(searchInput.value);
-  const minP = Number(minPriceEl.value);
-  const maxP = Number(maxPriceEl.value);
-
-  const hasMin = minPriceEl.value !== "" && Number.isFinite(minP);
-  const hasMax = maxPriceEl.value !== "" && Number.isFinite(maxP);
 
   let filtered = allProducts.slice();
 
-  // categoria
+  // categoria (fixa)
   if (selectedCategory !== "Todos") {
-    filtered = filtered.filter((p) => (p.category || "Recursos") === selectedCategory);
+    filtered = filtered.filter(
+      (p) => (p.category || "Outros").toString().trim() === selectedCategory
+    );
   }
 
   // busca (nome + descrição)
@@ -376,39 +346,31 @@ function applyFiltersAndRender() {
     });
   }
 
-  // preço
-  if (hasMin) filtered = filtered.filter((p) => getShownPrice(p) >= minP);
-  if (hasMax) filtered = filtered.filter((p) => getShownPrice(p) <= maxP);
-
-  // ordenação
-  const ord = sortPriceEl.value;
-  if (ord === "asc") filtered.sort((a, b) => getShownPrice(a) - getShownPrice(b));
-  if (ord === "desc") filtered.sort((a, b) => getShownPrice(b) - getShownPrice(a));
-
   filterHint.textContent = `Mostrando ${filtered.length} de ${allProducts.length} produtos`;
-
   renderProducts(filtered);
 }
 
-searchInput.addEventListener("input", () => applyFiltersAndRender());
-minPriceEl.addEventListener("input", () => applyFiltersAndRender());
-maxPriceEl.addEventListener("input", () => applyFiltersAndRender());
-sortPriceEl.addEventListener("change", () => applyFiltersAndRender());
+searchInput.addEventListener("input", applyFiltersAndRender);
 
 clearBtn.addEventListener("click", () => {
   searchInput.value = "";
-  minPriceEl.value = "";
-  maxPriceEl.value = "";
-  sortPriceEl.value = "default";
   selectedCategory = "Todos";
-  // rebuild chips to reset active
-  rebuildCategories(allProducts);
+  buildCategoryChips();
   applyFiltersAndRender();
 });
 
 /* ======================
    PRODUTOS
 ====================== */
+function getShownPrice(p) {
+  const promo =
+    p.promoPrice !== null &&
+    p.promoPrice !== undefined &&
+    Number(p.promoPrice) > 0 &&
+    Number(p.promoPrice) < Number(p.price || 0);
+  return promo ? Number(p.promoPrice) : Number(p.price || 0);
+}
+
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
 
@@ -433,7 +395,7 @@ function renderProducts(items) {
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
 
-    const cat = (p.category || "Recursos").toString();
+    const cat = (p.category || "Outros").toString();
     const best = !!p.bestSeller;
 
     card.innerHTML = `
@@ -529,9 +491,11 @@ onSnapshot(qProducts, (snap) => {
   snap.forEach((d) => {
     const data = d.data();
     if (!data?.active) return;
+
     const product = { id: d.id, ...data };
+
     // defaults seguros
-    if (!product.category) product.category = "Recursos";
+    if (!product.category) product.category = "Outros";
     if (product.bestSeller === undefined) product.bestSeller = false;
 
     items.push(product);
@@ -540,7 +504,8 @@ onSnapshot(qProducts, (snap) => {
 
   allProducts = items;
 
-  rebuildCategories(allProducts);
+  // build chips uma vez (e mantém seleção)
+  buildCategoryChips();
   applyFiltersAndRender();
 
   el("kpiProducts").textContent = `Produtos: ${items.length}`;

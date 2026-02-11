@@ -86,9 +86,143 @@ function normalizeStr(s) {
 }
 
 /* ======================
-   CARRINHO (ELEGANTE NA ESQUERDA)
+   TOAST
 ====================== */
-let cart = [];
+function showToast(message) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = message;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add("show"), 10);
+  setTimeout(() => {
+    t.classList.remove("show");
+    setTimeout(() => t.remove(), 250);
+  }, 1800);
+}
+
+/* ======================
+   MODAL PRODUTO
+====================== */
+const modalOverlay = document.createElement("div");
+modalOverlay.className = "productModalOverlay";
+modalOverlay.innerHTML = `
+  <div class="productModal" role="dialog" aria-modal="true">
+    <button class="productModalClose" type="button" aria-label="Fechar">✕</button>
+    <div>
+      <img id="modalImg" alt="Produto" />
+    </div>
+    <div>
+      <h3 id="modalTitle"></h3>
+      <p id="modalDesc" class="modalDesc"></p>
+
+      <div id="modalBadges" class="badges" style="margin-top:12px;"></div>
+
+      <div id="modalPrices" class="priceBlock" style="margin-top:12px;"></div>
+
+      <div class="productModalActions">
+        <input id="modalQty" class="input" type="number" min="1" value="1" style="width:90px;">
+        <button id="modalAddBtn" class="btn" type="button" style="flex:1;">Adicionar</button>
+      </div>
+
+      <div class="small" style="margin-top:8px; opacity:.9;">Pagamento em cash do jogo!</div>
+    </div>
+  </div>
+`;
+document.body.appendChild(modalOverlay);
+
+const closeModal = () => (modalOverlay.style.display = "none");
+modalOverlay.addEventListener("click", (e) => {
+  if (e.target === modalOverlay) closeModal();
+});
+modalOverlay.querySelector(".productModalClose").addEventListener("click", closeModal);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
+});
+
+let modalCurrentProduct = null;
+
+function isPromo(p) {
+  return (
+    p.promoPrice !== null &&
+    p.promoPrice !== undefined &&
+    Number(p.promoPrice) > 0 &&
+    Number(p.promoPrice) < Number(p.price || 0)
+  );
+}
+function shownPrice(p) {
+  return isPromo(p) ? Number(p.promoPrice) : Number(p.price || 0);
+}
+
+function openProductModal(p) {
+  modalCurrentProduct = p;
+
+  const img = fixAssetPath(p.imageUrl || "");
+  const imgEl = el("modalImg");
+  imgEl.src = img;
+
+  applyImageView(imgEl, imgEl.parentElement, {
+    x: p.imagePosX ?? 50,
+    y: p.imagePosY ?? 50,
+    zoom: p.imageZoom ?? 100,
+  });
+
+  el("modalTitle").textContent = p.name || "Produto";
+  el("modalDesc").textContent = p.description || "";
+
+  const badges = [];
+  const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
+  const hasStock = Number.isFinite(stock);
+  badges.push(hasStock ? `Estoque: ${stock}` : "Estoque: ∞");
+  badges.push((p.category || "Outros").toString());
+  if (p.featured) badges.push("Destaque");
+  if (p.bestSeller) badges.push("Mais vendido");
+
+  el("modalBadges").innerHTML = badges
+    .map((b) => `<div class="badge ${b === "Mais vendido" ? "best" : ""}">${b}</div>`)
+    .join("");
+
+  const promo = isPromo(p);
+  const html = promo
+    ? `
+      <div class="priceLine">
+        <div class="priceLabel">Preço atual na trade</div>
+        <div class="priceValue trade">${money(p.price)}</div>
+      </div>
+      <div class="priceLine">
+        <div class="priceLabel">Preço casamata</div>
+        <div class="priceValue casamata">${money(shownPrice(p))}</div>
+      </div>
+    `
+    : `
+      <div class="priceLine">
+        <div class="priceLabel">Preço casamata</div>
+        <div class="priceValue casamata">${money(shownPrice(p))}</div>
+      </div>
+    `;
+  el("modalPrices").innerHTML = html;
+
+  const qtyEl = el("modalQty");
+  qtyEl.value = "1";
+  qtyEl.min = "1";
+  if (hasStock) qtyEl.max = String(Math.max(1, stock));
+
+  modalOverlay.style.display = "flex";
+}
+
+el("modalAddBtn").addEventListener("click", () => {
+  const p = modalCurrentProduct;
+  if (!p) return;
+
+  const qty = Math.max(1, Number(el("modalQty").value || 1));
+  addToCart(p, qty);
+  showToast("Produto adicionado ao carrinho!");
+  closeModal();
+});
+
+/* ======================
+   CARRINHO (ESQUERDA)
+====================== */
+let cart = []; // { productId, name, price, qty }
 let cartOpen = false;
 
 const stockMap = new Map();
@@ -119,12 +253,9 @@ function closeCart() {
 
 cartBtn?.addEventListener("click", () => (cartOpen ? closeCart() : openCart()));
 cartOverlay.addEventListener("click", closeCart);
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && cartOpen) closeCart();
-});
 
 function updateCartCount() {
-  if (cartCount) cartCount.textContent = String(cart.length);
+  if (cartCount) cartCount.textContent = String(cart.reduce((s, i) => s + i.qty, 0));
 }
 
 function getAvailableStock(productId) {
@@ -149,11 +280,39 @@ function normalizeCartAgainstStock() {
   return changed;
 }
 
+function addToCart(p, qty) {
+  const id = p.id;
+  const price = shownPrice(p);
+  const avail = getAvailableStock(id);
+
+  if (avail !== null && avail <= 0) {
+    alert("Sem estoque.");
+    return;
+  }
+  if (avail !== null && qty > avail) {
+    alert(`Só tem ${avail} em estoque.`);
+    return;
+  }
+
+  const existing = cart.find((x) => x.productId === id && x.price === price);
+  if (existing) {
+    const next = existing.qty + qty;
+    existing.qty = avail === null ? next : Math.min(next, avail);
+  } else {
+    cart.push({ productId: id, name: p.name, price, qty });
+  }
+
+  updateCartCount();
+  if (cartOpen) renderCart();
+}
+
+function cartTotal() {
+  return cart.reduce((s, i) => s + i.qty * i.price, 0);
+}
+
 function renderCart() {
   normalizeCartAgainstStock();
   updateCartCount();
-
-  const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
 
   cartPanel.innerHTML = `
     <div class="cartHeader">
@@ -175,12 +334,17 @@ function renderCart() {
                   <div class="cartItem">
                     <strong>${i.name}</strong>
                     ${stockLine}
-                    <div class="small">Qtd: ${i.qty}</div>
-                    <div style="font-weight:800;margin-top:6px">${money(i.price * i.qty)}</div>
-                    <div class="small" style="margin-top:4px;opacity:.85">Pagamento em cash do jogo!</div>
-                    <div style="margin-top:10px;display:flex;gap:8px">
-                      <button class="btn danger smallBtn" type="button" data-remove="${idx}">Remover</button>
+                    <div class="small">Unitário: ${money(i.price)}</div>
+
+                    <div class="cartQtyRow">
+                      <button class="cartQtyBtn" type="button" data-dec="${idx}">−</button>
+                      <div class="cartQtyVal">${i.qty}</div>
+                      <button class="cartQtyBtn" type="button" data-inc="${idx}">+</button>
+                      <button class="btn danger smallBtn" type="button" data-remove="${idx}" style="margin-left:auto;">Remover</button>
                     </div>
+
+                    <div style="font-weight:900;margin-top:10px">${money(i.price * i.qty)}</div>
+                    <div class="small" style="margin-top:4px;opacity:.85">Pagamento em cash do jogo!</div>
                   </div>
                 `;
               })
@@ -188,7 +352,7 @@ function renderCart() {
       }
     </div>
 
-    <div class="cartTotal">Total: ${money(total)}</div>
+    <div class="cartTotal">Total: ${money(cartTotal())}</div>
 
     <div class="cartFooter">
       <label class="small">Nick no jogo</label>
@@ -203,12 +367,30 @@ function renderCart() {
 
   el("closeCartBtn")?.addEventListener("click", closeCart);
 
-  cartPanel.querySelectorAll("[data-remove]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      cart.splice(Number(btn.dataset.remove), 1);
+  cartPanel.querySelectorAll("[data-dec]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const idx = Number(b.dataset.dec);
+      cart[idx].qty = Math.max(1, cart[idx].qty - 1);
       renderCart();
-    });
-  });
+    })
+  );
+
+  cartPanel.querySelectorAll("[data-inc]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const idx = Number(b.dataset.inc);
+      const avail = getAvailableStock(cart[idx].productId);
+      const next = cart[idx].qty + 1;
+      cart[idx].qty = avail === null ? next : Math.min(next, avail);
+      renderCart();
+    })
+  );
+
+  cartPanel.querySelectorAll("[data-remove]").forEach((b) =>
+    b.addEventListener("click", () => {
+      cart.splice(Number(b.dataset.remove), 1);
+      renderCart();
+    })
+  );
 
   el("sendOrder")?.addEventListener("click", sendOrder);
 }
@@ -226,7 +408,6 @@ async function sendOrder() {
       return alert(`"${item.name}" está sem estoque.`);
   }
 
-  const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
   const payload = {
     nick,
     discord,
@@ -238,7 +419,7 @@ async function sendOrder() {
       unitPriceText: money(i.price),
       subtotalText: money(i.price * i.qty),
     })),
-    totalText: money(total),
+    totalText: money(cartTotal()),
     createdAt: new Date().toISOString(),
   };
 
@@ -299,7 +480,7 @@ function watchGlobalConfig() {
 /* ======================
    FILTROS: CATEGORIA + BUSCA
 ====================== */
-const CATEGORIES = ["Todos", "Armas", "Recursos", "Equipamentos", "Munição", "Outros"];
+const CATEGORIES = ["Todos", "Armas", "Munição", "Recursos", "Equipamentos", "Outros"];
 
 const catChips = el("catChips");
 const searchInput = el("searchInput");
@@ -331,14 +512,12 @@ function applyFiltersAndRender() {
 
   let filtered = allProducts.slice();
 
-  // categoria (fixa)
   if (selectedCategory !== "Todos") {
     filtered = filtered.filter(
       (p) => (p.category || "Outros").toString().trim() === selectedCategory
     );
   }
 
-  // busca (nome + descrição)
   if (q) {
     filtered = filtered.filter((p) => {
       const hay = normalizeStr((p.name || "") + " " + (p.description || ""));
@@ -362,15 +541,6 @@ clearBtn.addEventListener("click", () => {
 /* ======================
    PRODUTOS
 ====================== */
-function getShownPrice(p) {
-  const promo =
-    p.promoPrice !== null &&
-    p.promoPrice !== undefined &&
-    Number(p.promoPrice) > 0 &&
-    Number(p.promoPrice) < Number(p.price || 0);
-  return promo ? Number(p.promoPrice) : Number(p.price || 0);
-}
-
 function renderProducts(items) {
   el("productsGrid").innerHTML = "";
 
@@ -383,20 +553,14 @@ function renderProducts(items) {
     const hasStock = Number.isFinite(stock);
     const out = hasStock && stock <= 0;
 
-    const promo =
-      p.promoPrice !== null &&
-      p.promoPrice !== undefined &&
-      Number(p.promoPrice) > 0 &&
-      Number(p.promoPrice) < Number(p.price || 0);
+    const promo = isPromo(p);
+    const sp = shownPrice(p);
 
-    const shownPrice = getShownPrice(p);
-
-    const stockBadge = hasStock
-      ? `<div class="badge">Estoque: ${stock}</div>`
-      : `<div class="badge">Estoque: ∞</div>`;
-
-    const cat = (p.category || "Outros").toString();
-    const best = !!p.bestSeller;
+    const badges = [];
+    badges.push(hasStock ? `Estoque: ${stock}` : "Estoque: ∞");
+    badges.push((p.category || "Outros").toString());
+    if (p.featured) badges.push("Destaque");
+    if (p.bestSeller) badges.push("Mais vendido");
 
     card.innerHTML = `
       <div class="img"><img src="${img}" alt=""></div>
@@ -405,10 +569,9 @@ function renderProducts(items) {
         <p>${p.description || ""}</p>
 
         <div class="badges">
-          ${stockBadge}
-          <div class="badge">${cat}</div>
-          ${p.featured ? `<div class="badge">Destaque</div>` : ``}
-          ${best ? `<div class="badge best">Mais vendido</div>` : ``}
+          ${badges
+            .map((b) => `<div class="badge ${b === "Mais vendido" ? "best" : ""}">${b}</div>`)
+            .join("")}
         </div>
 
         <div class="priceBlock">
@@ -421,13 +584,13 @@ function renderProducts(items) {
             </div>
             <div class="priceLine">
               <div class="priceLabel">Preço casamata</div>
-              <div class="priceValue casamata">${money(shownPrice)}</div>
+              <div class="priceValue casamata">${money(sp)}</div>
             </div>
           `
               : `
             <div class="priceLine">
               <div class="priceLabel">Preço casamata</div>
-              <div class="priceValue casamata">${money(shownPrice)}</div>
+              <div class="priceValue casamata">${money(sp)}</div>
             </div>
           `
           }
@@ -446,7 +609,6 @@ function renderProducts(items) {
 
     const imgContainer = card.querySelector(".img");
     const imgEl = card.querySelector("img");
-
     applyImageView(imgEl, imgContainer, {
       x: p.imagePosX ?? 50,
       y: p.imagePosY ?? 50,
@@ -465,15 +627,16 @@ function renderProducts(items) {
       });
     }
 
-    addBtn.addEventListener("click", () => {
+    addBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       const wanted = Math.max(1, Number(qtyInput.value || 1));
-      const avail = getAvailableStock(p.id);
-      if (avail !== null && wanted > avail) return alert(`Só tem ${avail} em estoque.`);
-      if (avail !== null && avail <= 0) return alert("Sem estoque.");
+      addToCart(p, wanted);
+      showToast("Produto adicionado ao carrinho!");
+    });
 
-      cart.push({ productId: p.id, name: p.name, price: shownPrice, qty: wanted });
-      updateCartCount();
-      if (cartOpen) renderCart();
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".buyRow")) return;
+      openProductModal(p);
     });
 
     el("productsGrid").appendChild(card);
@@ -494,7 +657,6 @@ onSnapshot(qProducts, (snap) => {
 
     const product = { id: d.id, ...data };
 
-    // defaults seguros
     if (!product.category) product.category = "Outros";
     if (product.bestSeller === undefined) product.bestSeller = false;
 
@@ -504,7 +666,6 @@ onSnapshot(qProducts, (snap) => {
 
   allProducts = items;
 
-  // build chips uma vez (e mantém seleção)
   buildCategoryChips();
   applyFiltersAndRender();
 

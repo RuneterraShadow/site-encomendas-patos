@@ -690,6 +690,7 @@ label{
   max-width:780px;
   padding:18px;
   display:grid;
+  align-items:start;
   grid-template-columns:1fr 1fr;
   gap:16px;
   box-shadow:0 40px 90px rgba(0,0,0,.75);
@@ -795,3 +796,6 @@ label{
   border:2px solid rgba(7,10,8,.85);
 }
 ::-webkit-scrollbar-thumb:hover{ background:rgba(255,122,0,.55); }
+
+/* Modal image column: avoid stretching (prevents checker area showing below image) */
+.productModal > div:first-child{ align-self:start; }

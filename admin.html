@@ -133,6 +133,12 @@
           <!-- ✅ DESTAQUES (3 CARDS) -->
           <div class="hr"></div>
           <h3 style="margin:0;">Destaques do topo (3 cards)</h3>
+
+          <label style="margin-top:10px;">Mostrar cards do topo</label>
+          <select id="showTrustBlock" class="input">
+            <option value="true">Ativado</option>
+            <option value="false">Desativado</option>
+          </select>
           <p class="small" style="margin:6px 0 0;">Ícone pode ser emoji (ex: 🚀 💰 📦).</p>
 
           <div class="formGrid" style="margin-top:10px;">
@@ -178,6 +184,12 @@
           <div class="hr"></div>
           <h3 style="margin:0;">Rodapé</h3>
 
+          <label style="margin-top:10px;">Mostrar rodapé</label>
+          <select id="showFooter" class="input">
+            <option value="true">Ativado</option>
+            <option value="false">Desativado</option>
+          </select>
+
           <label>Título do rodapé</label>
           <input id="footerTitle" class="input" placeholder="CASAMATA" />
 
@@ -200,7 +212,7 @@ Contato | https://..."></textarea>
         </div>
 
         <!-- PRODUCT FORM -->
-        <div class="panel">
+        <div class="panel" id="productFormPanel">
           <h2 style="margin:0;">Criar / Editar Produto</h2>
 
           <input type="hidden" id="productId" />

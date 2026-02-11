@@ -379,32 +379,59 @@ async function sendOrder() {
   const discord = (el("discordInput")?.value || "").trim();
   if (!nick || !discord) return showToast("Preencha Nick e Discord.");
 
-  const total = cartTotal();
+  // ✅ Normaliza números para evitar NaN/strings estranhas
+  const items = cart.map((i) => {
+    const qty = Math.max(1, Number(i.qty || 1));
+    const unit = Number(i.price);
+    const safeUnit = Number.isFinite(unit) ? unit : 0;
+    const lineTotal = safeUnit * qty;
+
+    // Manda várias chaves (compatibilidade com Workers diferentes)
+    return {
+      productId: i.productId,
+      id: i.productId,
+      name: i.name,
+      title: i.name,
+
+      qty,
+      quantity: qty,
+
+      unit: safeUnit,
+      unitPrice: safeUnit,
+      price: safeUnit,
+
+      subtotal: lineTotal,
+      lineTotal,
+      total: lineTotal,
+
+      // versões em texto também (caso o Worker formate por string)
+      unitText: money(safeUnit),
+      totalText: money(lineTotal),
+    };
+  });
+
+  const total = items.reduce((sum, it) => sum + Number(it.total || 0), 0);
+
   const payload = {
     nick,
     discord,
+
+    // totais (várias chaves por compatibilidade)
     total,
-    quantity: cart.reduce((s, i) => s + Number(i.qty || 0), 0),
-    items: cart.map((i) => {
-      const unit = Number(i.price || 0);
-      const qty = Number(i.qty || 0);
-      const lineTotal = unit * qty;
+    grandTotal: total,
+    totalValue: total,
+    subtotal: total,
+    amount: total,
 
-      // Compat: envia vários nomes de campo porque o Worker/Webhook pode estar lendo chaves antigas
-      return {
-        productId: i.productId,
-        name: i.name,
-        qty,
+    // versões em texto
+    totalText: money(total),
 
-        unit,                 // novo
-        price: unit,          // compat (muito comum)
-        unitPrice: unit,      // compat
+    // itens
+    items,
 
-        subtotal: lineTotal,  // compat
-        lineTotal,            // novo
-        total: lineTotal,     // compat
-      };
-    }),
+    // infos extras úteis (não atrapalham se o Worker ignorar)
+    createdAt: new Date().toISOString(),
+    channel: "site",
   };
 
   try {

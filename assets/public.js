@@ -79,8 +79,15 @@ function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {})
   }
 }
 
+function normalizeStr(s) {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 /* ======================
-   ESTADO / ESTOQUE / CARRINHO
+   ESTOQUE / CARRINHO (mantém o seu elegante na esquerda)
 ====================== */
 let cart = [];
 let cartOpen = false;
@@ -91,7 +98,6 @@ const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
 
-/* ---- overlay + painel (carrinho elegante) ---- */
 const cartOverlay = document.createElement("div");
 cartOverlay.className = "cartOverlay";
 document.body.appendChild(cartOverlay);
@@ -106,23 +112,21 @@ function openCart() {
   cartPanel.classList.add("active");
   renderCart();
 }
-
 function closeCart() {
   cartOpen = false;
   cartOverlay.classList.remove("active");
   cartPanel.classList.remove("active");
 }
 
-cartBtn?.addEventListener("click", () => {
-  if (cartOpen) closeCart();
-  else openCart();
-});
-
+cartBtn?.addEventListener("click", () => (cartOpen ? closeCart() : openCart()));
 cartOverlay.addEventListener("click", closeCart);
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && cartOpen) closeCart();
 });
+
+function updateCartCount() {
+  if (cartCount) cartCount.textContent = String(cart.length);
+}
 
 function getAvailableStock(productId) {
   if (!stockMap.has(productId)) return null;
@@ -146,13 +150,6 @@ function normalizeCartAgainstStock() {
   return changed;
 }
 
-function updateCartCount() {
-  if (cartCount) cartCount.textContent = String(cart.length);
-}
-
-/* ======================
-   RENDER CARRINHO
-====================== */
 function renderCart() {
   normalizeCartAgainstStock();
   updateCartCount();
@@ -217,15 +214,11 @@ function renderCart() {
   el("sendOrder")?.addEventListener("click", sendOrder);
 }
 
-/* ======================
-   ENVIAR PEDIDO
-====================== */
 async function sendOrder() {
   const nick = el("nickInput").value.trim();
   const discord = el("discordInput").value.trim();
   if (!nick || !discord) return alert("Preencha Nick e Discord");
 
-  // valida estoque
   for (const item of cart) {
     const avail = getAvailableStock(item.productId);
     if (avail !== null && item.qty > avail)
@@ -287,7 +280,6 @@ function watchGlobalConfig() {
     const bannerUrl = fixAssetPath(pick(data, ["bannerImageUrl"], ""));
     if (bannerUrl) el("bannerImg").src = bannerUrl;
 
-    // ✅ aplica corte/zoom do banner no site
     const bannerContainer = el("bannerImg")?.parentElement;
     applyImageView(el("bannerImg"), bannerContainer, {
       x: data.bannerPosX ?? 50,
@@ -304,6 +296,115 @@ function watchGlobalConfig() {
     el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
   });
 }
+
+/* ======================
+   FILTROS (UI)
+====================== */
+const catChips = el("catChips");
+const searchInput = el("searchInput");
+const minPriceEl = el("minPrice");
+const maxPriceEl = el("maxPrice");
+const sortPriceEl = el("sortPrice");
+const clearBtn = el("clearFilters");
+const filterHint = el("filterHint");
+
+let allProducts = [];
+let selectedCategory = "Todos";
+
+function getShownPrice(p) {
+  const promo =
+    p.promoPrice !== null &&
+    p.promoPrice !== undefined &&
+    Number(p.promoPrice) > 0 &&
+    Number(p.promoPrice) < Number(p.price || 0);
+  return promo ? Number(p.promoPrice) : Number(p.price || 0);
+}
+
+function rebuildCategories(items) {
+  const baseOrder = ["Recursos", "Equipamentos", "Armas", "Munição", "Outros"];
+  const set = new Set();
+  for (const p of items) {
+    const c = (p.category || "Recursos").toString().trim() || "Recursos";
+    set.add(c);
+  }
+
+  const cats = ["Todos", ...baseOrder.filter((c) => set.has(c)), ...[...set].filter((c) => !baseOrder.includes(c))];
+
+  catChips.innerHTML = "";
+  for (const c of cats) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip" + (c === selectedCategory ? " active" : "");
+    btn.textContent = c;
+    btn.addEventListener("click", () => {
+      selectedCategory = c;
+      // re-render chips active state
+      [...catChips.querySelectorAll(".chip")].forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      applyFiltersAndRender();
+    });
+    catChips.appendChild(btn);
+  }
+
+  // se categoria selecionada não existe mais, volta pra Todos
+  if (!cats.includes(selectedCategory)) {
+    selectedCategory = "Todos";
+    catChips.querySelector(".chip")?.classList.add("active");
+  }
+}
+
+function applyFiltersAndRender() {
+  const q = normalizeStr(searchInput.value);
+  const minP = Number(minPriceEl.value);
+  const maxP = Number(maxPriceEl.value);
+
+  const hasMin = minPriceEl.value !== "" && Number.isFinite(minP);
+  const hasMax = maxPriceEl.value !== "" && Number.isFinite(maxP);
+
+  let filtered = allProducts.slice();
+
+  // categoria
+  if (selectedCategory !== "Todos") {
+    filtered = filtered.filter((p) => (p.category || "Recursos") === selectedCategory);
+  }
+
+  // busca (nome + descrição)
+  if (q) {
+    filtered = filtered.filter((p) => {
+      const hay = normalizeStr((p.name || "") + " " + (p.description || ""));
+      return hay.includes(q);
+    });
+  }
+
+  // preço
+  if (hasMin) filtered = filtered.filter((p) => getShownPrice(p) >= minP);
+  if (hasMax) filtered = filtered.filter((p) => getShownPrice(p) <= maxP);
+
+  // ordenação
+  const ord = sortPriceEl.value;
+  if (ord === "asc") filtered.sort((a, b) => getShownPrice(a) - getShownPrice(b));
+  if (ord === "desc") filtered.sort((a, b) => getShownPrice(b) - getShownPrice(a));
+
+  filterHint.textContent = `Mostrando ${filtered.length} de ${allProducts.length} produtos`;
+
+  renderProducts(filtered);
+}
+
+searchInput.addEventListener("input", () => applyFiltersAndRender());
+minPriceEl.addEventListener("input", () => applyFiltersAndRender());
+maxPriceEl.addEventListener("input", () => applyFiltersAndRender());
+sortPriceEl.addEventListener("change", () => applyFiltersAndRender());
+
+clearBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  minPriceEl.value = "";
+  maxPriceEl.value = "";
+  sortPriceEl.value = "default";
+  selectedCategory = "Todos";
+  // rebuild chips to reset active
+  rebuildCategories(allProducts);
+  applyFiltersAndRender();
+});
 
 /* ======================
    PRODUTOS
@@ -326,11 +427,14 @@ function renderProducts(items) {
       Number(p.promoPrice) > 0 &&
       Number(p.promoPrice) < Number(p.price || 0);
 
-    const shownPrice = promo ? Number(p.promoPrice) : Number(p.price || 0);
+    const shownPrice = getShownPrice(p);
 
     const stockBadge = hasStock
       ? `<div class="badge">Estoque: ${stock}</div>`
       : `<div class="badge">Estoque: ∞</div>`;
+
+    const cat = (p.category || "Recursos").toString();
+    const best = !!p.bestSeller;
 
     card.innerHTML = `
       <div class="img"><img src="${img}" alt=""></div>
@@ -340,7 +444,9 @@ function renderProducts(items) {
 
         <div class="badges">
           ${stockBadge}
+          <div class="badge">${cat}</div>
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
+          ${best ? `<div class="badge best">Mais vendido</div>` : ``}
         </div>
 
         <div class="priceBlock">
@@ -368,9 +474,7 @@ function renderProducts(items) {
         <div class="pay-hint">Pagamento em cash do jogo!</div>
 
         <div class="buyRow">
-          <input type="number" min="1" value="1" class="input qty" ${
-            out ? "disabled" : ""
-          }>
+          <input type="number" min="1" value="1" class="input qty" ${out ? "disabled" : ""}>
           <button class="btn addBtn" type="button" ${out ? "disabled" : ""}>
             ${out ? "Sem estoque" : "Adicionar"}
           </button>
@@ -402,16 +506,11 @@ function renderProducts(items) {
     addBtn.addEventListener("click", () => {
       const wanted = Math.max(1, Number(qtyInput.value || 1));
       const avail = getAvailableStock(p.id);
-
       if (avail !== null && wanted > avail) return alert(`Só tem ${avail} em estoque.`);
       if (avail !== null && avail <= 0) return alert("Sem estoque.");
 
       cart.push({ productId: p.id, name: p.name, price: shownPrice, qty: wanted });
       updateCartCount();
-
-      // se quiser abrir automaticamente ao adicionar, descomente:
-      // openCart();
-
       if (cartOpen) renderCart();
     });
 
@@ -431,11 +530,19 @@ onSnapshot(qProducts, (snap) => {
     const data = d.data();
     if (!data?.active) return;
     const product = { id: d.id, ...data };
+    // defaults seguros
+    if (!product.category) product.category = "Recursos";
+    if (product.bestSeller === undefined) product.bestSeller = false;
+
     items.push(product);
     stockMap.set(d.id, data.stock);
   });
 
-  renderProducts(items);
+  allProducts = items;
+
+  rebuildCategories(allProducts);
+  applyFiltersAndRender();
+
   el("kpiProducts").textContent = `Produtos: ${items.length}`;
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 

@@ -40,18 +40,10 @@ a{ color:inherit; text-decoration:none; }
 }
 
 .row{ display:flex; align-items:center; gap:12px; }
-.rowBtns{ display:flex; gap:10px; align-items:center; }
+.rowBtns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
-.brand h1{
-  margin:0;
-  font-size:20px;
-  color:var(--brand);
-}
-.brand p{
-  margin:4px 0 0;
-  font-size:13px;
-  color:var(--muted);
-}
+.brand h1{ margin:0; font-size:20px; color:var(--brand); }
+.brand p{ margin:4px 0 0; font-size:13px; color:var(--muted); }
 
 /* =====================
    BOTÕES / INPUTS
@@ -73,20 +65,35 @@ a{ color:inherit; text-decoration:none; }
 .btn.danger{ background:var(--danger); color:#111; }
 .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
-.input, textarea{
+.smallBtn{ padding:6px 10px; border-radius:10px; font-size:12px; }
+
+.input, textarea, select{
   width:100%;
   padding:10px 12px;
   border-radius:12px;
   border:1px solid #2a2a2a;
   background:#0d0d0d;
   color:#fff;
+  outline:none;
 }
+textarea{ resize:vertical; }
 
+label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
 .small{ font-size:13px; color:var(--muted); }
 .hr{ height:1px; background:#232323; margin:12px 0; }
 
 /* =====================
-   HERO / BANNER
+   PAINÉIS (ADMIN + SITE)
+===================== */
+.panel{
+  background:var(--panel);
+  border:1px solid #232323;
+  border-radius:var(--radius);
+  padding:14px;
+}
+
+/* =====================
+   HERO / BANNER (SITE e ADMIN)
 ===================== */
 .hero{
   display:grid;
@@ -98,6 +105,7 @@ a{ color:inherit; text-decoration:none; }
   .hero{ grid-template-columns:1fr; }
 }
 
+/* banner do site */
 .heroBanner{
   position:relative;
   border-radius:var(--radius);
@@ -110,6 +118,7 @@ a{ color:inherit; text-decoration:none; }
   height:260px;
   object-fit:cover;
   display:block;
+  transform-origin:center center;
 }
 .heroBanner .overlay{
   position:absolute;
@@ -123,14 +132,10 @@ a{ color:inherit; text-decoration:none; }
   right:14px;
 }
 .heroBanner h2{ margin:0; font-size:22px; }
-.heroBanner .desc{
-  margin-top:6px;
-  font-size:14px;
-  opacity:.9;
-}
+.heroBanner .desc{ margin-top:6px; font-size:14px; opacity:.9; }
 
 /* =====================
-   GRID / CARDS
+   GRID / CARDS (LISTAGEM)
 ===================== */
 .grid{
   display:grid;
@@ -144,6 +149,7 @@ a{ color:inherit; text-decoration:none; }
   .grid{ grid-template-columns:1fr; }
 }
 
+/* card de produto (site + cards admin) */
 .card{
   background:var(--panel);
   border:1px solid #232323;
@@ -152,19 +158,20 @@ a{ color:inherit; text-decoration:none; }
   display:flex;
   flex-direction:column;
 }
-
 .card .img{
   width:100%;
   aspect-ratio:16/10;
   background:#0b0b0b;
   overflow:hidden;
+  position:relative;
 }
 .card .img img{
   width:100%;
   height:100%;
   object-fit:cover;
+  display:block;
+  transform-origin:center center;
 }
-
 .card .body{
   padding:12px;
   display:flex;
@@ -172,13 +179,9 @@ a{ color:inherit; text-decoration:none; }
   flex:1;
 }
 
-/* título */
-.card h3{
-  margin:0;
-  font-size:16px;
-}
+.card h3{ margin:0; font-size:16px; }
 
-/* descrição padronizada */
+/* descrição padronizada p/ alinhar botões */
 .card p{
   margin:8px 0 0;
   font-size:13px;
@@ -190,9 +193,7 @@ a{ color:inherit; text-decoration:none; }
   overflow:hidden;
 }
 
-/* =====================
-   BADGES
-===================== */
+/* badges */
 .badges{
   display:flex;
   gap:8px;
@@ -208,22 +209,19 @@ a{ color:inherit; text-decoration:none; }
 }
 
 /* =====================
-   BLOCO DE PREÇOS (FIX)
+   BLOCO DE PREÇOS (FIX 1 ou 2 linhas)
 ===================== */
 .priceBlock{
   margin-top:10px;
   display:grid;
   gap:8px;
-  min-height:104px; /* sempre igual */
+  min-height:104px; /* mantém igual mesmo sem promo */
 }
-
-/* espaço fantasma para quando não há promoção */
 .priceBlock::after{
   content:"";
-  display:block;
+  display:block; /* reserva espaço quando só existe 1 linha */
 }
 
-/* linha de preço */
 .priceLine{
   min-height:40px;
   display:flex;
@@ -234,34 +232,15 @@ a{ color:inherit; text-decoration:none; }
   border-radius:12px;
   padding:8px 10px;
 }
-
-.priceLabel{
-  font-size:12px;
-  color:var(--muted);
-}
-
-.priceValue{
-  font-size:15px;
-  font-weight:900;
-}
-
-.priceValue.casamata{
-  color:var(--brand);
-}
-
-.priceValue.trade{
-  color:#9a9a9a;
-  text-decoration:line-through;
-}
+.priceLabel{ font-size:12px; color:var(--muted); }
+.priceValue{ font-size:15px; font-weight:900; }
+.priceValue.casamata{ color:var(--brand); }
+.priceValue.trade{ color:#9a9a9a; text-decoration:line-through; }
 
 /* =====================
-   COMPRA
+   COMPRA (ALINHAMENTO DO BOTÃO)
 ===================== */
-.pay-hint{
-  margin-top:6px;
-  font-size:12px;
-  opacity:.85;
-}
+.pay-hint{ margin-top:6px; font-size:12px; opacity:.85; }
 
 .buyRow{
   margin-top:auto;
@@ -269,13 +248,57 @@ a{ color:inherit; text-decoration:none; }
   gap:6px;
   align-items:center;
 }
+.buyRow .qty{ width:70px; }
+.buyRow .addBtn{ flex:1; }
 
-.buyRow .qty{
-  width:70px;
+/* =====================
+   ADMIN: FORM LAYOUT
+===================== */
+.formGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:10px;
+}
+@media (max-width:900px){
+  .formGrid{ grid-template-columns:1fr; }
 }
 
-.buyRow .addBtn{
-  flex:1;
+/* blocos de sliders */
+.imgPosWrap{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #232323;
+  border-radius:14px;
+  background:#101010;
+}
+.imgPosRow{ margin-top:10px; }
+.imgPosRow input[type="range"]{ width:100%; }
+
+/* preview (ISSO resolve seu problema do admin) */
+.imgPreviewWrap{ margin-top:10px; }
+.imgPreviewBox{
+  width:100%;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid #232323;
+  background:#0b0b0b;
+  position:relative;
+  max-height:260px;           /* ✅ impede ficar gigante */
+}
+
+/* preview produto */
+.imgPreviewBox.product{ aspect-ratio:16/10; }
+
+/* preview banner */
+.imgPreviewBox.banner{ aspect-ratio:16/6; }
+
+.imgPreviewBox img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  transform-origin:center center;
 }
 
 /* =====================

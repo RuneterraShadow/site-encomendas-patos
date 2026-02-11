@@ -578,3 +578,376 @@ label{ display:block; margin-top:10px; font-size:var(--text-sm); font-weight:600
   justify-content:center;
   font-size:18px;
 }
+
+:root{
+  --bg:#0f0f0f;
+  --panel:#151515;
+  --panel2:#1c1c1c;
+  --txt:#ffffff;
+  --muted:#bdbdbd;
+  --brand:#ff7a00;
+  --danger:#ff4d4d;
+  --ok:#38d478;
+  --radius:16px;
+}
+
+/* =====================
+   RESET / BASE
+===================== */
+*{ box-sizing:border-box; }
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+}
+a{ color:inherit; text-decoration:none; }
+
+.container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:18px;
+}
+
+/* =====================
+   TOPO
+===================== */
+.topbar{
+  background:#121212;
+  border-bottom:1px solid #232323;
+  position:sticky;
+  top:0;
+  z-index:50;
+}
+
+.row{ display:flex; align-items:center; gap:12px; }
+.rowBtns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+.brand h1{ margin:0; font-size:20px; color:var(--brand); }
+.brand p{ margin:4px 0 0; font-size:13px; color:var(--muted); }
+
+/* =====================
+   BOTÕES / INPUTS
+===================== */
+.btn{
+  border:none;
+  background:var(--brand);
+  color:#111;
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.15s;
+}
+.btn:hover{ filter:brightness(1.05); }
+.btn:active{ transform:translateY(1px); }
+
+.btn.secondary{ background:#2a2a2a; color:#fff; }
+.btn.danger{ background:var(--danger); color:#111; }
+.btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+.smallBtn{ padding:6px 10px; border-radius:10px; font-size:12px; }
+
+.input, textarea, select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid #2a2a2a;
+  background:#0d0d0d;
+  color:#fff;
+  outline:none;
+}
+textarea{ resize:vertical; }
+
+label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
+.small{ font-size:13px; color:var(--muted); }
+.hr{ height:1px; background:#232323; margin:12px 0; }
+
+/* =====================
+   PAINÉIS (ADMIN + SITE)
+===================== */
+.panel{
+  background:var(--panel);
+  border:1px solid #232323;
+  border-radius:var(--radius);
+  padding:14px;
+}
+
+/* =====================
+   HERO / BANNER (SITE e ADMIN)
+===================== */
+.hero{
+  display:grid;
+  grid-template-columns:1.35fr .65fr;
+  gap:14px;
+  margin-top:14px;
+}
+@media (max-width:900px){
+  .hero{ grid-template-columns:1fr; }
+}
+
+/* banner do site */
+.heroBanner{
+  position:relative;
+  border-radius:var(--radius);
+  overflow:hidden;
+  border:1px solid #232323;
+  background:#0b0b0b;
+}
+.heroBanner img{
+  width:100%;
+  height:260px;
+  object-fit:cover;
+  display:block;
+  transform-origin:center center;
+}
+.heroBanner .overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.75));
+}
+.heroBanner .text{
+  position:absolute;
+  left:14px;
+  bottom:14px;
+  right:14px;
+}
+.heroBanner h2{ margin:0; font-size:22px; }
+.heroBanner .desc{ margin-top:6px; font-size:14px; opacity:.9; }
+
+/* =====================
+   KPI
+===================== */
+.kpiRow{ display:flex; gap:10px; flex-wrap:wrap; }
+.kpi{
+  background:var(--panel2);
+  border:1px solid #232323;
+  border-radius:12px;
+  padding:8px 10px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* =====================
+   GRID / CARDS (LISTAGEM)
+===================== */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+@media (max-width:900px){
+  .grid{ grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:640px){
+  .grid{ grid-template-columns:1fr; }
+}
+
+/* card de produto (site + cards admin) */
+.card{
+  background:var(--panel);
+  border:1px solid #232323;
+  border-radius:var(--radius);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.card .img{
+  width:100%;
+  aspect-ratio:16/10;
+  background:#0b0b0b;
+  overflow:hidden;
+  position:relative;
+}
+.card .img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  transform-origin:center center;
+}
+.card .body{
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  flex:1;
+}
+
+.card h3{ margin:0; font-size:16px; }
+
+/* descrição padronizada p/ alinhar botões */
+.card p{
+  margin:8px 0 0;
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.35;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+/* badges */
+.badges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.badge{
+  background:#232323;
+  border:1px solid #2a2a2a;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:12px;
+}
+.badge.best{
+  background: rgba(255,122,0,.18);
+  border-color: rgba(255,122,0,.35);
+  color: #ffd7b0;
+  font-weight:900;
+}
+
+/* =====================
+   BLOCO DE PREÇOS
+===================== */
+.priceBlock{
+  margin-top:10px;
+  display:grid;
+  gap:8px;
+  min-height:104px;
+}
+.priceLine{
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--panel2);
+  border:1px solid #232323;
+  border-radius:12px;
+  padding:8px 10px;
+}
+.priceLabel{ font-size:12px; color:var(--muted); }
+.priceValue{ font-size:15px; font-weight:900; }
+.priceValue.casamata{ color:var(--brand); }
+.priceValue.trade{ color:#9a9a9a; text-decoration:line-through; }
+
+/* =====================
+   COMPRA
+===================== */
+.pay-hint{ margin-top:6px; font-size:12px; opacity:.85; }
+
+.buyRow{
+  margin-top:auto;
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.buyRow .qty{ width:70px; }
+.buyRow .addBtn{ flex:1; }
+
+/* =====================
+   ADMIN: FORM LAYOUT
+===================== */
+.formGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:10px;
+}
+@media (max-width:900px){
+  .formGrid{ grid-template-columns:1fr; }
+}
+
+/* blocos de sliders */
+.imgPosWrap{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #232323;
+  border-radius:14px;
+  background:#101010;
+}
+.imgPosRow{ margin-top:10px; }
+.imgPosRow input[type="range"]{ width:100%; }
+
+/* preview */
+.imgPreviewWrap{ margin-top:10px; }
+.imgPreviewBox{
+  width:100%;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid #232323;
+  background:#0b0b0b;
+  position:relative;
+  max-height:260px;
+}
+.imgPreviewBox.product{ aspect-ratio:16/10; }
+.imgPreviewBox.banner{ aspect-ratio:16/6; }
+
+.imgPreviewBox img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  transform-origin:center center;
+}
+
+/* =====================
+   FUNDO QUADRICULADO (ZOOM OUT)
+===================== */
+.checker{
+  background-color:#0b0b0b;
+  background-image:
+    linear-gradient(45deg, rgba(255,255,255,.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,.08) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,.08) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.08) 75%);
+  background-size:18px 18px;
+  background-position:0 0,0 9px,9px -9px,-9px 0;
+}
+
+/* =========================
+   DESTAQUES (3 CARDS NO TOPO)
+========================= */
+.trustBlock{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:14px;
+  margin-top:14px;
+}
+@media (max-width:900px){
+  .trustBlock{ grid-template-columns:1fr; }
+}
+.trustItem{
+  background: var(--panel);
+  border:1px solid #232323;
+  border-radius: var(--radius);
+  padding:14px;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+.trustIcon{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: var(--panel2);
+  border:1px solid #232323;
+  font-size:18px;
+  flex:0 0 auto;
+}
+.trustText strong{
+  display:block;
+  font-size:15px;
+  line-height:1.2;
+}
+.trustText span{
+  display:block;
+  margin-top:6px;
+  color: var(--muted);
+  font-size:13px;
+  line-height:1.35;
+}

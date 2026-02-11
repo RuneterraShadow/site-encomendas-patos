@@ -100,7 +100,6 @@
           <label>Banner: imagem (URL)</label>
           <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
 
-          <!-- ✅ EDIÇÃO DO BANNER (corte/zoom) -->
           <div class="imgPosWrap">
             <div class="small">Corte / Zoom do Banner (fiel ao site)</div>
 
@@ -126,9 +125,7 @@
             </div>
 
             <div class="rowBtns" style="margin-top:10px;">
-              <button class="btn secondary smallBtn" id="resetBannerBtn" type="button">
-                Resetar banner
-              </button>
+              <button class="btn secondary smallBtn" id="resetBannerBtn" type="button">Resetar banner</button>
             </div>
 
             <div class="imgPreviewWrap">
@@ -139,7 +136,62 @@
             </div>
           </div>
 
-          <!-- ✅ RODAPÉ (EDITÁVEL) -->
+          <!-- ✅ NOVO: DESTAQUES DO TOPO -->
+          <div class="hr"></div>
+          <h3 style="margin:0;">Destaques do topo (3 cards)</h3>
+          <p class="small" style="margin:6px 0 0;">
+            Ícone pode ser emoji (ex: 🚀 💰 📦).
+          </p>
+
+          <div class="imgPosWrap" style="margin-top:10px;">
+            <div class="small" style="font-weight:900;">Card 1</div>
+            <div class="formGrid">
+              <div>
+                <label>Ícone</label>
+                <input id="trust1Icon" class="input" placeholder="🚀" />
+              </div>
+              <div>
+                <label>Título</label>
+                <input id="trust1Title" class="input" placeholder="Entrega rápida" />
+              </div>
+            </div>
+            <label>Texto</label>
+            <input id="trust1Text" class="input" placeholder="Itens entregues no servidor em poucos minutos" />
+          </div>
+
+          <div class="imgPosWrap">
+            <div class="small" style="font-weight:900;">Card 2</div>
+            <div class="formGrid">
+              <div>
+                <label>Ícone</label>
+                <input id="trust2Icon" class="input" placeholder="💰" />
+              </div>
+              <div>
+                <label>Título</label>
+                <input id="trust2Title" class="input" placeholder="Pagamento em cash" />
+              </div>
+            </div>
+            <label>Texto</label>
+            <input id="trust2Text" class="input" placeholder="Transação 100% dentro do jogo" />
+          </div>
+
+          <div class="imgPosWrap">
+            <div class="small" style="font-weight:900;">Card 3</div>
+            <div class="formGrid">
+              <div>
+                <label>Ícone</label>
+                <input id="trust3Icon" class="input" placeholder="📦" />
+              </div>
+              <div>
+                <label>Título</label>
+                <input id="trust3Title" class="input" placeholder="Estoque em tempo real" />
+              </div>
+            </div>
+            <label>Texto</label>
+            <input id="trust3Text" class="input" placeholder="Atualização automática de disponibilidade" />
+          </div>
+
+          <!-- ✅ RODAPÉ -->
           <div class="hr"></div>
           <h3 style="margin:0;">Rodapé</h3>
 
@@ -198,7 +250,6 @@ Contato | https://..."></textarea>
             </div>
           </div>
 
-          <!-- ✅ CATEGORIA + MAIS VENDIDO -->
           <div class="formGrid">
             <div>
               <label>Categoria</label>
@@ -222,7 +273,6 @@ Contato | https://..."></textarea>
           <label>Imagem do produto (URL)</label>
           <input id="pImageUrl" class="input" placeholder="/assets/images/products/produto.jpg" />
 
-          <!-- ✅ EDIÇÃO DO PRODUTO (corte/zoom) -->
           <div class="imgPosWrap">
             <div class="small">Corte / Zoom da imagem (igual ao produto)</div>
 
@@ -248,14 +298,12 @@ Contato | https://..."></textarea>
             </div>
 
             <div class="rowBtns" style="margin-top:10px;">
-              <button class="btn secondary smallBtn" id="resetCropBtn" type="button">
-                Resetar corte
-              </button>
+              <button class="btn secondary smallBtn" id="resetCropBtn" type="button">Resetar corte</button>
             </div>
 
             <div class="imgPreviewWrap">
-              <div class="small">Prévia (fiel ao site)</div>
-              <div class="imgPreviewBox product" id="pImagePreviewBox">
+              <div class="small">Prévia do produto</div>
+              <div class="imgPreviewBox product checker" id="pImagePreviewBox">
                 <img id="pImagePreview" alt="Prévia do produto" />
               </div>
             </div>
@@ -265,8 +313,8 @@ Contato | https://..."></textarea>
             <div>
               <label>Ativo</label>
               <select id="pActive" class="input">
-                <option value="true">Sim (aparece)</option>
-                <option value="false">Não (some)</option>
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
               </select>
             </div>
             <div>
@@ -278,9 +326,9 @@ Contato | https://..."></textarea>
             </div>
           </div>
 
-          <div class="rowBtns">
-            <button class="btn" id="saveProductBtn" type="button">Salvar produto</button>
+          <div class="rowBtns" style="margin-top:12px;">
             <button class="btn secondary" id="clearFormBtn" type="button">Limpar</button>
+            <button class="btn" id="saveProductBtn" type="button">Salvar</button>
             <button class="btn danger" id="deleteProductBtn" type="button" disabled>Excluir</button>
           </div>
 
@@ -288,9 +336,9 @@ Contato | https://..."></textarea>
         </div>
       </div>
 
-      <h2 style="margin:18px 0 10px;">Produtos cadastrados</h2>
+      <div class="hr"></div>
+      <h2 style="margin:0 0 10px;">Produtos (lista)</h2>
       <div id="productsGrid" class="grid"></div>
-
     </div>
   </div>
 

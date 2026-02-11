@@ -214,12 +214,18 @@ let cartOpen = false;
 
 const stockMap = new Map();
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
-let LOW_STOCK_ALERTS_ENABLED = true;
-let LOW_STOCK_THRESHOLD = 5;
-
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
+
+// ✅ Botão flutuante do carrinho (fica visível ao rolar a página)
+const floatingCartBtn = document.createElement("button");
+floatingCartBtn.type = "button";
+floatingCartBtn.className = "floatingCartBtn";
+floatingCartBtn.innerHTML = `🛒 <span class="floatingCartCount">0</span>`;
+document.body.appendChild(floatingCartBtn);
+
+floatingCartBtn.addEventListener("click", () => (cartOpen ? closeCart() : openCart()));
 
 const cartOverlay = document.createElement("div");
 cartOverlay.className = "cartOverlay";
@@ -245,7 +251,10 @@ cartBtn?.addEventListener("click", () => (cartOpen ? closeCart() : openCart()));
 cartOverlay.addEventListener("click", closeCart);
 
 function updateCartCount() {
-  if (cartCount) cartCount.textContent = String(cart.reduce((s, i) => s + i.qty, 0));
+  const n = String(cart.reduce((s, i) => s + i.qty, 0));
+  if (cartCount) cartCount.textContent = n;
+  const fc = floatingCartBtn?.querySelector?.(".floatingCartCount");
+  if (fc) fc.textContent = n;
 }
 
 function getAvailableStock(productId) {
@@ -382,82 +391,17 @@ async function sendOrder() {
   const discord = (el("discordInput")?.value || "").trim();
   if (!nick || !discord) return showToast("Preencha Nick e Discord.");
 
-  // ✅ Normaliza números para evitar NaN/strings estranhas
-  const items = cart.map((i) => {
-    const qty = Math.max(1, Number(i.qty || 1));
-    const unit = Number(i.price);
-    const safeUnit = Number.isFinite(unit) ? unit : 0;
-    const lineTotal = safeUnit * qty;
-
-    // Manda várias chaves (compatibilidade com Workers diferentes)
-    return {
-      productId: i.productId,
-      id: i.productId,
-      name: i.name,
-      title: i.name,
-
-      qty,
-      quantity: qty,
-
-      unit: safeUnit,
-      unitPrice: safeUnit,
-      price: safeUnit,
-
-      subtotal: lineTotal,
-      lineTotal,
-      total: lineTotal,
-
-      // versões em texto também (caso o Worker formate por string)
-      unitText: money(safeUnit),
-      totalText: money(lineTotal),
-    };
-  });
-
-  const total = items.reduce((sum, it) => sum + Number(it.total || 0), 0);
-
-  // ✅ Detecta estoque baixo no momento do envio (com base no estoque atual carregado do Firestore)
-  const lowStockItems = [];
-  if (LOW_STOCK_ALERTS_ENABLED) {
-    for (const it of items) {
-      const availNow = getAvailableStock(it.productId);
-      if (availNow !== null) {
-        const remaining = Math.max(0, Number(availNow) - Number(it.qty || 0));
-        if (remaining <= LOW_STOCK_THRESHOLD) {
-          lowStockItems.push({
-            productId: it.productId,
-            name: it.name,
-            remaining,
-            threshold: LOW_STOCK_THRESHOLD,
-          });
-        }
-      }
-    }
-  }
-
   const payload = {
     nick,
     discord,
-
-    // totais (várias chaves por compatibilidade)
-    total,
-    grandTotal: total,
-    totalValue: total,
-    subtotal: total,
-    amount: total,
-
-    // versões em texto
-    totalText: money(total),
-
-    // itens
-    items,
-
-    // infos extras úteis (não atrapalham se o Worker ignorar)
-    createdAt: new Date().toISOString(),
-    channel: "site",
-
-    // alerta de estoque baixo (para o Worker enviar notificação)
-    lowStockThreshold: LOW_STOCK_THRESHOLD,
-    lowStockItems,
+    total: cartTotal(),
+    items: cart.map((i) => ({
+      productId: i.productId,
+      name: i.name,
+      qty: i.qty,
+      unit: i.price,
+      total: i.price * i.qty,
+    })),
   };
 
   try {
@@ -644,11 +588,6 @@ function watchGlobalConfig() {
     const showFooter = data.showFooter ?? true;
     const footerEl = document.querySelector(".footer");
     if (footerEl) footerEl.style.display = showFooter ? "" : "none";
-
-    // ✅ Alertas de estoque baixo (opcional no Firestore)
-    LOW_STOCK_ALERTS_ENABLED = data.lowStockAlertsEnabled ?? true;
-    LOW_STOCK_THRESHOLD = Number.isFinite(Number(data.lowStockThreshold)) ? Number(data.lowStockThreshold) : 5;
-
 
     el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 

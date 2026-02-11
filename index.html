@@ -8,11 +8,6 @@
   <!-- ISSO AQUI É O QUE GARANTE QUE ./assets/... FUNCIONA NO GITHUB PAGES -->
   <base href="/site-encomendas-patos/">
 
-  <!-- Fonte Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="./assets/app.css" />
 </head>
 
@@ -62,37 +57,32 @@
     </div>
 
     <!-- ✅ DESTAQUES (EDITÁVEL NO ADMIN) -->
-    <div class="trustBlock" id="trustBlock">
+    <div class="trustBlock">
       <div class="trustItem">
-        <div class="row" style="gap:10px;">
-          <div class="trustIcon" id="trust1Icon">🚀</div>
-          <div>
-            <strong id="trust1Title">Entrega rápida</strong><br>
-            <span id="trust1Text">Itens entregues no servidor em poucos minutos</span>
-          </div>
+        <div class="trustIcon" id="trust1Icon">🚀</div>
+        <div class="trustText">
+          <strong id="trust1Title">Entrega rápida</strong>
+          <span id="trust1Text">Itens entregues no servidor em poucos minutos</span>
         </div>
       </div>
 
       <div class="trustItem">
-        <div class="row" style="gap:10px;">
-          <div class="trustIcon" id="trust2Icon">💰</div>
-          <div>
-            <strong id="trust2Title">Pagamento em cash</strong><br>
-            <span id="trust2Text">Transação 100% dentro do jogo</span>
-          </div>
+        <div class="trustIcon" id="trust2Icon">💰</div>
+        <div class="trustText">
+          <strong id="trust2Title">Pagamento em cash</strong>
+          <span id="trust2Text">Transação 100% dentro do jogo</span>
         </div>
       </div>
 
       <div class="trustItem">
-        <div class="row" style="gap:10px;">
-          <div class="trustIcon" id="trust3Icon">📦</div>
-          <div>
-            <strong id="trust3Title">Estoque em tempo real</strong><br>
-            <span id="trust3Text">Atualização automática de disponibilidade</span>
-          </div>
+        <div class="trustIcon" id="trust3Icon">📦</div>
+        <div class="trustText">
+          <strong id="trust3Title">Estoque em tempo real</strong>
+          <span id="trust3Text">Atualização automática de disponibilidade</span>
         </div>
       </div>
     </div>
+
 
     <h2 style="margin:18px 0 10px;">Produtos</h2>
     <div id="productsGrid" class="grid"></div>
@@ -100,22 +90,6 @@
     <p class="small" style="margin-top:18px;">
       * Preços e disponibilidade podem mudar em tempo real.
     </p>
-
-    <!-- ✅ RODAPÉ (EDITÁVEL NO ADMIN) -->
-    <footer class="siteFooter">
-      <div class="footerInner">
-        <div class="footerCol">
-          <div class="footerTitle" id="footerTitle">—</div>
-          <div class="footerText" id="footerText">—</div>
-        </div>
-
-        <div class="footerCol">
-          <div class="footerLinks" id="footerLinks"></div>
-        </div>
-      </div>
-
-      <div class="footerCopy" id="footerCopy">—</div>
-    </footer>
   </div>
 
   <script type="module" src="./assets/public.js"></script>

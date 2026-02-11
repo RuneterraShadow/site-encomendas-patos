@@ -143,7 +143,20 @@ async function loadSettings() {
   el("bImagePosYVal").textContent = String(by);
   el("bImageZoomVal").textContent = String(bz);
 
-  /* ✅ RODAPÉ (NOVO) */
+  /* ✅ DESTAQUES (NOVO) */
+  if (el("trust1Icon")) el("trust1Icon").value = s.trust1Icon || "🚀";
+  if (el("trust1Title")) el("trust1Title").value = s.trust1Title || "Entrega rápida";
+  if (el("trust1Text")) el("trust1Text").value = s.trust1Text || "Itens entregues no servidor em poucos minutos";
+
+  if (el("trust2Icon")) el("trust2Icon").value = s.trust2Icon || "💰";
+  if (el("trust2Title")) el("trust2Title").value = s.trust2Title || "Pagamento em cash";
+  if (el("trust2Text")) el("trust2Text").value = s.trust2Text || "Transação 100% dentro do jogo";
+
+  if (el("trust3Icon")) el("trust3Icon").value = s.trust3Icon || "📦";
+  if (el("trust3Title")) el("trust3Title").value = s.trust3Title || "Estoque em tempo real";
+  if (el("trust3Text")) el("trust3Text").value = s.trust3Text || "Atualização automática de disponibilidade";
+
+  /* ✅ RODAPÉ */
   if (el("footerTitle")) el("footerTitle").value = s.footerTitle || "";
   if (el("footerText")) el("footerText").value = s.footerText || "";
   if (el("footerLinksRaw")) el("footerLinksRaw").value = s.footerLinksRaw || "";
@@ -169,17 +182,17 @@ function updateBannerPreview() {
 }
 
 ["bannerImageUrl", "bImagePosX", "bImagePosY", "bImageZoom"].forEach((id) => {
-  el(id).addEventListener("input", updateBannerPreview);
+  el(id)?.addEventListener("input", updateBannerPreview);
 });
 
-el("resetBannerBtn").addEventListener("click", () => {
+el("resetBannerBtn")?.addEventListener("click", () => {
   el("bImagePosX").value = "50";
   el("bImagePosY").value = "50";
   el("bImageZoom").value = "100";
   updateBannerPreview();
 });
 
-el("saveSettingsBtn").addEventListener("click", async () => {
+el("saveSettingsBtn")?.addEventListener("click", async () => {
   const payload = {
     siteTitle: el("siteTitle").value.trim(),
     siteSubtitle: el("siteSubtitle").value.trim(),
@@ -195,7 +208,20 @@ el("saveSettingsBtn").addEventListener("click", async () => {
     bannerPosY: clampPos(el("bImagePosY").value, 50),
     bannerZoom: clampZoom(el("bImageZoom").value, 100),
 
-    /* ✅ RODAPÉ (NOVO) */
+    /* ✅ DESTAQUES (NOVO) */
+    trust1Icon: el("trust1Icon") ? el("trust1Icon").value.trim() : "🚀",
+    trust1Title: el("trust1Title") ? el("trust1Title").value.trim() : "",
+    trust1Text: el("trust1Text") ? el("trust1Text").value.trim() : "",
+
+    trust2Icon: el("trust2Icon") ? el("trust2Icon").value.trim() : "💰",
+    trust2Title: el("trust2Title") ? el("trust2Title").value.trim() : "",
+    trust2Text: el("trust2Text") ? el("trust2Text").value.trim() : "",
+
+    trust3Icon: el("trust3Icon") ? el("trust3Icon").value.trim() : "📦",
+    trust3Title: el("trust3Title") ? el("trust3Title").value.trim() : "",
+    trust3Text: el("trust3Text") ? el("trust3Text").value.trim() : "",
+
+    /* ✅ RODAPÉ */
     footerTitle: el("footerTitle") ? el("footerTitle").value.trim() : "",
     footerText: el("footerText") ? el("footerText").value.trim() : "",
     footerLinksRaw: el("footerLinksRaw") ? el("footerLinksRaw").value.trim() : "",
@@ -259,19 +285,19 @@ function updateProductPreview() {
 }
 
 ["pImageUrl", "pImagePosX", "pImagePosY", "pImageZoom"].forEach((id) => {
-  el(id).addEventListener("input", updateProductPreview);
+  el(id)?.addEventListener("input", updateProductPreview);
 });
 
-el("resetCropBtn").addEventListener("click", () => {
+el("resetCropBtn")?.addEventListener("click", () => {
   el("pImagePosX").value = "50";
   el("pImagePosY").value = "50";
   el("pImageZoom").value = "100";
   updateProductPreview();
 });
 
-el("clearFormBtn").addEventListener("click", clearProductForm);
+el("clearFormBtn")?.addEventListener("click", clearProductForm);
 
-el("saveProductBtn").addEventListener("click", async () => {
+el("saveProductBtn")?.addEventListener("click", async () => {
   const id = el("productId").value.trim();
   const payload = {
     name: el("pName").value.trim(),
@@ -309,7 +335,7 @@ el("saveProductBtn").addEventListener("click", async () => {
   }
 });
 
-el("deleteProductBtn").addEventListener("click", async () => {
+el("deleteProductBtn")?.addEventListener("click", async () => {
   const id = el("productId").value.trim();
   if (!id) return;
 

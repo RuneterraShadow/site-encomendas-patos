@@ -529,3 +529,93 @@ label{
   background:transparent;
   padding:10px 2px;
 }
+
+/* =========================
+   UPGRADE PRO (VISUAL)
+   - hover premium
+   - sombras suaves
+   - transições
+   - melhor leitura e espaçamento
+========================= */
+
+/* transições suaves globais */
+.card, .panel, .btn, .chip, .priceLine{
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+
+/* painéis mais “macios” */
+.panel{
+  box-shadow: 0 6px 22px rgba(0,0,0,.25);
+}
+
+/* cards mais profissionais */
+.card{
+  box-shadow: 0 10px 30px rgba(0,0,0,.28);
+}
+.card:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 16px 45px rgba(0,0,0,.40);
+  border-color: rgba(255,255,255,.14);
+}
+
+/* imagem com leve zoom no hover */
+.card .img img{
+  transition: transform .22s ease, filter .22s ease;
+}
+.card:hover .img img{
+  transform: scale(1.03);
+  filter: contrast(1.02) saturate(1.04);
+}
+
+/* melhor leitura do texto */
+.card p{
+  opacity: .95;
+}
+
+/* preço com destaque mais “loja” */
+.priceLine{
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+}
+.priceValue.casamata{
+  text-shadow: 0 0 14px rgba(255,122,0,.25);
+}
+
+/* botões mais premium */
+.btn{
+  box-shadow: 0 10px 22px rgba(0,0,0,.25);
+}
+.btn:hover{
+  transform: translateY(-1px);
+}
+.btn:active{
+  transform: translateY(1px);
+}
+
+/* chips com feedback melhor */
+.chip:hover{
+  transform: translateY(-1px);
+}
+
+/* topbar um pouco mais “glass” */
+.topbar{
+  background: rgba(18,18,18,.88);
+  backdrop-filter: blur(10px);
+}
+
+/* carrinho com sombra forte */
+#cartPanel{
+  box-shadow: 18px 0 60px rgba(0,0,0,.55);
+}
+
+/* scrollbar mais discreta no carrinho */
+.cartItems::-webkit-scrollbar{
+  width: 10px;
+}
+.cartItems::-webkit-scrollbar-thumb{
+  background: #2a2a2a;
+  border-radius: 999px;
+  border: 2px solid #141414;
+}
+.cartItems::-webkit-scrollbar-track{
+  background: transparent;
+}

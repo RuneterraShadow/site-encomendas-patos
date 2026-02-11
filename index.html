@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Loja</title>
 
-  <!-- ISSO AQUI É O QUE GARANTE QUE ./assets/... FUNCIONA NO GITHUB PAGES -->
+  <!-- GITHUB PAGES -->
   <base href="/site-encomendas-patos/">
 
   <link rel="stylesheet" href="./assets/app.css" />
@@ -56,26 +56,15 @@
 
     <h2 style="margin:18px 0 10px;">Produtos</h2>
 
-    <!-- ✅ BARRA DE FILTROS -->
+    <!-- ✅ FILTROS (APENAS BUSCA + CATEGORIA) -->
     <div class="filtersWrap">
       <div id="catChips" class="chipsRow"></div>
 
-      <div class="filtersBar">
+      <div class="filtersBarSimple">
         <div class="searchBox">
           <span class="icon">🔎</span>
           <input id="searchInput" class="input" placeholder="Buscar produto..." />
         </div>
-
-        <div class="priceFilters">
-          <input id="minPrice" class="input" type="number" step="0.01" placeholder="Preço mín." />
-          <input id="maxPrice" class="input" type="number" step="0.01" placeholder="Preço máx." />
-        </div>
-
-        <select id="sortPrice" class="input">
-          <option value="default">Ordenar</option>
-          <option value="asc">Menor preço</option>
-          <option value="desc">Maior preço</option>
-        </select>
 
         <button id="clearFilters" class="btn secondary" type="button">Limpar</button>
       </div>

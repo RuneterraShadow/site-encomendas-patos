@@ -24,7 +24,7 @@
       </div>
       <div class="rowBtns">
         <a class="btn secondary" href="./index.html">Voltar</a>
-        <button class="btn danger" id="logoutBtn">Sair</button>
+        <button class="btn danger" id="logoutBtn" type="button">Sair</button>
       </div>
     </div>
   </div>
@@ -48,7 +48,7 @@
       </div>
 
       <div class="rowBtns">
-        <button class="btn" id="loginBtn">Entrar</button>
+        <button class="btn" id="loginBtn" type="button">Entrar</button>
       </div>
 
       <p class="small" id="loginMsg" style="margin:0;"></p>
@@ -100,6 +100,7 @@
           <label>Banner: imagem (URL)</label>
           <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
 
+          <!-- ✅ EDIÇÃO DO BANNER (corte/zoom) -->
           <div class="imgPosWrap">
             <div class="small">Corte / Zoom do Banner (fiel ao site)</div>
 
@@ -139,7 +140,7 @@
           </div>
 
           <div class="rowBtns">
-            <button class="btn" id="saveSettingsBtn">Salvar configurações</button>
+            <button class="btn" id="saveSettingsBtn" type="button">Salvar configurações</button>
           </div>
 
           <p class="small" id="settingsMsg" style="margin:0;"></p>
@@ -179,14 +180,15 @@
             </div>
           </div>
 
+          <!-- ✅ CATEGORIA + MAIS VENDIDO -->
           <div class="formGrid">
             <div>
               <label>Categoria</label>
               <select id="pCategory" class="input">
-                <option value="Recursos">Recursos</option>
-                <option value="Equipamentos">Equipamentos</option>
                 <option value="Armas">Armas</option>
                 <option value="Munição">Munição</option>
+                <option value="Recursos">Recursos</option>
+                <option value="Equipamentos">Equipamentos</option>
                 <option value="Outros">Outros</option>
               </select>
             </div>
@@ -202,6 +204,7 @@
           <label>Imagem do produto (URL)</label>
           <input id="pImageUrl" class="input" placeholder="/assets/images/products/produto.jpg" />
 
+          <!-- ✅ EDIÇÃO DO PRODUTO (corte/zoom) -->
           <div class="imgPosWrap">
             <div class="small">Corte / Zoom da imagem (igual ao produto)</div>
 
@@ -258,9 +261,9 @@
           </div>
 
           <div class="rowBtns">
-            <button class="btn" id="saveProductBtn">Salvar produto</button>
-            <button class="btn secondary" id="clearFormBtn">Limpar</button>
-            <button class="btn danger" id="deleteProductBtn" disabled>Excluir</button>
+            <button class="btn" id="saveProductBtn" type="button">Salvar produto</button>
+            <button class="btn secondary" id="clearFormBtn" type="button">Limpar</button>
+            <button class="btn danger" id="deleteProductBtn" type="button" disabled>Excluir</button>
           </div>
 
           <p class="small" id="productMsg" style="margin:0;"></p>
@@ -269,6 +272,7 @@
 
       <h2 style="margin:18px 0 10px;">Produtos cadastrados</h2>
       <div id="productsGrid" class="grid"></div>
+
     </div>
   </div>
 

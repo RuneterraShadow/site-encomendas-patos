@@ -8,6 +8,19 @@
   --danger:#ff4d4d;
   --ok:#38d478;
   --radius:16px;
+
+  /* ✅ Tipografia PRO (Inter) */
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --title-sm: 18px;
+  --title-md: 22px;
+  --title-lg: 26px;
+  --lh-tight: 1.15;
+  --lh: 1.35;
+  --lh-loose: 1.55;
 }
 
 /* =====================
@@ -16,7 +29,12 @@
 *{ box-sizing:border-box; }
 body{
   margin:0;
-  font-family:Arial,Helvetica,sans-serif;
+  font-family: var(--font);
+  font-size: var(--text-md);
+  line-height: var(--lh-loose);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
   background:var(--bg);
   color:var(--txt);
 }
@@ -27,6 +45,15 @@ a{ color:inherit; text-decoration:none; }
   margin:0 auto;
   padding:18px;
 }
+
+/* títulos globais */
+h1,h2,h3{
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+}
+h1{ font-size: var(--title-lg); font-weight: 900; }
+h2{ font-size: var(--title-md); font-weight: 800; }
+h3{ font-size: var(--title-sm); font-weight: 800; }
 
 /* =====================
    TOPO
@@ -42,8 +69,20 @@ a{ color:inherit; text-decoration:none; }
 .row{ display:flex; align-items:center; gap:12px; }
 .rowBtns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
-.brand h1{ margin:0; font-size:20px; color:var(--brand); }
-.brand p{ margin:4px 0 0; font-size:13px; color:var(--muted); }
+.brand h1{
+  margin:0;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-0.02em;
+  color:var(--brand);
+}
+.brand p{
+  margin:4px 0 0;
+  font-size:var(--text-sm);
+  font-weight:500;
+  color:var(--muted);
+  opacity:.95;
+}
 
 /* =====================
    BOTÕES / INPUTS
@@ -54,7 +93,8 @@ a{ color:inherit; text-decoration:none; }
   color:#111;
   padding:10px 14px;
   border-radius:12px;
-  font-weight:700;
+  font-weight:800;
+  letter-spacing:-0.01em;
   cursor:pointer;
   transition:.15s;
 }
@@ -65,7 +105,7 @@ a{ color:inherit; text-decoration:none; }
 .btn.danger{ background:var(--danger); color:#111; }
 .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
-.smallBtn{ padding:6px 10px; border-radius:10px; font-size:12px; }
+.smallBtn{ padding:6px 10px; border-radius:10px; font-size:var(--text-xs); }
 
 .input, textarea, select{
   width:100%;
@@ -75,11 +115,23 @@ a{ color:inherit; text-decoration:none; }
   background:#0d0d0d;
   color:#fff;
   outline:none;
+  font-family: var(--font);
+  font-size: var(--text-md);
 }
 textarea{ resize:vertical; }
 
-label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
-.small{ font-size:13px; color:var(--muted); }
+label{
+  display:block;
+  margin-top:10px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color:var(--muted);
+}
+.small{
+  font-size: var(--text-sm);
+  line-height: var(--lh);
+  color:var(--muted);
+}
 .hr{ height:1px; background:#232323; margin:12px 0; }
 
 /* =====================
@@ -131,8 +183,18 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   bottom:14px;
   right:14px;
 }
-.heroBanner h2{ margin:0; font-size:22px; }
-.heroBanner .desc{ margin-top:6px; font-size:14px; opacity:.9; }
+.heroBanner h2{
+  margin:0;
+  font-size: var(--title-md);
+  font-weight: 900;
+  letter-spacing:-0.02em;
+}
+.heroBanner .desc{
+  margin-top:6px;
+  font-size: var(--text-md);
+  font-weight: 500;
+  opacity:.92;
+}
 
 /* =====================
    GRID / CARDS (LISTAGEM)
@@ -179,14 +241,19 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   flex:1;
 }
 
-.card h3{ margin:0; font-size:16px; }
+.card h3{
+  margin:0;
+  font-size: var(--text-lg);
+  font-weight: 900;
+  letter-spacing:-0.02em;
+}
 
 /* descrição padronizada p/ alinhar botões */
 .card p{
   margin:8px 0 0;
-  font-size:13px;
+  font-size: var(--text-sm);
   color:var(--muted);
-  line-height:1.35;
+  line-height: var(--lh);
   display:-webkit-box;
   -webkit-line-clamp:3;
   -webkit-box-orient:vertical;
@@ -205,7 +272,16 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   border:1px solid #2a2a2a;
   padding:5px 9px;
   border-radius:999px;
-  font-size:12px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+/* badge mais vendido */
+.badge.best{
+  background: rgba(255,122,0,.18);
+  border-color: rgba(255,122,0,.35);
+  color: #ffd7b0;
+  font-weight:900;
 }
 
 /* =====================
@@ -232,15 +308,23 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   border-radius:12px;
   padding:8px 10px;
 }
-.priceLabel{ font-size:12px; color:var(--muted); }
-.priceValue{ font-size:15px; font-weight:900; }
+.priceLabel{
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color:var(--muted);
+}
+.priceValue{
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing:-0.01em;
+}
 .priceValue.casamata{ color:var(--brand); }
 .priceValue.trade{ color:#9a9a9a; text-decoration:line-through; }
 
 /* =====================
    COMPRA (ALINHAMENTO DO BOTÃO)
 ===================== */
-.pay-hint{ margin-top:6px; font-size:12px; opacity:.85; }
+.pay-hint{ margin-top:6px; font-size: var(--text-xs); opacity:.85; }
 
 .buyRow{
   margin-top:auto;
@@ -275,7 +359,7 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
 .imgPosRow{ margin-top:10px; }
 .imgPosRow input[type="range"]{ width:100%; }
 
-/* preview (ISSO resolve seu problema do admin) */
+/* preview */
 .imgPreviewWrap{ margin-top:10px; }
 .imgPreviewBox{
   width:100%;
@@ -284,13 +368,9 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   border:1px solid #232323;
   background:#0b0b0b;
   position:relative;
-  max-height:260px;           /* ✅ impede ficar gigante */
+  max-height:260px;
 }
-
-/* preview produto */
 .imgPreviewBox.product{ aspect-ratio:16/10; }
-
-/* preview banner */
 .imgPreviewBox.banner{ aspect-ratio:16/6; }
 
 .imgPreviewBox img{
@@ -316,10 +396,8 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
 }
 
 /* =========================
-   CARRINHO PROFISSIONAL
+   CARRINHO PROFISSIONAL (ESQUERDA)
 ========================= */
-
-/* fundo escurecido */
 .cartOverlay{
   position:fixed;
   inset:0;
@@ -330,13 +408,11 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   transition:.25s ease;
   z-index:9998;
 }
-
 .cartOverlay.active{
   opacity:1;
   pointer-events:auto;
 }
 
-/* painel lateral */
 #cartPanel{
   position:fixed;
   top:0;
@@ -353,30 +429,25 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   display:flex;
   flex-direction:column;
 }
-
 #cartPanel.active{
   transform:translateX(0);
 }
 
-/* header */
 .cartHeader{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:15px;
 }
-
 .cartItems{
   flex:1;
   overflow:auto;
   padding-right:5px;
 }
-
 .cartItem{
   padding:10px 0;
   border-bottom:1px solid #232323;
 }
-
 .cartItem strong{
   display:block;
   margin-bottom:4px;
@@ -388,15 +459,13 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   background:#1c1c1c;
   border-radius:12px;
   font-size:18px;
-  font-weight:800;
+  font-weight:900;
   color:var(--brand);
   text-align:center;
+  letter-spacing:-0.01em;
 }
 
-.cartFooter{
-  margin-top:15px;
-}
-
+.cartFooter{ margin-top:15px; }
 .cartFooter .btn{
   width:100%;
   padding:14px;
@@ -405,7 +474,7 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
 }
 
 /* =========================
-   FILTROS / CATEGORIAS (SITE)
+   FILTROS / CATEGORIAS (BUSCA + CHIPS)
 ========================= */
 .filtersWrap{ margin:10px 0 16px; }
 
@@ -424,68 +493,9 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   border-radius:999px;
   cursor:pointer;
   transition:.15s;
-  font-weight:700;
-  font-size:13px;
-}
-.chip:hover{ filter:brightness(1.06); }
-.chip.active{
-  background:var(--brand);
-  color:#111;
-  border-color:transparent;
-}
-
-.filtersBar{
-  display:grid;
-  grid-template-columns: 1.2fr 1fr .6fr auto;
-  gap:10px;
-  align-items:center;
-}
-@media (max-width:900px){
-  .filtersBar{ grid-template-columns: 1fr; }
-}
-
-.searchBox{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:0 10px;
-  border-radius:12px;
-  border:1px solid #2a2a2a;
-  background:#0d0d0d;
-}
-.searchBox .icon{ opacity:.8; }
-.searchBox .input{
-  border:none;
-  background:transparent;
-  padding:10px 2px;
-}
-
-.priceFilters{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-/* filtros simples */
-.filtersWrap{ margin:10px 0 16px; }
-
-.chipsRow{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-bottom:10px;
-}
-
-.chip{
-  border:1px solid #2a2a2a;
-  background:#141414;
-  color:#fff;
-  padding:8px 12px;
-  border-radius:999px;
-  cursor:pointer;
-  transition:.15s;
-  font-weight:700;
-  font-size:13px;
+  font-weight:800;
+  font-size: var(--text-sm);
+  letter-spacing:-0.01em;
 }
 .chip:hover{ filter:brightness(1.06); }
 .chip.active{
@@ -518,12 +528,4 @@ label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
   border:none;
   background:transparent;
   padding:10px 2px;
-}
-
-/* badge mais vendido */
-.badge.best{
-  background: rgba(255,122,0,.18);
-  border-color: rgba(255,122,0,.35);
-  color: #ffd7b0;
-  font-weight:900;
 }

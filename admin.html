@@ -91,6 +91,7 @@
           <label>Banner: imagem (URL)</label>
           <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
 
+          <!-- ✅ EDIÇÃO DO BANNER (corte/zoom) -->
           <div class="imgPosWrap">
             <div class="small">Corte / Zoom do Banner (fiel ao site)</div>
 
@@ -129,8 +130,8 @@
             </div>
           </div>
 
+          <!-- ✅ DESTAQUES (3 CARDS) -->
           <div class="hr"></div>
-
           <h3 style="margin:0;">Destaques do topo (3 cards)</h3>
           <p class="small" style="margin:6px 0 0;">Ícone pode ser emoji (ex: 🚀 💰 📦).</p>
 
@@ -173,14 +174,29 @@
           <label>Card 3 - Texto</label>
           <input id="trust3Text" class="input" placeholder="Atualização automática de disponibilidade" />
 
+          <!-- ✅ RODAPÉ (EDITÁVEL) -->
+          <div class="hr"></div>
+          <h3 style="margin:0;">Rodapé</h3>
+
+          <label>Título do rodapé</label>
+          <input id="footerTitle" class="input" placeholder="CASAMATA" />
+
+          <label>Texto do rodapé (pode ter linhas)</label>
+          <textarea id="footerText" class="input" rows="3" placeholder="Ex: Entrega rápida no servidor..."></textarea>
+
+          <label>Links do rodapé (1 por linha no formato: Texto | URL)</label>
+          <textarea id="footerLinksRaw" class="input" rows="4" placeholder="Como funciona | https://...
+Regras | https://...
+Contato | https://..."></textarea>
+
+          <label>Copyright (linha pequena)</label>
+          <input id="footerCopy" class="input" placeholder="© 2026 CASAMATA — Todos os direitos reservados" />
+
           <div class="rowBtns">
-            <button class="btn" id="saveSettingsBtn">Salvar configurações</button>
+            <button class="btn" id="saveSettingsBtn" type="button">Salvar configurações</button>
           </div>
 
           <p class="small" id="settingsMsg" style="margin:0;"></p>
-          <p class="small" style="margin:0;">
-            Dica: use imagem no GitHub tipo <b>/assets/images/banner/banner.jpg</b>
-          </p>
         </div>
 
         <!-- PRODUCT FORM -->

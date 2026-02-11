@@ -156,6 +156,10 @@ async function loadSettings() {
   if (el("trust3Title")) el("trust3Title").value = s.trust3Title || "Estoque em tempo real";
   if (el("trust3Text")) el("trust3Text").value = s.trust3Text || "Atualização automática de disponibilidade";
 
+  // ✅ VISIBILIDADE (CARDS / RODAPÉ)
+  if (el("showTrustBlock")) el("showTrustBlock").value = String(s.showTrustBlock ?? true);
+  if (el("showFooter")) el("showFooter").value = String(s.showFooter ?? true);
+
   /* ✅ RODAPÉ (NOVO) */
   if (el("footerTitle")) el("footerTitle").value = s.footerTitle || "";
   if (el("footerText")) el("footerText").value = s.footerText || "";
@@ -220,6 +224,10 @@ el("saveSettingsBtn").addEventListener("click", async () => {
     trust3Icon: el("trust3Icon") ? el("trust3Icon").value.trim() : "📦",
     trust3Title: el("trust3Title") ? el("trust3Title").value.trim() : "",
     trust3Text: el("trust3Text") ? el("trust3Text").value.trim() : "",
+
+    // ✅ VISIBILIDADE (CARDS / RODAPÉ)
+    showTrustBlock: el("showTrustBlock") ? el("showTrustBlock").value === "true" : true,
+    showFooter: el("showFooter") ? el("showFooter").value === "true" : true,
 
     /* ✅ RODAPÉ (NOVO) */
     footerTitle: el("footerTitle") ? el("footerTitle").value.trim() : "",
@@ -436,4 +444,10 @@ function fillProductForm(p) {
 
   updateProductPreview();
   showMsg("productMsg", "Editando produto. Altere e clique em Salvar.", true);
+
+  // ✅ quando clicar em um produto para editar, sobe a tela até o formulário
+  const panel = document.getElementById("productFormPanel") || el("pName")?.closest(".panel");
+  if (panel && panel.scrollIntoView) {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }

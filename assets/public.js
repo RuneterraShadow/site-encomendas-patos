@@ -568,6 +568,15 @@ function watchGlobalConfig() {
     if (el("trust3Title")) el("trust3Title").textContent = t3t;
     if (el("trust3Text")) el("trust3Text").textContent = t3x;
 
+    // ✅ VISIBILIDADE (CARDS / RODAPÉ)
+    const showTrustBlock = data.showTrustBlock ?? true;
+    const trustBlockEl = document.querySelector(".trustBlock");
+    if (trustBlockEl) trustBlockEl.style.display = showTrustBlock ? "" : "none";
+
+    const showFooter = data.showFooter ?? true;
+    const footerEl = document.querySelector(".footer");
+    if (footerEl) footerEl.style.display = showFooter ? "" : "none";
+
     el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 
     /* ✅ RODAPÉ */

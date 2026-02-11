@@ -143,6 +143,12 @@ async function loadSettings() {
   el("bImagePosYVal").textContent = String(by);
   el("bImageZoomVal").textContent = String(bz);
 
+  /* ✅ RODAPÉ (NOVO) */
+  if (el("footerTitle")) el("footerTitle").value = s.footerTitle || "";
+  if (el("footerText")) el("footerText").value = s.footerText || "";
+  if (el("footerLinksRaw")) el("footerLinksRaw").value = s.footerLinksRaw || "";
+  if (el("footerCopy")) el("footerCopy").value = s.footerCopy || "";
+
   updateBannerPreview();
 }
 
@@ -188,6 +194,12 @@ el("saveSettingsBtn").addEventListener("click", async () => {
     bannerPosX: clampPos(el("bImagePosX").value, 50),
     bannerPosY: clampPos(el("bImagePosY").value, 50),
     bannerZoom: clampZoom(el("bImageZoom").value, 100),
+
+    /* ✅ RODAPÉ (NOVO) */
+    footerTitle: el("footerTitle") ? el("footerTitle").value.trim() : "",
+    footerText: el("footerText") ? el("footerText").value.trim() : "",
+    footerLinksRaw: el("footerLinksRaw") ? el("footerLinksRaw").value.trim() : "",
+    footerCopy: el("footerCopy") ? el("footerCopy").value.trim() : "",
   };
 
   try {
@@ -399,4 +411,3 @@ function fillProductForm(p) {
   updateProductPreview();
   showMsg("productMsg", "Editando produto. Altere e clique em Salvar.", true);
 }
-

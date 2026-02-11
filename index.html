@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Loja</title>
 
-  <!-- GITHUB PAGES -->
+  <!-- ISSO AQUI É O QUE GARANTE QUE ./assets/... FUNCIONA NO GITHUB PAGES -->
   <base href="/site-encomendas-patos/">
 
   <!-- Fonte Inter -->
@@ -32,6 +32,8 @@
 
       <div class="rowBtns">
         <a id="whatsBtn" class="btn" href="#" target="_blank" rel="noopener">COMPRE AGORA!</a>
+
+        <!-- ✅ Admin virou ⚙️ -->
         <a class="btn secondary btnIcon" href="./admin.html" title="Admin" aria-label="Admin">⚙️</a>
       </div>
     </div>
@@ -59,60 +61,62 @@
       </div>
     </div>
 
-    <!-- ✅ BLOCO DE CONFIANÇA -->
-    <div class="trustBlock">
+    <!-- ✅ DESTAQUES (EDITÁVEL NO ADMIN) -->
+    <div class="trustBlock" id="trustBlock">
       <div class="trustItem">
-        🚀 <strong>Entrega rápida</strong>
-        <span>Itens entregues no servidor em poucos minutos</span>
+        <div class="row" style="gap:10px;">
+          <div class="trustIcon" id="trust1Icon">🚀</div>
+          <div>
+            <strong id="trust1Title">Entrega rápida</strong><br>
+            <span id="trust1Text">Itens entregues no servidor em poucos minutos</span>
+          </div>
+        </div>
       </div>
+
       <div class="trustItem">
-        💰 <strong>Pagamento em cash</strong>
-        <span>Transação 100% dentro do jogo</span>
+        <div class="row" style="gap:10px;">
+          <div class="trustIcon" id="trust2Icon">💰</div>
+          <div>
+            <strong id="trust2Title">Pagamento em cash</strong><br>
+            <span id="trust2Text">Transação 100% dentro do jogo</span>
+          </div>
+        </div>
       </div>
+
       <div class="trustItem">
-        📦 <strong>Estoque em tempo real</strong>
-        <span>Atualização automática de disponibilidade</span>
+        <div class="row" style="gap:10px;">
+          <div class="trustIcon" id="trust3Icon">📦</div>
+          <div>
+            <strong id="trust3Title">Estoque em tempo real</strong><br>
+            <span id="trust3Text">Atualização automática de disponibilidade</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <h2 style="margin:18px 0 10px;">Produtos</h2>
-
-    <!-- ✅ FILTROS (BUSCA + CATEGORIA) -->
-    <div class="filtersWrap">
-      <div id="catChips" class="chipsRow"></div>
-
-      <div class="filtersBarSimple">
-        <div class="searchBox">
-          <span class="icon">🔎</span>
-          <input id="searchInput" class="input" placeholder="Buscar produto..." />
-        </div>
-
-        <button id="clearFilters" class="btn secondary" type="button">Limpar</button>
-      </div>
-
-      <div id="filterHint" class="small" style="margin-top:8px; opacity:.85;"></div>
-    </div>
-
     <div id="productsGrid" class="grid"></div>
 
     <p class="small" style="margin-top:18px;">
       * Preços e disponibilidade podem mudar em tempo real.
     </p>
-  </div>
 
-  <!-- ✅ RODAPÉ (EDITÁVEL NO ADMIN) -->
-  <footer class="footer">
-    <div class="container footerGrid">
-      <div>
-        <div class="footerTitle" id="footerTitle">CASAMATA</div>
-        <div class="footerText" id="footerText">—</div>
+    <!-- ✅ RODAPÉ (EDITÁVEL NO ADMIN) -->
+    <footer class="siteFooter">
+      <div class="footerInner">
+        <div class="footerCol">
+          <div class="footerTitle" id="footerTitle">—</div>
+          <div class="footerText" id="footerText">—</div>
+        </div>
+
+        <div class="footerCol">
+          <div class="footerLinks" id="footerLinks"></div>
+        </div>
       </div>
 
-      <div class="footerLinks" id="footerLinks"></div>
-
       <div class="footerCopy" id="footerCopy">—</div>
-    </div>
-  </footer>
+    </footer>
+  </div>
 
   <script type="module" src="./assets/public.js"></script>
 </body>

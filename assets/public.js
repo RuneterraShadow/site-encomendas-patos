@@ -80,41 +80,48 @@ function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {})
 }
 
 /* ======================
-   ESTADO / CARRINHO
+   ESTADO / ESTOQUE / CARRINHO
 ====================== */
 let cart = [];
 let cartOpen = false;
+
 const stockMap = new Map();
 const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");
 
+/* ---- overlay + painel (carrinho elegante) ---- */
+const cartOverlay = document.createElement("div");
+cartOverlay.className = "cartOverlay";
+document.body.appendChild(cartOverlay);
+
 const cartPanel = document.createElement("div");
 cartPanel.id = "cartPanel";
-cartPanel.style.display = "none";
-cartPanel.style.position = "fixed";
-cartPanel.style.left = "16px";
-cartPanel.style.top = "78px";
-cartPanel.style.width = "320px";
-cartPanel.style.maxHeight = "calc(100vh - 110px)";
-cartPanel.style.overflow = "auto";
-cartPanel.style.zIndex = "99999";
-cartPanel.style.background = "#141414";
-cartPanel.style.border = "1px solid rgba(255,255,255,.08)";
-cartPanel.style.borderRadius = "14px";
-cartPanel.style.padding = "14px";
-cartPanel.style.boxShadow = "0 18px 40px rgba(0,0,0,.55)";
-
-const style = document.createElement("style");
-style.textContent = `.pay-hint{margin-top:4px;font-size:12px;opacity:.85;}`;
-document.head.appendChild(style);
 document.body.appendChild(cartPanel);
 
-cartBtn?.addEventListener("click", () => {
-  cartOpen = !cartOpen;
-  cartPanel.style.display = cartOpen ? "block" : "none";
+function openCart() {
+  cartOpen = true;
+  cartOverlay.classList.add("active");
+  cartPanel.classList.add("active");
   renderCart();
+}
+
+function closeCart() {
+  cartOpen = false;
+  cartOverlay.classList.remove("active");
+  cartPanel.classList.remove("active");
+}
+
+cartBtn?.addEventListener("click", () => {
+  if (cartOpen) closeCart();
+  else openCart();
+});
+
+cartOverlay.addEventListener("click", closeCart);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && cartOpen) closeCart();
 });
 
 function getAvailableStock(productId) {
@@ -139,51 +146,66 @@ function normalizeCartAgainstStock() {
   return changed;
 }
 
+function updateCartCount() {
+  if (cartCount) cartCount.textContent = String(cart.length);
+}
+
+/* ======================
+   RENDER CARRINHO
+====================== */
 function renderCart() {
   normalizeCartAgainstStock();
+  updateCartCount();
+
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
-  cartCount.textContent = cart.length;
 
   cartPanel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <div class="cartHeader">
       <h3 style="margin:0">Carrinho</h3>
-      <button id="closeCart" class="btn secondary" type="button" style="padding:6px 10px">Fechar</button>
+      <button id="closeCartBtn" class="btn secondary" type="button">Fechar</button>
     </div>
-    ${cart.length === 0 ? `<p class="small" style="margin-top:10px">Carrinho vazio</p>` : ""}
-    ${cart
-      .map((i, idx) => {
-        const avail = getAvailableStock(i.productId);
-        const stockLine =
-          avail === null ? "" : `<span class="small">Estoque: ${avail}</span><br>`;
-        return `
-        <div class="hr" style="margin:10px 0"></div>
-        <div>
-          <strong>${i.name}</strong><br>
-          ${stockLine}
-          <span class="small">Qtd: ${i.qty}</span><br>
-          <strong>${money(i.price * i.qty)}</strong>
-          <div class="pay-hint">Pagamento em cash do jogo!</div>
-          <div style="margin-top:8px">
-            <button class="btn danger" data-remove="${idx}" type="button">Remover</button>
-          </div>
-        </div>`;
-      })
-      .join("")}
-    <div class="hr" style="margin:12px 0"></div>
-    <strong>Total: ${money(total)}</strong>
-    <div class="pay-hint">Pagamento em cash do jogo!</div>
-    <div class="hr" style="margin:12px 0"></div>
-    <label class="small">Nick no jogo</label>
-    <input id="nickInput" class="input" placeholder="">
-    <label class="small" style="margin-top:10px;display:block">@ do Discord</label>
-    <input id="discordInput" class="input" placeholder="">
-    <button class="btn" style="width:100%;margin-top:12px" id="sendOrder" type="button">Finalizar pedido</button>
+
+    <div class="cartItems">
+      ${
+        cart.length === 0
+          ? `<p class="small">Seu carrinho está vazio.</p>`
+          : cart
+              .map((i, idx) => {
+                const avail = getAvailableStock(i.productId);
+                const stockLine =
+                  avail === null ? "" : `<div class="small">Estoque: ${avail}</div>`;
+
+                return `
+                  <div class="cartItem">
+                    <strong>${i.name}</strong>
+                    ${stockLine}
+                    <div class="small">Qtd: ${i.qty}</div>
+                    <div style="font-weight:800;margin-top:6px">${money(i.price * i.qty)}</div>
+                    <div class="small" style="margin-top:4px;opacity:.85">Pagamento em cash do jogo!</div>
+                    <div style="margin-top:10px;display:flex;gap:8px">
+                      <button class="btn danger smallBtn" type="button" data-remove="${idx}">Remover</button>
+                    </div>
+                  </div>
+                `;
+              })
+              .join("")
+      }
+    </div>
+
+    <div class="cartTotal">Total: ${money(total)}</div>
+
+    <div class="cartFooter">
+      <label class="small">Nick no jogo</label>
+      <input id="nickInput" class="input" placeholder="">
+      <label class="small" style="margin-top:10px;display:block">@ do Discord</label>
+      <input id="discordInput" class="input" placeholder="">
+      <button id="sendOrder" class="btn" style="width:100%;margin-top:12px" type="button">
+        Finalizar pedido
+      </button>
+    </div>
   `;
 
-  el("closeCart")?.addEventListener("click", () => {
-    cartOpen = false;
-    cartPanel.style.display = "none";
-  });
+  el("closeCartBtn")?.addEventListener("click", closeCart);
 
   cartPanel.querySelectorAll("[data-remove]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -195,16 +217,21 @@ function renderCart() {
   el("sendOrder")?.addEventListener("click", sendOrder);
 }
 
+/* ======================
+   ENVIAR PEDIDO
+====================== */
 async function sendOrder() {
   const nick = el("nickInput").value.trim();
   const discord = el("discordInput").value.trim();
   if (!nick || !discord) return alert("Preencha Nick e Discord");
 
+  // valida estoque
   for (const item of cart) {
     const avail = getAvailableStock(item.productId);
     if (avail !== null && item.qty > avail)
       return alert(`"${item.name}" tem só ${avail} em estoque.`);
-    if (avail !== null && avail <= 0) return alert(`"${item.name}" está sem estoque.`);
+    if (avail !== null && avail <= 0)
+      return alert(`"${item.name}" está sem estoque.`);
   }
 
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
@@ -230,11 +257,11 @@ async function sendOrder() {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     alert("Pedido recebido! Entraremos em contato.");
     cart = [];
     renderCart();
-    cartOpen = false;
-    cartPanel.style.display = "none";
+    closeCart();
   } catch (e) {
     alert("Erro ao enviar pedido");
     console.error(e);
@@ -310,12 +337,12 @@ function renderProducts(items) {
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
+
         <div class="badges">
           ${stockBadge}
           ${p.featured ? `<div class="badge">Destaque</div>` : ``}
         </div>
 
-        <!-- ✅ NOVO LAYOUT DE PREÇO -->
         <div class="priceBlock">
           ${
             promo
@@ -340,7 +367,6 @@ function renderProducts(items) {
 
         <div class="pay-hint">Pagamento em cash do jogo!</div>
 
-        <!-- ✅ linha de compra padronizada (alinhamento via CSS) -->
         <div class="buyRow">
           <input type="number" min="1" value="1" class="input qty" ${
             out ? "disabled" : ""
@@ -376,17 +402,26 @@ function renderProducts(items) {
     addBtn.addEventListener("click", () => {
       const wanted = Math.max(1, Number(qtyInput.value || 1));
       const avail = getAvailableStock(p.id);
+
       if (avail !== null && wanted > avail) return alert(`Só tem ${avail} em estoque.`);
       if (avail !== null && avail <= 0) return alert("Sem estoque.");
 
       cart.push({ productId: p.id, name: p.name, price: shownPrice, qty: wanted });
-      renderCart();
+      updateCartCount();
+
+      // se quiser abrir automaticamente ao adicionar, descomente:
+      // openCart();
+
+      if (cartOpen) renderCart();
     });
 
     el("productsGrid").appendChild(card);
   });
 }
 
+/* ======================
+   FIRESTORE LISTENERS
+====================== */
 const qProducts = query(collection(db, "products"), orderBy("sortOrder", "asc"));
 onSnapshot(qProducts, (snap) => {
   const items = [];
@@ -405,6 +440,8 @@ onSnapshot(qProducts, (snap) => {
   el("kpiUpdated").textContent = `Atualizado: ${formatDateTime()}`;
 
   if (normalizeCartAgainstStock() && cartOpen) renderCart();
+  updateCartCount();
 });
 
 watchGlobalConfig();
+updateCartCount();

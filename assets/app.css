@@ -799,3 +799,14 @@ label{
 
 /* Modal image column: avoid stretching (prevents checker area showing below image) */
 .productModal > div:first-child{ align-self:start; }
+
+.productModal > div:first-child{
+  padding: 4px !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.productModal img{
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}

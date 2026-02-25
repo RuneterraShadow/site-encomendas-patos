@@ -80,8 +80,12 @@ const loginBox = el("loginBox");
 const adminBox = el("adminBox");
 
 function showAdmin(isAuthed) {
-  loginBox.style.display = isAuthed ? "none" : "block";
-  adminBox.style.display = isAuthed ? "block" : "none";
+  if (loginBox) {
+    loginBox.style.display = isAuthed ? "none" : "block";
+  }
+  if (adminBox) {
+    adminBox.style.display = isAuthed ? "block" : "none";
+  }
 }
 
 el("loginBtn")?.addEventListener("click", async () => {

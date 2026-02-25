@@ -1,51 +1,55 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin 2.0</title>
 <link rel="stylesheet" href="./assets/app.css">
 </head>
+
 <body class="admin-page">
 
-<div class="topbar">
-  <div class="container row" style="justify-content:space-between;">
-    <div>
-      <h1>Admin 2.0</h1>
-      <p>Painel completo de controle</p>
-    </div>
-    <div class="rowBtns">
-      <a href="./index.html" class="btn secondary">Ver Loja</a>
-      <button id="logoutBtn" class="btn danger">Sair</button>
-    </div>
-  </div>
+<div class="admin-container">
+
+<h1>Admin 2.0</h1>
+
+<section>
+<h2>Criar / Editar Produto</h2>
+
+<input id="name" placeholder="Nome" />
+<textarea id="description" placeholder="Descrição"></textarea>
+<input id="category" placeholder="Categoria" />
+
+<input id="price" type="number" placeholder="Preço" />
+<input id="promoPrice" type="number" placeholder="Preço Promoção" />
+<input id="stock" type="number" placeholder="Estoque" />
+<input id="sortOrder" type="number" placeholder="Ordem" />
+
+<input id="imageUrl" placeholder="URL da imagem" />
+<input id="imageZoom" type="number" placeholder="Zoom (ex: 120)" />
+<input id="imagePosX" type="number" placeholder="Posição X" />
+<input id="imagePosY" type="number" placeholder="Posição Y" />
+
+<label><input type="checkbox" id="active"> Ativo</label>
+<label><input type="checkbox" id="featured"> Featured</label>
+<label><input type="checkbox" id="bestSeller"> Best Seller</label>
+
+<button id="saveBtn">Salvar</button>
+<button id="deleteBtn">Excluir</button>
+
+<div class="preview-box">
+<img id="previewImage"/>
 </div>
 
-<div class="container">
+</section>
 
-  <!-- LOGIN -->
-  <div id="loginBox" class="panel" style="max-width:500px;margin-top:20px;">
-    <h2>Entrar</h2>
-    <input id="email" class="input" placeholder="Email">
-    <input id="password" type="password" class="input" placeholder="Senha">
-    <button id="loginBtn" class="btn">Entrar</button>
-  </div>
-
-  <!-- ADMIN -->
-  <div id="adminBox" style="display:none;margin-top:20px;">
-
-    <div class="tabs">
-      <button data-tab="settings" class="tabBtn active">Configurações</button>
-      <button data-tab="products" class="tabBtn">Produtos</button>
-    </div>
-
-    <div id="settingsTab" class="tabContent"></div>
-    <div id="productsTab" class="tabContent" style="display:none;"></div>
-
-  </div>
+<section>
+<h2>Produtos</h2>
+<div id="productsGrid"></div>
+</section>
 
 </div>
 
-<script type="module" src="./assets/admin.js?v=1"></script>
+<script type="module" src="./assets/admin.js"></script>
 </body>
 </html>

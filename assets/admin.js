@@ -1,4 +1,5 @@
 import { auth, db } from "./firebase.js";
+
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -15,18 +16,33 @@ import {
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+/* ELEMENTOS */
 const loginBox = document.getElementById("loginBox");
 const adminBox = document.getElementById("adminBox");
 
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 
-loginBtn?.addEventListener("click", async () => {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("pass").value;
+const saveBtn = document.getElementById("saveProductBtn");
+const deleteBtn = document.getElementById("deleteProductBtn");
+const clearBtn = document.getElementById("clearFormBtn");
 
+const productsGrid = document.getElementById("productsGrid");
+
+const pId = document.getElementById("productId");
+const pName = document.getElementById("pName");
+const pDesc = document.getElementById("pDesc");
+const pPrice = document.getElementById("pPrice");
+const pImage = document.getElementById("pImageUrl");
+
+/* LOGIN */
+loginBtn?.addEventListener("click", async () => {
   try {
-    await signInWithEmailAndPassword(auth, email, pass);
+    await signInWithEmailAndPassword(
+      auth,
+      document.getElementById("email").value,
+      document.getElementById("pass").value
+    );
   } catch (err) {
     alert("Erro ao logar: " + err.message);
   }
@@ -47,60 +63,89 @@ onAuthStateChanged(auth, user => {
   }
 });
 
+/* FIRESTORE */
 const productsRef = collection(db, "products");
 
 async function loadProducts() {
-  const list = document.getElementById("productsGrid");
-  if (!list) return;
+  if (!productsGrid) return;
 
-  list.innerHTML = "";
+  productsGrid.innerHTML = "";
 
   const snap = await getDocs(productsRef);
 
   snap.forEach(docSnap => {
     const p = docSnap.data();
 
-    const div = document.createElement("div");
-    div.className = "card";
+    const card = document.createElement("div");
+    card.className = "card";
 
-    div.innerHTML = `
+    card.innerHTML = `
       <img src="${p.imageUrl || ""}" 
            style="width:100%;height:180px;object-fit:cover;border-radius:8px;">
       <h3>${p.name}</h3>
       <p>R$ ${p.price}</p>
-      <button onclick="editProduct('${docSnap.id}')">Editar</button>
+      <button class="btn smallBtn" data-id="${docSnap.id}">Editar</button>
     `;
 
-    list.appendChild(div);
+    card.querySelector("button").addEventListener("click", () => {
+      editProduct(docSnap.id);
+    });
+
+    productsGrid.appendChild(card);
   });
 }
 
-window.editProduct = async id => {
+/* EDITAR */
+async function editProduct(id) {
   const snap = await getDoc(doc(db, "products", id));
   const p = snap.data();
 
-  document.getElementById("productId").value = id;
-  document.getElementById("pName").value = p.name;
-  document.getElementById("pDesc").value = p.description;
-  document.getElementById("pPrice").value = p.price;
-  document.getElementById("pImageUrl").value = p.imageUrl;
-};
+  pId.value = id;
+  pName.value = p.name;
+  pDesc.value = p.description;
+  pPrice.value = p.price;
+  pImage.value = p.imageUrl;
 
-document.getElementById("saveProductBtn")?.addEventListener("click", async () => {
-  const id = document.getElementById("productId").value;
+  deleteBtn.disabled = false;
+}
 
+/* SALVAR */
+saveBtn?.addEventListener("click", async () => {
   const data = {
-    name: document.getElementById("pName").value,
-    description: document.getElementById("pDesc").value,
-    price: Number(document.getElementById("pPrice").value),
-    imageUrl: document.getElementById("pImageUrl").value
+    name: pName.value,
+    description: pDesc.value,
+    price: Number(pPrice.value),
+    imageUrl: pImage.value
   };
 
-  if (id) {
-    await updateDoc(doc(db, "products", id), data);
+  if (pId.value) {
+    await updateDoc(doc(db, "products", pId.value), data);
   } else {
     await addDoc(productsRef, data);
   }
 
+  clearForm();
   loadProducts();
 });
+
+/* EXCLUIR */
+deleteBtn?.addEventListener("click", async () => {
+  if (!pId.value) return;
+
+  await deleteDoc(doc(db, "products", pId.value));
+
+  clearForm();
+  loadProducts();
+});
+
+/* LIMPAR */
+clearBtn?.addEventListener("click", clearForm);
+
+function clearForm() {
+  pId.value = "";
+  pName.value = "";
+  pDesc.value = "";
+  pPrice.value = "";
+  pImage.value = "";
+  deleteBtn.disabled = true;
+}

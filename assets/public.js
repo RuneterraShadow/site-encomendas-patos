@@ -83,8 +83,10 @@ function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {})
   if (imgEl) {
     imgEl.style.objectFit = fit;
     imgEl.style.objectPosition = `${clampPos(x, 50)}% ${clampPos(y, 50)}%`;
-    imgEl.style.transform = `scale(${z / 100})`;
-    imgEl.style.transformOrigin = "center center";
+    imgEl.style.transform = z === 100 ? "none" : `scale(${z / 100})`;
+imgEl.style.transformOrigin = "center center";
+imgEl.style.maxWidth = "100%";
+imgEl.style.maxHeight = "100%";
   }
 }
 

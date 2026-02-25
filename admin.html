@@ -3,335 +3,118 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin</title>
+  <title>Admin 2.0</title>
   <link rel="stylesheet" href="./assets/app.css" />
 </head>
-<body class="admin-page">
-  <div class="topbar">
-    <div class="row container">
-      <div class="brand">
-        <h1>Admin</h1>
-        <p>Controle total em tempo real</p>
-      </div>
-      <div class="rowBtns">
-        <a class="btn secondary" href="./index.html">Voltar</a>
-        <button class="btn danger" id="logoutBtn" type="button">Sair</button>
-      </div>
-    </div>
-  </div>
 
-  <div class="container">
+<body class="admin-page">
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">Admin 2.0</div>
+
+    <nav>
+      <a href="#loginBox">Login</a>
+      <a href="#settings">Configurações</a>
+      <a href="#products">Produtos</a>
+      <a href="#list">Lista</a>
+      <a href="./index.html">Voltar ao Site</a>
+    </nav>
+
+    <div style="margin-top:auto;">
+      <button class="btn danger" id="logoutBtn" type="button" style="width:100%;">Sair</button>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO -->
+  <main class="admin-content">
 
     <!-- LOGIN -->
-    <div id="loginBox" class="panel" style="max-width:520px; margin-top:16px;">
-      <h2 style="margin:0;">Entrar</h2>
-      <p class="small" style="margin:0;">Use o email/senha criado no Firebase Authentication.</p>
+    <section id="loginBox" class="panel" style="max-width:500px;">
+      <h2>Entrar</h2>
+      <p class="small">Use o email/senha criado no Firebase Authentication.</p>
 
-      <div class="formGrid">
-        <div>
-          <label>Email</label>
-          <input id="email" class="input" type="email" placeholder="seuemail@..." />
-        </div>
-        <div>
-          <label>Senha</label>
-          <input id="pass" class="input" type="password" placeholder="********" />
-        </div>
-      </div>
+      <label>Email</label>
+      <input id="email" class="input" type="email" />
 
-      <div class="rowBtns">
+      <label>Senha</label>
+      <input id="pass" class="input" type="password" />
+
+      <div class="rowBtns" style="margin-top:10px;">
         <button class="btn" id="loginBtn" type="button">Entrar</button>
       </div>
 
-      <p class="small" id="loginMsg" style="margin:0;"></p>
-    </div>
+      <p class="small" id="loginMsg"></p>
+    </section>
 
     <!-- PAINEL -->
-    <div id="adminBox" style="display:none; margin-top:16px;">
+    <div id="adminBox" style="display:none;">
 
-      <div class="hero" style="grid-template-columns: 1fr 1fr;">
-        <!-- SETTINGS -->
-        <div class="panel">
-          <h2 style="margin:0;">Configurações Globais</h2>
+      <!-- CONFIGURAÇÕES -->
+      <section id="settings" class="panel">
+        <h2>Configurações Globais</h2>
 
-          <div class="formGrid">
-            <div>
-              <label>Título do site</label>
-              <input id="siteTitle" class="input" placeholder="Minha Loja" />
-            </div>
-            <div>
-              <label>Subtítulo</label>
-              <input id="siteSubtitle" class="input" placeholder="Entrega rápida..." />
-            </div>
-          </div>
+        <label>Título do site</label>
+        <input id="siteTitle" class="input" />
 
-          <label>Descrição global</label>
-          <textarea id="globalDesc" class="input" rows="3" placeholder="Texto geral do site..."></textarea>
+        <label>Subtítulo</label>
+        <input id="siteSubtitle" class="input" />
 
-          <div class="formGrid">
-            <div>
-              <label>Link do WhatsApp (ex: https://wa.me/55...)</label>
-              <input id="whatsappLink" class="input" placeholder="https://wa.me/55..." />
-            </div>
-            <div>
-              <label>Texto do botão (opcional)</label>
-              <input id="buyBtnText" class="input" placeholder="COMPRE AGORA!" />
-            </div>
-          </div>
+        <label>Descrição</label>
+        <textarea id="globalDesc" class="input" rows="3"></textarea>
 
-          <div class="hr"></div>
+        <label>Link do WhatsApp</label>
+        <input id="whatsappLink" class="input" />
 
-          <h3 style="margin:0;">Banner</h3>
-
-          <label>Banner: título</label>
-          <input id="bannerTitle" class="input" placeholder="Título do banner..." />
-
-          <label>Banner: descrição</label>
-          <textarea id="bannerDesc" class="input" rows="2" placeholder="Texto do banner..."></textarea>
-
-          <label>Banner: imagem (URL)</label>
-          <input id="bannerImageUrl" class="input" placeholder="/assets/images/banner/banner.jpg" />
-
-          <!-- ✅ EDIÇÃO DO BANNER (corte/zoom) -->
-          <div class="imgPosWrap">
-            <div class="small">Corte / Zoom do Banner (fiel ao site)</div>
-
-            <div class="imgPosRow">
-              <label class="small" for="bImagePosX">
-                Horizontal (X): <span id="bImagePosXVal">50</span>%
-              </label>
-              <input id="bImagePosX" type="range" min="0" max="100" value="50" />
-            </div>
-
-            <div class="imgPosRow">
-              <label class="small" for="bImagePosY">
-                Vertical (Y): <span id="bImagePosYVal">50</span>%
-              </label>
-              <input id="bImagePosY" type="range" min="0" max="100" value="50" />
-            </div>
-
-            <div class="imgPosRow">
-              <label class="small" for="bImageZoom">
-                Zoom: <span id="bImageZoomVal">100</span>%
-              </label>
-              <input id="bImageZoom" type="range" min="50" max="200" value="100" />
-            </div>
-
-            <div class="rowBtns" style="margin-top:10px;">
-              <button class="btn secondary smallBtn" id="resetBannerBtn" type="button">
-                Resetar banner
-              </button>
-            </div>
-
-            <div class="imgPreviewWrap">
-              <div class="small">Prévia do banner (igual ao topo do site)</div>
-              <div class="imgPreviewBox banner" id="bImagePreviewBox">
-                <img id="bImagePreview" alt="Prévia do banner" />
-              </div>
-            </div>
-          </div>
-
-          <!-- ✅ DESTAQUES (3 CARDS) -->
-          <div class="hr"></div>
-          <h3 style="margin:0;">Destaques do topo (3 cards)</h3>
-
-          <label style="margin-top:10px;">Mostrar cards do topo</label>
-          <select id="showTrustBlock" class="input">
-            <option value="true">Ativado</option>
-            <option value="false">Desativado</option>
-          </select>
-          <p class="small" style="margin:6px 0 0;">Ícone pode ser emoji (ex: 🚀 💰 📦).</p>
-
-          <div class="formGrid" style="margin-top:10px;">
-            <div>
-              <label>Card 1 - Ícone</label>
-              <input id="trust1Icon" class="input" placeholder="🚀" />
-            </div>
-            <div>
-              <label>Card 1 - Título</label>
-              <input id="trust1Title" class="input" placeholder="Entrega rápida" />
-            </div>
-          </div>
-          <label>Card 1 - Texto</label>
-          <input id="trust1Text" class="input" placeholder="Itens entregues no servidor em poucos minutos" />
-
-          <div class="formGrid">
-            <div>
-              <label>Card 2 - Ícone</label>
-              <input id="trust2Icon" class="input" placeholder="💰" />
-            </div>
-            <div>
-              <label>Card 2 - Título</label>
-              <input id="trust2Title" class="input" placeholder="Pagamento em cash" />
-            </div>
-          </div>
-          <label>Card 2 - Texto</label>
-          <input id="trust2Text" class="input" placeholder="Transação 100% dentro do jogo" />
-
-          <div class="formGrid">
-            <div>
-              <label>Card 3 - Ícone</label>
-              <input id="trust3Icon" class="input" placeholder="📦" />
-            </div>
-            <div>
-              <label>Card 3 - Título</label>
-              <input id="trust3Title" class="input" placeholder="Estoque em tempo real" />
-            </div>
-          </div>
-          <label>Card 3 - Texto</label>
-          <input id="trust3Text" class="input" placeholder="Atualização automática de disponibilidade" />
-
-          <!-- ✅ RODAPÉ (EDITÁVEL) -->
-          <div class="hr"></div>
-          <h3 style="margin:0;">Rodapé</h3>
-
-          <label style="margin-top:10px;">Mostrar rodapé</label>
-          <select id="showFooter" class="input">
-            <option value="true">Ativado</option>
-            <option value="false">Desativado</option>
-          </select>
-
-          <label>Título do rodapé</label>
-          <input id="footerTitle" class="input" placeholder="CASAMATA" />
-
-          <label>Texto do rodapé (pode ter linhas)</label>
-          <textarea id="footerText" class="input" rows="3" placeholder="Ex: Entrega rápida no servidor..."></textarea>
-
-          <label>Links do rodapé (1 por linha no formato: Texto | URL)</label>
-          <textarea id="footerLinksRaw" class="input" rows="4" placeholder="Como funciona | https://...
-Regras | https://...
-Contato | https://..."></textarea>
-
-          <label>Copyright (linha pequena)</label>
-          <input id="footerCopy" class="input" placeholder="© 2026 CASAMATA — Todos os direitos reservados" />
-
-          <div class="rowBtns">
-            <button class="btn" id="saveSettingsBtn" type="button">Salvar configurações</button>
-          </div>
-
-          <p class="small" id="settingsMsg" style="margin:0;"></p>
+        <div class="rowBtns">
+          <button class="btn" id="saveSettingsBtn" type="button">
+            Salvar configurações
+          </button>
         </div>
 
-        <!-- PRODUCT FORM -->
-        <div class="panel" id="productFormPanel">
-          <h2 style="margin:0;">Criar / Editar Produto</h2>
+        <p class="small" id="settingsMsg"></p>
+      </section>
 
-          <input type="hidden" id="productId" />
+      <!-- PRODUTO -->
+      <section id="products" class="panel">
+        <h2>Criar / Editar Produto</h2>
 
-          <label>Nome</label>
-          <input id="pName" class="input" placeholder="Nome do produto" />
+        <input type="hidden" id="productId" />
 
-          <label>Descrição</label>
-          <textarea id="pDesc" class="input" rows="3" placeholder="Detalhes do produto..."></textarea>
+        <label>Nome</label>
+        <input id="pName" class="input" />
 
-          <div class="formGrid">
-            <div>
-              <label>Preço (BRL)</label>
-              <input id="pPrice" class="input" type="number" step="0.01" />
-            </div>
-            <div>
-              <label>Preço Promo (opcional)</label>
-              <input id="pPromo" class="input" type="number" step="0.01" />
-            </div>
-          </div>
+        <label>Descrição</label>
+        <textarea id="pDesc" class="input" rows="3"></textarea>
 
-          <div class="formGrid">
-            <div>
-              <label>Estoque (opcional)</label>
-              <input id="pStock" class="input" type="number" step="1" />
-            </div>
-            <div>
-              <label>Ordem (menor = primeiro)</label>
-              <input id="pOrder" class="input" type="number" step="1" value="100" />
-            </div>
-          </div>
+        <label>Preço</label>
+        <input id="pPrice" class="input" type="number" step="0.01" />
 
-          <label>Categoria</label>
-          <select id="pCategory" class="input">
-            <option value="Armas">Armas</option>
-            <option value="Munição">Munição</option>
-            <option value="Recursos">Recursos</option>
-            <option value="Equipamentos">Equipamentos</option>
-            <option value="Outros">Outros</option>
-          </select>
+        <label>Imagem (URL)</label>
+        <input id="pImageUrl" class="input" />
 
-          <label>Mais vendido</label>
-          <select id="pBestSeller" class="input">
-            <option value="false">Não</option>
-            <option value="true">Sim</option>
-          </select>
-
-          <label>Imagem do produto (URL)</label>
-          <input id="pImageUrl" class="input" placeholder="/assets/images/products/produto.jpg" />
-
-          <div class="imgPosWrap">
-            <div class="small">Corte / Zoom da imagem (igual ao produto)</div>
-
-            <div class="imgPosRow">
-              <label class="small" for="pImagePosX">
-                Horizontal (X): <span id="pImagePosXVal">50</span>%
-              </label>
-              <input id="pImagePosX" type="range" min="0" max="100" value="50" />
-            </div>
-
-            <div class="imgPosRow">
-              <label class="small" for="pImagePosY">
-                Vertical (Y): <span id="pImagePosYVal">50</span>%
-              </label>
-              <input id="pImagePosY" type="range" min="0" max="100" value="50" />
-            </div>
-
-            <div class="imgPosRow">
-              <label class="small" for="pImageZoom">
-                Zoom: <span id="pImageZoomVal">100</span>%
-              </label>
-              <input id="pImageZoom" type="range" min="50" max="200" value="100" />
-            </div>
-
-            <div class="rowBtns" style="margin-top:10px;">
-              <button class="btn secondary smallBtn" id="resetCropBtn" type="button">Resetar corte</button>
-            </div>
-
-            <div class="imgPreviewWrap">
-              <div class="small">Prévia do produto</div>
-              <div class="imgPreviewBox product checker" id="pImagePreviewBox">
-                <img id="pImagePreview" alt="Prévia do produto" />
-              </div>
-            </div>
-          </div>
-
-          <div class="formGrid">
-            <div>
-              <label>Ativo</label>
-              <select id="pActive" class="input">
-                <option value="true">Sim</option>
-                <option value="false">Não</option>
-              </select>
-            </div>
-            <div>
-              <label>Destaque</label>
-              <select id="pFeatured" class="input">
-                <option value="false">Não</option>
-                <option value="true">Sim</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="rowBtns" style="margin-top:12px;">
-            <button class="btn secondary" id="clearFormBtn" type="button">Limpar</button>
-            <button class="btn" id="saveProductBtn" type="button">Salvar</button>
-            <button class="btn danger" id="deleteProductBtn" type="button" disabled>Excluir</button>
-          </div>
-
-          <p class="small" id="productMsg" style="margin:0;"></p>
+        <div class="rowBtns">
+          <button class="btn secondary" id="clearFormBtn" type="button">Limpar</button>
+          <button class="btn" id="saveProductBtn" type="button">Salvar</button>
+          <button class="btn danger" id="deleteProductBtn" type="button" disabled>Excluir</button>
         </div>
-      </div>
 
-      <div class="hr"></div>
-      <h2 style="margin:0 0 10px;">Produtos (lista)</h2>
-      <div id="productsGrid" class="grid"></div>
+        <p class="small" id="productMsg"></p>
+      </section>
+
+      <!-- LISTA -->
+      <section id="list">
+        <h2>Produtos (lista)</h2>
+        <div id="productsGrid" class="grid"></div>
+      </section>
+
     </div>
-  </div>
 
-  <script type="module" src="./assets/admin.js"></script>
+  </main>
+</div>
+
+<script type="module" src="./assets/admin.js"></script>
 </body>
 </html>

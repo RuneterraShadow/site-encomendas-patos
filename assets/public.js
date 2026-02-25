@@ -79,13 +79,12 @@ function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {})
   const z = clampZoom(zoom, 100);
   const fit = z < 100 ? "contain" : "cover";
 
-  if (containerEl && containerEl.classList && containerEl.classList.contains("imgPreviewBox")) {
-    containerEl.classList.toggle("checker", z < 100);
-  }
-
+  if (containerEl) containerEl.classList.toggle("checker", z < 100);
   if (imgEl) {
     imgEl.style.objectFit = fit;
     imgEl.style.objectPosition = `${clampPos(x, 50)}% ${clampPos(y, 50)}%`;
+    imgEl.style.transform = `scale(${z / 100})`;
+    imgEl.style.transformOrigin = "center center";
   }
 }
 
@@ -214,7 +213,7 @@ let cart = [];
 let cartOpen = false;
 
 const stockMap = new Map();
-const WORKER_URL = "https://site-encomendas-backend.viniespezio21.workers.dev";
+const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");

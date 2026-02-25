@@ -438,10 +438,6 @@ function renderAdminProducts(items) {
   });
 }
 
-    card?.addEventListener("click", () => fillProductForm(p));
-    grid.appendChild(card);
-  });
-}
 
 function fillProductForm(p) {
   el("productId").value = p.id || "";

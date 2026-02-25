@@ -394,39 +394,38 @@ function renderAdminProducts(items) {
     const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
     const hasStock = Number.isFinite(stock);
 
-    card.innerHTML = `
-      <div class="img">
-        <img src="${img}" alt="">
+  card.innerHTML = `
+  <div class="img">
+    <img src="${img}" alt="">
+  </div>
+
+  <div class="body">
+    <h3>${p.name || "Produto"}</h3>
+
+    <p>${p.description || ""}</p>
+
+    <div class="badges">
+      <div class="badge">${p.category || "Outros"}</div>
+      ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ``}
+      ${p.featured ? `<div class="badge">Destaque</div>` : ``}
+      <div class="badge">${p.active ? "Ativo" : "Inativo"}</div>
+      <div class="badge">Estoque: ${p.stock ?? "∞"}</div>
+    </div>
+
+    <div class="priceBlock">
+      <div class="priceLine">
+        <span class="priceLabel">Preço casamata</span>
+        <span class="priceValue casamata">
+          ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+        </span>
       </div>
+    </div>
 
-      <div class="body">
-        <h3>${p.name || "Produto"}</h3>
-        <p>${p.description || ""}</p>
-
-        <div class="badges">
-          <div class="badge">${(p.category || "Outros")}</div>
-          ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ``}
-          ${p.featured ? `<div class="badge">Destaque</div>` : ``}
-          <div class="badge">${p.active ? "Ativo" : "Inativo"}</div>
-          <div class="badge">${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}</div>
-        </div>
-
-        <div class="admin-actions" style="margin-top:16px;">
-          <button class="btn primary edit-btn">
-            Editar
-          </button>
-        </div>
-      </div>
-    `;
-
-    const imgContainer = card.querySelector(".img");
-    const imgEl = card.querySelector("img");
-
-    applyImageView(imgEl, imgContainer, {
-      x: p.imagePosX ?? 50,
-      y: p.imagePosY ?? 50,
-      zoom: p.imageZoom ?? 100,
-    });
+    <div class="buyRow">
+      <button class="btn edit-btn addBtn">Editar</button>
+    </div>
+  </div>
+`;
 
     const editBtn = card.querySelector(".edit-btn");
     editBtn.addEventListener("click", (e) => {

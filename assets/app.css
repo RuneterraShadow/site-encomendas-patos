@@ -724,3 +724,21 @@ label{
   box-shadow: 0 20px 60px rgba(0,0,0,.6);
   border-color: rgba(255,255,255,.12);
 }
+/* =========================
+   ADMIN - TAMANHO FIXO CARD
+========================= */
+
+.admin-page #productsGrid {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.admin-page #productsGrid .card .img {
+  height: 200px;        /* força altura fixa */
+  aspect-ratio: unset;  /* remove proporção automática */
+}
+
+.admin-page #productsGrid .card .img img {
+  height: 100%;
+  object-fit: cover;
+}

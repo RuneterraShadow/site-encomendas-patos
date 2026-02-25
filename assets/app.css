@@ -1005,3 +1005,120 @@ body.admin-page {
 .admin-content button:hover {
   transform: translateY(-1px);
 }
+/* ========================= */
+/* ===== ADMIN 2.0 PRO ===== */
+/* ========================= */
+
+body.admin-page {
+  background: #0e1117;
+}
+
+.admin-page .topbar {
+  background: linear-gradient(90deg, #121826, #0f141f);
+  border-bottom: 1px solid #1e2636;
+  padding: 18px 0;
+}
+
+.admin-page .topbar h1 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.admin-page .panel {
+  background: #151a24;
+  border: 1px solid #1f2635;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+}
+
+.admin-page .panel h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Layout principal 2 colunas reais */
+.admin-page .hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  align-items: start;
+}
+
+/* Inputs mais clean */
+.admin-page .input {
+  background: #101520;
+  border: 1px solid #273044;
+  border-radius: 8px;
+  padding: 9px 12px;
+  transition: 0.2s ease;
+}
+
+.admin-page .input:focus {
+  border-color: #ff7a00;
+  box-shadow: 0 0 0 2px rgba(255,122,0,0.2);
+}
+
+/* Labels */
+.admin-page label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #aab2c5;
+  margin-bottom: 4px;
+}
+
+/* Separadores */
+.admin-page .hr {
+  margin: 24px 0;
+  border-top: 1px solid #222b3c;
+}
+
+/* Botões refinados */
+.admin-page .btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 8px 14px;
+  transition: 0.2s ease;
+}
+
+.admin-page .btn:hover {
+  transform: translateY(-2px);
+}
+
+.admin-page .btn.secondary {
+  background: #1c2230;
+  border: 1px solid #2a3145;
+}
+
+.admin-page .btn.danger {
+  background: #c53b3b;
+}
+
+/* Grid da lista de produtos mais premium */
+.admin-page .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.admin-page .grid .card {
+  background: #151a24;
+  border: 1px solid #1f2635;
+  border-radius: 12px;
+  padding: 14px;
+  transition: 0.2s ease;
+}
+
+.admin-page .grid .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.4);
+}
+
+/* Preview boxes mais refinadas */
+.admin-page .imgPreviewBox {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #1f2635;
+}

@@ -706,16 +706,11 @@ label{
   .floatingCartBtn{ right: 12px; bottom: 92px; }
 }
 /* ======================
-   ADMIN - GRID
+   ADMIN - GRID IGUAL LOJA
 ====================== */
 
 .admin-page #productsGrid{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.admin-page #productsGrid .card{
-  display: flex;
-  flex-direction: column;
+  gap: 14px;
 }

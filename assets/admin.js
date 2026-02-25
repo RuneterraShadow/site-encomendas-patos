@@ -84,7 +84,7 @@ function showAdmin(isAuthed) {
   adminBox.style.display = isAuthed ? "block" : "none";
 }
 
-el("loginBtn").addEventListener("click", async () => {
+el("loginBtn")?.addEventListener("click", async () => {
   const email = el("email").value.trim();
   const pass = el("pass").value;
   if (!email || !pass) return showMsg("loginMsg", "Preencha email e senha.", false);
@@ -98,7 +98,7 @@ el("loginBtn").addEventListener("click", async () => {
   }
 });
 
-el("logoutBtn").addEventListener("click", async () => {
+el("logoutBtn")?.addEventListener("click", async () => {
   await signOut(auth);
 });
 
@@ -186,17 +186,17 @@ function updateBannerPreview() {
 }
 
 ["bannerImageUrl", "bImagePosX", "bImagePosY", "bImageZoom"].forEach((id) => {
-  el(id).addEventListener("input", updateBannerPreview);
+  el(id)?.addEventListener("input", updateBannerPreview);
 });
 
-el("resetBannerBtn").addEventListener("click", () => {
+el("resetBannerBtn")?.addEventListener("click", () => {
   el("bImagePosX").value = "50";
   el("bImagePosY").value = "50";
   el("bImageZoom").value = "100";
   updateBannerPreview();
 });
 
-el("saveSettingsBtn").addEventListener("click", async () => {
+el("saveSettingsBtn")?.addEventListener("click", async () => {
   const payload = {
     siteTitle: el("siteTitle").value.trim(),
     siteSubtitle: el("siteSubtitle").value.trim(),
@@ -293,19 +293,19 @@ function updateProductPreview() {
 }
 
 ["pImageUrl", "pImagePosX", "pImagePosY", "pImageZoom"].forEach((id) => {
-  el(id).addEventListener("input", updateProductPreview);
+  el(id)?.addEventListener("input", updateProductPreview);
 });
 
-el("resetCropBtn").addEventListener("click", () => {
+el("resetCropBtn")?.addEventListener("click", () => {
   el("pImagePosX").value = "50";
   el("pImagePosY").value = "50";
   el("pImageZoom").value = "100";
   updateProductPreview();
 });
 
-el("clearFormBtn").addEventListener("click", clearProductForm);
+el("clearFormBtn")?.addEventListener("click", clearProductForm);
 
-el("saveProductBtn").addEventListener("click", async () => {
+el("saveProductBtn")?.addEventListener("click", async () => {
   const id = el("productId").value.trim();
   const payload = {
     name: el("pName").value.trim(),
@@ -343,7 +343,7 @@ el("saveProductBtn").addEventListener("click", async () => {
   }
 });
 
-el("deleteProductBtn").addEventListener("click", async () => {
+el("deleteProductBtn")?.addEventListener("click", async () => {
   const id = el("productId").value.trim();
   if (!id) return;
 
@@ -413,7 +413,7 @@ function renderAdminProducts(items) {
       zoom: p.imageZoom ?? 100,
     });
 
-    card.addEventListener("click", () => fillProductForm(p));
+    card?.addEventListener("click", () => fillProductForm(p));
     grid.appendChild(card);
   });
 }

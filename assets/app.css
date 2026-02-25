@@ -395,8 +395,13 @@ label{
   position:relative;
   max-height:260px;     /* trava a altura */
 }
-.imgPreviewBox.product{ aspect-ratio:16/10; }
-.imgPreviewBox.banner{ aspect-ratio:16/6; }
+.imgPreviewBox.product{
+  height: 220px;
+}
+
+.imgPreviewBox.banner{
+  height: 180px;
+}
 
 .imgPreviewBox img{
   width:100%;

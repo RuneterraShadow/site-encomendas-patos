@@ -214,7 +214,7 @@ let cart = [];
 let cartOpen = false;
 
 const stockMap = new Map();
-const WORKER_URL = "https://site-encomendas-patos.viniespezio21.workers.dev";
+const WORKER_URL = "https://site-encomendas-backend.viniespezio21.workers.dev";
 
 const cartBtn = el("cartOpenBtn");
 const cartCount = el("cartCount");

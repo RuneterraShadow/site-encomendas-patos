@@ -706,19 +706,37 @@ label{
   .floatingCartBtn{ right: 12px; bottom: 92px; }
 }
 /* ======================
-   AJUSTE GRID ADMIN
+   ADMIN - LISTA ANTIGA
 ====================== */
 
 #productsGrid{
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#productsGrid .card{
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px;
 }
 
 #productsGrid .card .img{
-  aspect-ratio: 16/9;
-  max-height: 180px;
+  width: 320px;
+  height: 180px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 #productsGrid .card .img img{
+  width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+#productsGrid .card .body{
+  flex: 1;
 }

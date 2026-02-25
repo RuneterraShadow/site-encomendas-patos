@@ -709,13 +709,13 @@ label{
    ADMIN - LISTA ANTIGA
 ====================== */
 
-#productsGrid{
+.admin-page #productsGrid{
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-#productsGrid .card{
+.admin-page #productsGrid .card{
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -723,7 +723,7 @@ label{
   padding: 16px;
 }
 
-#productsGrid .card .img{
+.admin-page #productsGrid .card .img{
   width: 320px;
   height: 180px;
   flex-shrink: 0;
@@ -731,31 +731,12 @@ label{
   overflow: hidden;
 }
 
-#productsGrid .card .img img{
+.admin-page #productsGrid .card .img img{
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-#productsGrid .card .body{
+.admin-page #productsGrid .card .body{
   flex: 1;
-}
-/* =========================
-   ADMIN - FORÇA GRID VISUAL
-========================= */
-
-.admin-page #productsGrid {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 20px !important;
-}
-
-.admin-page #productsGrid .card {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.admin-page #productsGrid .card .img {
-  aspect-ratio: 16/10 !important;
-  height: auto !important;
 }

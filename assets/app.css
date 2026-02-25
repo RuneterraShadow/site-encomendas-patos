@@ -727,3 +727,14 @@ label{
   height:100%;
   display:block;
 }
+/* ===== AJUSTE VISUAL ZOOM NEGATIVO ===== */
+
+.productModal > div:first-child{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.productModal > div:first-child.checker{
+  background-position:center;
+}

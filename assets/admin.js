@@ -395,10 +395,14 @@ function renderAdminProducts(items) {
     const hasStock = Number.isFinite(stock);
 
     card.innerHTML = `
-      <div class="img"><img src="${img}" alt=""></div>
+      <div class="img">
+        <img src="${img}" alt="">
+      </div>
+
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
+
         <div class="badges">
           <div class="badge">${(p.category || "Outros")}</div>
           ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ``}
@@ -406,16 +410,33 @@ function renderAdminProducts(items) {
           <div class="badge">${p.active ? "Ativo" : "Inativo"}</div>
           <div class="badge">${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}</div>
         </div>
+
+        <div class="admin-actions" style="margin-top:16px;">
+          <button class="btn primary edit-btn">
+            Editar
+          </button>
+        </div>
       </div>
     `;
 
     const imgContainer = card.querySelector(".img");
     const imgEl = card.querySelector("img");
+
     applyImageView(imgEl, imgContainer, {
       x: p.imagePosX ?? 50,
       y: p.imagePosY ?? 50,
       zoom: p.imageZoom ?? 100,
     });
+
+    const editBtn = card.querySelector(".edit-btn");
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      fillProductForm(p);
+    });
+
+    grid.appendChild(card);
+  });
+}
 
     card?.addEventListener("click", () => fillProductForm(p));
     grid.appendChild(card);

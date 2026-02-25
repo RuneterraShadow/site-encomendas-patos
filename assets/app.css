@@ -852,3 +852,65 @@ body.admin-page {
   transform: translateY(-4px);
   border-color: #2d3545;
 }
+/* ========================= */
+/* ADMIN PREMIUM CLEAN FIX  */
+/* ========================= */
+
+body.admin-page {
+  background: #0f1115 !important;
+  color: #e6e6e6;
+}
+
+/* Centralizar conteúdo */
+body.admin-page > * {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Todos os blocos principais viram cards */
+body.admin-page section,
+body.admin-page .box,
+body.admin-page .card,
+body.admin-page .config,
+body.admin-page .panel,
+body.admin-page .container > div {
+  background: #151821 !important;
+  border: 1px solid #1f2430 !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  margin-bottom: 28px !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
+}
+
+/* Inputs */
+body.admin-page input,
+body.admin-page select,
+body.admin-page textarea {
+  background: #1a1f2b !important;
+  border: 1px solid #2a3040 !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  color: #fff !important;
+}
+
+/* Inputs focus */
+body.admin-page input:focus,
+body.admin-page select:focus,
+body.admin-page textarea:focus {
+  border-color: #ff7a00 !important;
+  box-shadow: 0 0 0 2px rgba(255,122,0,0.2) !important;
+  outline: none;
+}
+
+/* Botões */
+body.admin-page button {
+  border-radius: 10px !important;
+  padding: 8px 14px !important;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+body.admin-page button:hover {
+  transform: translateY(-1px);
+}

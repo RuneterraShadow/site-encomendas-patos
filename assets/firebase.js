@@ -1,21 +1,17 @@
-// Import Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// 🔥 COLOQUE AQUI SUAS CONFIGURAÇÕES REAIS
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_PROJETO.appspot.com",
-  messagingSenderId: "SEU_ID",
-  appId: "SEU_APP_ID"
+  apiKey: "AIzaSy....",  // SUA REAL
+  authDomain: "site-encomendas-patos.firebaseapp.com",
+  projectId: "site-encomendas-patos",
+  storageBucket: "site-encomendas-patos.appspot.com",
+  messagingSenderId: "1144979472433",
+  appId: "1:1144979472433:web:234dbecc30a5a27d56510"
 };
 
-// Inicializa
 const app = initializeApp(firebaseConfig);
 
-// Exporta corretamente
 export const auth = getAuth(app);
 export const db = getFirestore(app);

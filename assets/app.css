@@ -714,3 +714,13 @@ label{
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
+.admin-page #productsGrid .card {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  box-shadow: 0 14px 35px rgba(0,0,0,.45);
+}
+
+.admin-page #productsGrid .card:hover {
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  border-color: rgba(255,255,255,.12);
+}

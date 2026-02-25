@@ -79,7 +79,8 @@ function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {})
   const z = clampZoom(zoom, 100);
   const fit = z < 100 ? "contain" : "cover";
 
-  if (containerEl) containerEl.classList.toggle("checker", z < 100);
+  if (containerEl && containerEl.classList.contains("imgPreviewBox")) {
+  containerEl.classList.toggle("checker", z < 100);
   if (imgEl) {
     imgEl.style.objectFit = fit;
     imgEl.style.objectPosition = `${clampPos(x, 50)}% ${clampPos(y, 50)}%`;

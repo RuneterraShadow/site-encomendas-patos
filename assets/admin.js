@@ -1,4 +1,4 @@
-import { auth, db } from "./firebase.js";
+import { auth, db } from "/site-encomendas-patos/assets/firebase.js";
 
 import {
   signInWithEmailAndPassword,

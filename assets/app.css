@@ -740,3 +740,22 @@ label{
 #productsGrid .card .body{
   flex: 1;
 }
+/* =========================
+   ADMIN - FORÇA GRID VISUAL
+========================= */
+
+.admin-page #productsGrid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 20px !important;
+}
+
+.admin-page #productsGrid .card {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.admin-page #productsGrid .card .img {
+  aspect-ratio: 16/10 !important;
+  height: auto !important;
+}

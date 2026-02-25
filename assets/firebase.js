@@ -3,7 +3,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSy....",  // SUA REAL
+ apiKey: "AIzaSyC5uVZVPbM8aDPgZ66QmqXvBh8eZP5sg",
   authDomain: "site-encomendas-patos.firebaseapp.com",
   projectId: "site-encomendas-patos",
   storageBucket: "site-encomendas-patos.appspot.com",

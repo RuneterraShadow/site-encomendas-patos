@@ -914,3 +914,94 @@ body.admin-page button {
 body.admin-page button:hover {
   transform: translateY(-1px);
 }
+/* ========================= */
+/* ===== ADMIN 2.0 ======== */
+/* ========================= */
+
+body.admin-page {
+  margin: 0;
+  background: #0f1115;
+  font-family: system-ui, sans-serif;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.admin-sidebar {
+  background: #11151c;
+  border-right: 1px solid #1c2230;
+  padding: 24px 18px;
+}
+
+.sidebar-logo {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  color: #ff7a00;
+}
+
+.admin-sidebar nav a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #aab0bd;
+  text-decoration: none;
+  margin-bottom: 6px;
+  transition: 0.2s ease;
+}
+
+.admin-sidebar nav a:hover {
+  background: #1a1f2a;
+  color: #ffffff;
+}
+
+/* Conteúdo */
+.admin-content {
+  padding: 40px;
+}
+
+/* Cards */
+.admin-content > div,
+.admin-content section,
+.admin-content .panel {
+  background: #151821;
+  border: 1px solid #1f2430;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+/* Inputs */
+.admin-content input,
+.admin-content select,
+.admin-content textarea {
+  background: #1a1f2b;
+  border: 1px solid #2a3040;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+}
+
+.admin-content input:focus,
+.admin-content select:focus,
+.admin-content textarea:focus {
+  border-color: #ff7a00;
+  box-shadow: 0 0 0 2px rgba(255,122,0,0.2);
+  outline: none;
+}
+
+/* Botões */
+.admin-content button {
+  border-radius: 8px;
+  padding: 8px 14px;
+  transition: 0.2s ease;
+}
+
+.admin-content button:hover {
+  transform: translateY(-1px);
+}

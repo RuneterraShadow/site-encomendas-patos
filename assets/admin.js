@@ -232,44 +232,6 @@ el("saveSettingsBtn").addEventListener("click", async () => {
   await setDoc(settingsRef, payload, { merge: true });
 });
 
-    siteTitle: el("siteTitle").value.trim(),
-    siteSubtitle: el("siteSubtitle").value.trim(),
-    globalDesc: el("globalDesc").value.trim(),
-    whatsappLink: el("whatsappLink").value.trim(),
-    buyBtnText: el("buyBtnText").value.trim(),
-
-    bannerTitle: el("bannerTitle").value.trim(),
-    bannerDesc: el("bannerDesc").value.trim(),
-    bannerImageUrl: el("bannerImageUrl").value.trim(),
-
-    bannerPosX: clampPos(el("bImagePosX").value, 50),
-    bannerPosY: clampPos(el("bImagePosY").value, 50),
-    bannerZoom: clampZoom(el("bImageZoom").value, 100),
-
-    /* ✅ DESTAQUES (3 CARDS) */
-    trust1Icon: el("trust1Icon") ? el("trust1Icon").value.trim() : "🚀",
-    trust1Title: el("trust1Title") ? el("trust1Title").value.trim() : "",
-    trust1Text: el("trust1Text") ? el("trust1Text").value.trim() : "",
-
-    trust2Icon: el("trust2Icon") ? el("trust2Icon").value.trim() : "💰",
-    trust2Title: el("trust2Title") ? el("trust2Title").value.trim() : "",
-    trust2Text: el("trust2Text") ? el("trust2Text").value.trim() : "",
-
-    trust3Icon: el("trust3Icon") ? el("trust3Icon").value.trim() : "📦",
-    trust3Title: el("trust3Title") ? el("trust3Title").value.trim() : "",
-    trust3Text: el("trust3Text") ? el("trust3Text").value.trim() : "",
-
-    // ✅ VISIBILIDADE (CARDS / RODAPÉ)
-    showTrustBlock: el("showTrustBlock") ? el("showTrustBlock").value === "true" : true,
-    showFooter: el("showFooter") ? el("showFooter").value === "true" : true,
-
-    /* ✅ RODAPÉ (NOVO) */
-    footerTitle: el("footerTitle") ? el("footerTitle").value.trim() : "",
-    footerText: el("footerText") ? el("footerText").value.trim() : "",
-    footerLinksRaw: el("footerLinksRaw") ? el("footerLinksRaw").value.trim() : "",
-    footerCopy: el("footerCopy") ? el("footerCopy").value.trim() : "",
-  };
-
   try {
     await setDoc(settingsRef, payload, { merge: true });
     showMsg("settingsMsg", "Configurações salvas ✅", true);

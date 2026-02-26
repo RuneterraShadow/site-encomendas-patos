@@ -60,7 +60,7 @@ function clampZoom(v, fallback = 100) {
 }
 
 function applyImageView(imgEl, containerEl, { x = 50, y = 50, zoom = 100 } = {}) {
-  const z = clampZoom(zoom, 100);
+  const z = clampZoom(zoom);
   const fit = z < 100 ? "contain" : "cover";
 
   if (imgEl) {
@@ -93,7 +93,7 @@ el("loginBtn")?.addEventListener("click", async () => {
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
-  } catch (e) {
+  } catch {
     showMsg("loginMsg", "Falha no login.", false);
   }
 });
@@ -105,62 +105,6 @@ el("logoutBtn")?.addEventListener("click", async () => {
 onAuthStateChanged(auth, (user) => {
   showAdmin(!!user);
   if (user) watchProducts();
-});
-
-/* ======================
-   PRODUCT FORM
-====================== */
-
-function clearProductForm() {
-  el("productId").value = "";
-  el("pName").value = "";
-  el("pDesc").value = "";
-  el("pPrice").value = "";
-  el("pPromo").value = "";
-  el("pStock").value = "";
-  el("pOrder").value = "100";
-  el("pImageUrl").value = "";
-  el("deleteProductBtn").disabled = true;
-}
-
-el("clearFormBtn")?.addEventListener("click", clearProductForm);
-
-el("saveProductBtn")?.addEventListener("click", async () => {
-  const id = el("productId").value.trim();
-
-  const payload = {
-    name: el("pName").value.trim(),
-    description: el("pDesc").value.trim(),
-    price: toNum(el("pPrice").value, 0),
-    promoPrice: toNum(el("pPromo").value, null),
-    stock: toNum(el("pStock").value, null),
-    sortOrder: toNum(el("pOrder").value, 100),
-    imageUrl: el("pImageUrl").value.trim(),
-  };
-
-  if (!payload.name)
-    return showMsg("productMsg", "Nome obrigatório.", false);
-
-  try {
-    if (id) {
-      await updateDoc(doc(db, "products", id), payload);
-    } else {
-      await addDoc(collection(db, "products"), payload);
-      clearProductForm();
-    }
-    showMsg("productMsg", "Salvo com sucesso ✅", true);
-  } catch {
-    showMsg("productMsg", "Erro ao salvar.", false);
-  }
-});
-
-el("deleteProductBtn")?.addEventListener("click", async () => {
-  const id = el("productId").value.trim();
-  if (!id) return;
-  if (!confirm("Excluir produto?")) return;
-
-  await deleteDoc(doc(db, "products", id));
-  clearProductForm();
 });
 
 /* ======================
@@ -183,6 +127,8 @@ function watchProducts() {
 
 function renderAdminProducts(items) {
   const grid = el("productsGrid");
+  if (!grid) return;
+
   grid.innerHTML = "";
 
   items.forEach((p) => {
@@ -214,6 +160,7 @@ function renderAdminProducts(items) {
                     minimumFractionDigits: 2,
                   })}</strong>
                 </div>
+
                 <div class="priceLine promo">
                   <span>Preço promo</span>
                   <strong>${Number(p.promoPrice).toLocaleString("pt-BR", {
@@ -238,12 +185,28 @@ function renderAdminProducts(items) {
       </div>
     `;
 
-    const editBtn = card.querySelector(".edit-btn");
-    editBtn.addEventListener("click", () => fillProductForm(p));
+    const imgContainer = card.querySelector(".img");
+    const imgEl = card.querySelector("img");
+
+    if (imgEl && imgContainer) {
+      applyImageView(imgEl, imgContainer, {
+        x: p.imagePosX ?? 50,
+        y: p.imagePosY ?? 50,
+        zoom: p.imageZoom ?? 100,
+      });
+    }
+
+    card.querySelector(".edit-btn").addEventListener("click", () => {
+      fillProductForm(p);
+    });
 
     grid.appendChild(card);
   });
 }
+
+/* ======================
+   FILL FORM
+====================== */
 
 function fillProductForm(p) {
   el("productId").value = p.id || "";
@@ -254,6 +217,7 @@ function fillProductForm(p) {
   el("pStock").value = p.stock ?? "";
   el("pOrder").value = p.sortOrder ?? 100;
   el("pImageUrl").value = p.imageUrl || "";
+
   el("deleteProductBtn").disabled = false;
 
   window.scrollTo({ top: 0, behavior: "smooth" });

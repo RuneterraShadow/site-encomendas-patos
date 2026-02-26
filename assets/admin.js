@@ -200,8 +200,39 @@ el("resetBannerBtn")?.addEventListener("click", () => {
   updateBannerPreview();
 });
 
-el("saveSettingsBtn")?.addEventListener("click", async () => {
+el("saveSettingsBtn").addEventListener("click", async () => {
   const payload = {
+
+    /* CONFIGURAÇÕES EXISTENTES */
+    siteTitle: el("siteTitle").value.trim(),
+    siteSubtitle: el("siteSubtitle").value.trim(),
+    globalDesc: el("globalDesc").value.trim(),
+    whatsappLink: el("whatsappLink").value.trim(),
+    buyBtnText: el("buyBtnText").value.trim(),
+
+    bannerTitle: el("bannerTitle").value.trim(),
+    bannerDesc: el("bannerDesc").value.trim(),
+    bannerImageUrl: el("bannerImageUrl").value.trim(),
+
+    bannerPosX: clampPos(el("bImagePosX").value, 50),
+    bannerPosY: clampPos(el("bImagePosY").value, 50),
+    bannerZoom: clampZoom(el("bImageZoom").value, 100),
+
+    footerCopy: el("footerCopy") ? el("footerCopy").value.trim() : "",
+
+    /* 🔥 TOPO DO SITE */
+    headerTitle: el("headerTitle") ? el("headerTitle").value.trim() : "",
+    headerSubtitle: el("headerSubtitle") ? el("headerSubtitle").value.trim() : "",
+    headerBtnText: el("headerBtnText") ? el("headerBtnText").value.trim() : "",
+    headerBtnLink: el("headerBtnLink") ? el("headerBtnLink").value.trim() : "",
+    headerBtnShow: el("headerBtnShow") ? el("headerBtnShow").value : "true"
+
+  };
+
+  await setDoc(settingsRef, payload, { merge: true });
+});
+
+};
     siteTitle: el("siteTitle").value.trim(),
     siteSubtitle: el("siteSubtitle").value.trim(),
     globalDesc: el("globalDesc").value.trim(),

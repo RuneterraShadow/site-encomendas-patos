@@ -743,7 +743,12 @@ onSnapshot(qy, (snap) => {
     if (!product.category) product.category = "Outros";
     if (product.bestSeller === undefined) product.bestSeller = false;
     items.push(product);
-    stockMap.set(d.id, data.stock);
+   const stock =
+  data.stock === null || data.stock === undefined
+    ? null
+    : Number(data.stock);
+
+stockMap.set(d.id, stock);
   });
 
   allProducts = items;

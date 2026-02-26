@@ -1,4 +1,3 @@
-import { db } from "./firebase.js";
 import {
   collection,
   query,
@@ -438,17 +437,25 @@ async function sendOrder() {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error("Falha no envio.");
+   if (!res.ok) throw new Error("Falha no envio.");
 
-    showToast("Pedido enviado! ✅");
-    cart = [];
-    renderCart();
-    closeCart();
-  } catch (e) {
-    console.error(e);
-    showToast("Erro ao enviar pedido.");
+// 🔥 BAIXA AUTOMÁTICA DE ESTOQUE
+for (const item of cart) {
+  const stock = stockMap.get(item.productId);
+
+  if (stock !== null && stock !== undefined) {
+    const ref = doc(db, "products", item.productId);
+
+    await updateDoc(ref, {
+      stock: increment(-item.qty)
+    });
   }
 }
+
+showToast("Pedido enviado! ✅");
+cart = [];
+renderCart();
+closeCart();
 
 
 /* TOAST */

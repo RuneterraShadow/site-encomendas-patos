@@ -232,7 +232,6 @@ el("saveSettingsBtn").addEventListener("click", async () => {
   await setDoc(settingsRef, payload, { merge: true });
 });
 
-};
     siteTitle: el("siteTitle").value.trim(),
     siteSubtitle: el("siteSubtitle").value.trim(),
     globalDesc: el("globalDesc").value.trim(),

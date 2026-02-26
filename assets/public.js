@@ -473,9 +473,11 @@ function renderProducts(items) {
     card.className = "card";
 
     const img = fixAssetPath(p.imageUrl || "");
-    const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
-    const hasStock = Number.isFinite(stock);
-    const out = hasStock && stock <= 0;
+    const stock = stockMap.get(p.id);
+    const hasStock =
+  stock === null || stock === undefined
+    ? true
+    : stock > 0;
 
     const promo = isPromo(p);
     const shown = shownPrice(p);

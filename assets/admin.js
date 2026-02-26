@@ -371,7 +371,6 @@ function watchProducts() {
   clearProductForm();
   updateBannerPreview();
 }
-
 function renderAdminProducts(items) {
   const grid = el("productsGrid");
   grid.innerHTML = "";
@@ -383,9 +382,13 @@ function renderAdminProducts(items) {
     const img = fixAssetPath(p.imageUrl || "");
     const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
     const hasStock = Number.isFinite(stock);
+    const promo = p.promoPrice && Number(p.promoPrice) > 0;
 
-  card.innerHTML = `
-      <div class="img"><img src="${img}" alt=""></div>
+    card.innerHTML = `
+      <div class="img">
+        <img src="${img}" alt="">
+      </div>
+
       <div class="body">
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
@@ -394,10 +397,74 @@ function renderAdminProducts(items) {
           <div class="badge">${p.category || "Outros"}</div>
           ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ""}
           ${p.featured ? `<div class="badge">Destaque</div>` : ""}
-          <div class="badge">${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}</div>
+          <div class="badge">
+            ${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}
+          </div>
+        </div>
+        
+<div class="priceBlock">
+  ${
+    promo
+      ? `
+        <div class="priceLine">
+          <span class="priceLabel">Preço atual na trade</span>
+          <span class="priceValue trade">
+            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
         </div>
 
- <div class="priceBlock">
+        <div class="priceLine promo">
+          <span class="priceLabel">Preço casamata</span>
+          <span class="priceValue casamata">
+            ${Number(p.promoPrice || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      `
+      : `
+        <div class="priceLine">
+          <span class="priceLabel">Preço casamata</span>
+          <span class="priceValue casamata">
+            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      `
+  }
+</div>
+
+      `
+  }
+</div>
+          `}
+        </div>
+
+        <div class="buyRow">
+          <button class="btn edit-btn">Editar</button>
+        </div>
+
+      </div>
+    `;
+
+    // 🔥 aplica zoom e crop igual ao public
+    const imgContainer = card.querySelector(".img");
+    const imgEl = card.querySelector("img");
+
+    if (imgEl && imgContainer) {
+      applyImageView(imgEl, imgContainer, {
+        x: p.imagePosX ?? 50,
+        y: p.imagePosY ?? 50,
+        zoom: p.imageZoom ?? 100,
+      });
+    }
+
+    const editBtn = card.querySelector(".edit-btn");
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      fillProductForm(p);
+    });
+
+    grid.appendChild(card);
+  });
+}
   ${
     promo
       ? `

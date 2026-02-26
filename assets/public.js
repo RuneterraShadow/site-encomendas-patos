@@ -10,7 +10,7 @@ import {
 
 /* ======================
    HELPERS
-====================== */hasStock
+====================== */
 const el = (id) => document.getElementById(id);
 
 const money = (v) =>

@@ -385,37 +385,46 @@ function renderAdminProducts(items) {
     const hasStock = Number.isFinite(stock);
 
   card.innerHTML = `
-  <div class="img">
-    <img src="${img}" alt="">
-  </div>
+      <div class="img"><img src="${img}" alt=""></div>
+      <div class="body">
+        <h3>${p.name || "Produto"}</h3>
+        <p>${p.description || ""}</p>
 
-  <div class="body">
-    <h3>${p.name || "Produto"}</h3>
+        <div class="badges">
+          <div class="badge">${p.category || "Outros"}</div>
+          ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ""}
+          ${p.featured ? `<div class="badge">Destaque</div>` : ""}
+          <div class="badge">${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}</div>
+        </div>
 
-    <p>${p.description || ""}</p>
+ <div class="priceBlock">
+  ${
+    promo
+      ? `
+        <div class="priceLine">
+          <span class="priceLabel">Preço atual na trade</span>
+          <span class="priceValue trade">
+            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
 
-    <div class="badges">
-      <div class="badge">${p.category || "Outros"}</div>
-      ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ``}
-      ${p.featured ? `<div class="badge">Destaque</div>` : ``}
-      <div class="badge">${p.active ? "Ativo" : "Inativo"}</div>
-      <div class="badge">Estoque: ${p.stock ?? "∞"}</div>
-    </div>
-
-    <div class="priceBlock">
-      <div class="priceLine">
-        <span class="priceLabel">Preço casamata</span>
-        <span class="priceValue casamata">
-          ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-        </span>
-      </div>
-    </div>
-
-    <div class="buyRow">
-      <button class="btn edit-btn addBtn">Editar</button>
-    </div>
-  </div>
-`;
+        <div class="priceLine promo">
+          <span class="priceLabel">Preço casamata</span>
+          <span class="priceValue casamata">
+            ${Number(p.promoPrice || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      `
+      : `
+        <div class="priceLine">
+          <span class="priceLabel">Preço casamata</span>
+          <span class="priceValue casamata">
+            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      `
+  }
+</div>
 
     const editBtn = card.querySelector(".edit-btn");
     editBtn.addEventListener("click", (e) => {

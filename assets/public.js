@@ -10,7 +10,7 @@ import {
 
 /* ======================
    HELPERS
-====================== */
+====================== */hasStock
 const el = (id) => document.getElementById(id);
 
 const money = (v) =>
@@ -474,10 +474,13 @@ function renderProducts(items) {
 
     const img = fixAssetPath(p.imageUrl || "");
     const stock = stockMap.get(p.id);
-    const hasStock =
+
+const hasStock =
   stock === null || stock === undefined
     ? true
     : stock > 0;
+
+const out = !hasStock;
 
     const promo = isPromo(p);
     const shown = shownPrice(p);

@@ -561,8 +561,33 @@ function watchGlobalConfig() {
     if (!snap.exists()) return;
     const data = snap.data();
 
-    el("siteTitle").textContent = pick(data, ["siteTitle"], "Loja");
-    el("siteSubtitle").textContent = pick(data, ["siteSubtitle"], "—");
+    /* 🔥 TOPO DA BARRA PRETA */
+
+el("siteTitle").textContent = pick(
+  data,
+  ["headerTitle", "siteTitle"],
+  "Loja"
+);
+
+el("siteSubtitle").textContent = pick(
+  data,
+  ["headerSubtitle", "siteSubtitle"],
+  "—"
+);
+
+/* 🔥 BOTÃO DO TOPO */
+
+const headerBtnText = pick(data, ["headerBtnText"], "");
+const headerBtnLink = pick(data, ["headerBtnLink"], "");
+const headerBtnShow = data.headerBtnShow ?? "true";
+
+if (headerBtnShow === "false") {
+  el("whatsBtn").style.display = "none";
+} else {
+  el("whatsBtn").style.display = "inline-block";
+  el("whatsBtn").textContent = headerBtnText || pick(data, ["buyBtnText"], "COMPRAR");
+  el("whatsBtn").href = headerBtnLink || makeWhatsLink(pick(data, ["whatsappLink"], ""));
+}
     el("globalDesc").textContent = pick(data, ["globalDesc"], "—");
 
     el("bannerTitle").textContent = pick(data, ["bannerTitle"], "—");

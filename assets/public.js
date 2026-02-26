@@ -461,6 +461,7 @@ async function sendOrder() {
   console.error(e);
   showToast("Erro ao enviar pedido.");
 }
+}
 
 /* TOAST */
 const toast = document.createElement("div");

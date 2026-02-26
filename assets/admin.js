@@ -373,6 +373,8 @@ function watchProducts() {
 }
 function renderAdminProducts(items) {
   const grid = el("productsGrid");
+  if (!grid) return;
+
   grid.innerHTML = "";
 
   items.forEach((p) => {
@@ -380,9 +382,14 @@ function renderAdminProducts(items) {
     card.className = "card";
 
     const img = fixAssetPath(p.imageUrl || "");
-    const stock = p.stock === null || p.stock === undefined ? null : Number(p.stock);
+    const stock =
+      p.stock === null || p.stock === undefined ? null : Number(p.stock);
     const hasStock = Number.isFinite(stock);
-    const promo = p.promoPrice && Number(p.promoPrice) > 0;
+
+    const promo =
+      p.promoPrice &&
+      Number(p.promoPrice) > 0 &&
+      Number(p.promoPrice) < Number(p.price);
 
     card.innerHTML = `
       <div class="img">
@@ -401,50 +408,48 @@ function renderAdminProducts(items) {
             ${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}
           </div>
         </div>
-        
-<div class="priceBlock">
-  ${
-    promo
-      ? `
-        <div class="priceLine">
-          <span class="priceLabel">Preço atual na trade</span>
-          <span class="priceValue trade">
-            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
 
-        <div class="priceLine promo">
-          <span class="priceLabel">Preço casamata</span>
-          <span class="priceValue casamata">
-            ${Number(p.promoPrice || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      `
-      : `
-        <div class="priceLine">
-          <span class="priceLabel">Preço casamata</span>
-          <span class="priceValue casamata">
-            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      `
-  }
-</div>
+        <div class="priceBlock">
+          ${
+            promo
+              ? `
+                <div class="priceLine">
+                  <span class="priceLabel">Preço atual na trade</span>
+                  <span class="priceValue trade">
+                    ${Number(p.price || 0).toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
 
-      `
-  }
-</div>
-          `}
+                <div class="priceLine promo">
+                  <span class="priceLabel">Preço casamata</span>
+                  <span class="priceValue casamata">
+                    ${Number(p.promoPrice || 0).toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              `
+              : `
+                <div class="priceLine">
+                  <span class="priceLabel">Preço casamata</span>
+                  <span class="priceValue casamata">
+                    ${Number(p.price || 0).toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              `
+          }
         </div>
 
         <div class="buyRow">
           <button class="btn edit-btn">Editar</button>
         </div>
-
       </div>
     `;
 
-    // 🔥 aplica zoom e crop igual ao public
     const imgContainer = card.querySelector(".img");
     const imgEl = card.querySelector("img");
 
@@ -456,8 +461,7 @@ function renderAdminProducts(items) {
       });
     }
 
-    const editBtn = card.querySelector(".edit-btn");
-    editBtn.addEventListener("click", (e) => {
+    card.querySelector(".edit-btn").addEventListener("click", (e) => {
       e.stopPropagation();
       fillProductForm(p);
     });
@@ -465,44 +469,6 @@ function renderAdminProducts(items) {
     grid.appendChild(card);
   });
 }
-  ${
-    promo
-      ? `
-        <div class="priceLine">
-          <span class="priceLabel">Preço atual na trade</span>
-          <span class="priceValue trade">
-            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-
-        <div class="priceLine promo">
-          <span class="priceLabel">Preço casamata</span>
-          <span class="priceValue casamata">
-            ${Number(p.promoPrice || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      `
-      : `
-        <div class="priceLine">
-          <span class="priceLabel">Preço casamata</span>
-          <span class="priceValue casamata">
-            ${Number(p.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      `
-  }
-</div>
-
-    const editBtn = card.querySelector(".edit-btn");
-    editBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      fillProductForm(p);
-    });
-
-    grid.appendChild(card);
-  });
-}
-
 
 function fillProductForm(p) {
   el("productId").value = p.id || "";

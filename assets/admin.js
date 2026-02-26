@@ -227,18 +227,16 @@ el("saveSettingsBtn").addEventListener("click", async () => {
     headerBtnLink: el("headerBtnLink") ? el("headerBtnLink").value.trim() : "",
     headerBtnShow: el("headerBtnShow") ? el("headerBtnShow").value : "true"
 
-  };
+};
 
+try {
   await setDoc(settingsRef, payload, { merge: true });
-});
+  showMsg("settingsMsg", "Configurações salvas ✅", true);
+} catch (e) {
+  showMsg("settingsMsg", "Erro ao salvar configurações.", false);
+  console.error(e);
+}
 
-  try {
-    await setDoc(settingsRef, payload, { merge: true });
-    showMsg("settingsMsg", "Configurações salvas ✅", true);
-  } catch (e) {
-    showMsg("settingsMsg", "Erro ao salvar configurações.", false);
-    console.error(e);
-  }
 });
 
 /* ======================

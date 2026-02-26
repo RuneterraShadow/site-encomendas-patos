@@ -431,32 +431,36 @@ async function sendOrder() {
   };
 
   try {
-    const res = await fetch(`${WORKER_URL}/order`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  const res = await fetch(`${WORKER_URL}/order`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
-   if (!res.ok) throw new Error("Falha no envio.");
+  if (!res.ok) throw new Error("Falha no envio.");
 
-// 🔥 BAIXA AUTOMÁTICA DE ESTOQUE
-for (const item of cart) {
-  const stock = stockMap.get(item.productId);
+  // 🔥 BAIXA AUTOMÁTICA DE ESTOQUE
+  for (const item of cart) {
+    const stock = stockMap.get(item.productId);
 
-  if (stock !== null && stock !== undefined) {
-    const ref = doc(db, "products", item.productId);
+    if (stock !== null && stock !== undefined) {
+      const ref = doc(db, "products", item.productId);
 
-    await updateDoc(ref, {
-      stock: increment(-item.qty)
-    });
+      await updateDoc(ref, {
+        stock: increment(-item.qty),
+      });
+    }
   }
+
+  showToast("Pedido enviado! ✅");
+  cart = [];
+  renderCart();
+  closeCart();
+
+} catch (e) {
+  console.error(e);
+  showToast("Erro ao enviar pedido.");
 }
-
-showToast("Pedido enviado! ✅");
-cart = [];
-renderCart();
-closeCart();
-
 
 /* TOAST */
 const toast = document.createElement("div");

@@ -941,6 +941,7 @@ label{
 
 @media (max-width: 768px) {
 
+  /* Painel vira bottom sheet */
   #cartPanel {
     width: 100%;
     max-width: 100%;
@@ -961,15 +962,18 @@ label{
     transform: translateY(0);
   }
 
+  /* Overlay com leve blur */
   .cartOverlay {
     backdrop-filter: blur(4px);
   }
 
+  /* Header */
   .cartHeader {
     padding-bottom: 10px;
     border-bottom: 1px solid #232323;
   }
 
+  /* Itens */
   .cartItems {
     padding-bottom: 10px;
   }
@@ -978,16 +982,19 @@ label{
     padding: 14px 0;
   }
 
+  /* Botões + / - */
   .cartQtyBtn {
     width: 38px;
     height: 38px;
   }
 
+  /* Footer */
   .cartFooter {
     padding-top: 10px;
     border-top: 1px solid #232323;
   }
 
+  /* Botão finalizar maior */
   .cartFooter .btn {
     height: 48px;
     font-size: 16px;

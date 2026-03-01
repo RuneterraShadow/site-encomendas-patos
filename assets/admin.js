@@ -109,6 +109,7 @@ el("logoutBtn")?.addEventListener("click", async () => {
 onAuthStateChanged(auth, (user) => {
   showAdmin(!!user);
   if (user) {
+    document.getElementById("ordersPanel").style.display = "block";
     watchOrders();
     loadSettings();
     watchProducts();

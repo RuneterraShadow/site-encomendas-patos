@@ -543,12 +543,20 @@ const out = !unlimited && stock <= 0;
         <h3>${p.name || "Produto"}</h3>
         <p>${p.description || ""}</p>
 
-        <div class="badges">
-          <div class="badge">${p.category || "Outros"}</div>
-          ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ""}
-          ${p.featured ? `<div class="badge">Destaque</div>` : ""}
-          <div class="badge"${unlimited ? "Estoque: ∞" : `Estoque: ${stock}`}</div>
-        </div>
+   <div class="badges">
+  <div class="badge">${p.category || "Outros"}</div>
+  ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ""}
+  ${p.featured ? `<div class="badge">Destaque</div>` : ""}
+  <div class="badge">
+    ${
+      unlimited
+        ? "Estoque: ∞"
+        : stock <= 0
+          ? "Sem estoque"
+         : "Estoque: " + stock
+    }
+  </div>
+</div>
 
         <div class="priceBlock">
           ${

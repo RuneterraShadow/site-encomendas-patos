@@ -456,10 +456,26 @@ async function sendOrder() {
     }
   }
 
-  showToast("Pedido enviado! ✅");
-  cart = [];
-  renderCart();
-  closeCart();
+ cart = [];
+renderCart();
+closeCart();
+
+// Mensagem fixa na tela
+const successBox = document.createElement("div");
+successBox.className = "orderSuccessBox";
+successBox.innerHTML = `
+  <div class="orderSuccessContent">
+    <h2>✅ Pedido enviado!</h2>
+    <p>O contato será efetuado via Discord por <strong>Runeterra Shadow</strong>.</p>
+    <button class="btn" id="closeSuccessMsg">Fechar</button>
+  </div>
+`;
+
+document.body.appendChild(successBox);
+
+document.getElementById("closeSuccessMsg").addEventListener("click", () => {
+  successBox.remove();
+});
 
 } catch (e) {
   console.error(e);

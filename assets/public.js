@@ -528,12 +528,11 @@ function renderProducts(items) {
     const img = fixAssetPath(p.imageUrl || "");
     const stock = stockMap.get(p.id);
 
-const hasStock =
-  stock === null || stock === undefined
-    ? true
-    : stock > 0;
+// estoque ilimitado (não definido)
+const unlimited = stock === null || stock === undefined;
 
-const out = !hasStock;
+// sem estoque
+const out = !unlimited && stock <= 0;
 
     const promo = isPromo(p);
     const shown = shownPrice(p);
@@ -548,7 +547,7 @@ const out = !hasStock;
           <div class="badge">${p.category || "Outros"}</div>
           ${p.bestSeller ? `<div class="badge best">Mais vendido</div>` : ""}
           ${p.featured ? `<div class="badge">Destaque</div>` : ""}
-          <div class="badge">${hasStock ? `Estoque: ${stock}` : "Estoque: ∞"}</div>
+          <div class="badge"${unlimited ? "Estoque: ∞" : `Estoque: ${stock}`}</div>
         </div>
 
         <div class="priceBlock">

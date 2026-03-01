@@ -456,16 +456,25 @@ async function sendOrder() {
     }
   }
 
- cart = [];
+cart = [];
 renderCart();
 closeCart();
 
-// Mensagem fixa na tela
+// ===============================
+// MODAL DE SUCESSO PROFISSIONAL
+// ===============================
+
+const orderNumber = "PED-" + Date.now().toString().slice(-6);
+
+document.body.style.overflow = "hidden";
+
 const successBox = document.createElement("div");
 successBox.className = "orderSuccessBox";
 successBox.innerHTML = `
   <div class="orderSuccessContent">
-    <h2>✅ Pedido enviado!</h2>
+    <div class="successIcon">✔</div>
+    <h2>Pedido enviado com sucesso!</h2>
+    <p class="successNumber">Nº do Pedido: <strong>${orderNumber}</strong></p>
     <p>O contato será efetuado via Discord por <strong>Runeterra Shadow</strong>.</p>
     <button class="btn" id="closeSuccessMsg">Fechar</button>
   </div>
@@ -473,9 +482,22 @@ successBox.innerHTML = `
 
 document.body.appendChild(successBox);
 
-document.getElementById("closeSuccessMsg").addEventListener("click", () => {
-  successBox.remove();
-});
+setTimeout(() => {
+  successBox.classList.add("active");
+}, 10);
+
+function closeSuccess() {
+  successBox.classList.remove("active");
+  setTimeout(() => {
+    document.body.style.overflow = "";
+    successBox.remove();
+  }, 300);
+}
+
+document.getElementById("closeSuccessMsg")
+  .addEventListener("click", closeSuccess);
+
+setTimeout(closeSuccess, 6000);
 
 } catch (e) {
   console.error(e);

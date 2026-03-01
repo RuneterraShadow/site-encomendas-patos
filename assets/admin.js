@@ -109,6 +109,7 @@ el("logoutBtn")?.addEventListener("click", async () => {
 onAuthStateChanged(auth, (user) => {
   showAdmin(!!user);
   if (user) {
+    watchOrders();
     loadSettings();
     watchProducts();
   }
@@ -502,4 +503,51 @@ function fillProductForm(p) {
   if (panel && panel.scrollIntoView) {
     panel.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+}
+// ============================
+// HISTÓRICO DE PEDIDOS
+// ============================
+
+function watchOrders() {
+  const ordersRef = collection(db, "orders");
+
+  onSnapshot(ordersRef, (snapshot) => {
+    const list = document.getElementById("ordersList");
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const id = docSnap.id;
+
+      const div = document.createElement("div");
+      div.className = "panel";
+      div.style.marginBottom = "10px";
+
+      div.innerHTML = `
+        <strong>${data.nick}</strong><br>
+        Discord: ${data.discord}<br>
+        Total: ${data.total}<br>
+        Status: <b>${data.status}</b><br><br>
+        ${
+          data.status === "pendente"
+            ? `<button class="btn" data-id="${id}">
+                 Marcar como concluído
+               </button>`
+            : `<span style="color: #38d478;">✔ Concluído</span>`
+        }
+      `;
+
+      if (data.status === "pendente") {
+        div.querySelector("button").addEventListener("click", async () => {
+          await updateDoc(doc(db, "orders", id), {
+            status: "concluido"
+          });
+        });
+      }
+
+      list.appendChild(div);
+    });
+  });
 }

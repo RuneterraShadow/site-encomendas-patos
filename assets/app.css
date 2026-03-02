@@ -1029,3 +1029,6 @@ label{
 .tabContent.active {
   display: block;
 }
+.orderCard {
+  margin-bottom: 12px;
+}

@@ -494,6 +494,12 @@ label{
   background: #111;
   z-index: 10001;
   transition: right 0.25s ease;
+
+  /* RESTAURA LAYOUT */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.6);
 }
 
 #cartPanel.active {

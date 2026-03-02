@@ -396,6 +396,9 @@ function renderAdminProducts(items) {
     card.innerHTML = `
       <div class="img">
         <img src="${img}" alt="">
+        <button class="btn danger smallBtn deleteOrderBtn" data-id="${doc.id}">
+  Excluir
+</button>
       </div>
 
       <div class="body">
@@ -570,4 +573,22 @@ document.addEventListener("click", (e) => {
 
   e.target.classList.add("active");
   document.getElementById(tabName).classList.add("active");
+});
+import { deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("deleteOrderBtn")) {
+
+    const id = e.target.dataset.id;
+
+    if (!confirm("Tem certeza que deseja excluir este pedido?")) return;
+
+    try {
+      await deleteDoc(doc(db, "orders", id));
+      alert("Pedido excluído!");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao excluir.");
+    }
+  }
 });

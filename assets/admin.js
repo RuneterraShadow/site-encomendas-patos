@@ -552,3 +552,15 @@ function watchOrders() {
     });
   });
 }
+// Controle das abas de pedidos
+document.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("tabBtn")) return;
+
+  const tabName = e.target.dataset.tab;
+
+  document.querySelectorAll(".tabBtn").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".tabContent").forEach(tab => tab.classList.remove("active"));
+
+  e.target.classList.add("active");
+  document.getElementById(tabName).classList.add("active");
+});

@@ -1032,3 +1032,18 @@ label{
 .orderCard {
   margin-bottom: 12px;
 }
+/* Esconde input + label acima dele */
+
+#headerTitle,
+#headerSubtitle,
+#headerBtnText,
+#headerBtnLink {
+  display: none !important;
+}
+
+#headerTitle + *,
+#headerSubtitle + *,
+#headerBtnText + *,
+#headerBtnLink + * {
+  display: none !important;
+}

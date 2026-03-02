@@ -1047,14 +1047,3 @@ label{
 #headerBtnLink + * {
   display: none !important;
 }
-.logo-img {
-  height: 45px;
-  width: auto;
-  object-fit: contain;
-}
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-}

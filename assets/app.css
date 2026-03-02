@@ -1047,17 +1047,4 @@ label{
 #headerBtnLink + * {
   display: none !important;
 }
-.floatingCartBtn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 11000; /* maior que overlay */
-}
-.cartPanel {
-  z-index: 10001;
-}
-.cartOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-}
+

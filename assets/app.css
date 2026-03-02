@@ -487,14 +487,18 @@ label{
 
 .cartPanel {
   position: fixed;
-  right: 0;
   top: 0;
+  right: -350px; /* começa escondido */
   height: 100%;
   width: 350px;
   background: #111;
-  z-index: 10001; /* MAIOR que overlay */
+  z-index: 10001;
+  transition: right 0.25s ease;
 }
-#cartPanel.active{ transform:translateX(0); }
+
+.cartPanel.active {
+  right: 0; /* aparece */
+}
 
 .cartHeader{ display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
 .cartItems{ flex:1; overflow:auto; padding-right:5px; }

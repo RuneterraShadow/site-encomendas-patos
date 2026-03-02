@@ -485,10 +485,10 @@ label{
   pointer-events: auto;
 }
 
-.cartPanel {
+#cartPanel {
   position: fixed;
   top: 0;
-  right: -350px; /* começa escondido */
+  right: -350px;
   height: 100%;
   width: 350px;
   background: #111;
@@ -496,8 +496,8 @@ label{
   transition: right 0.25s ease;
 }
 
-.cartPanel.active {
-  right: 0; /* aparece */
+#cartPanel.active {
+  right: 0;
 }
 
 .cartHeader{ display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }

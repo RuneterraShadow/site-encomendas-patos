@@ -242,12 +242,14 @@ function openCart() {
   cartOpen = true;
   cartOverlay.classList.add("active");
   cartPanel.classList.add("active");
+  document.body.style.overflow = "hidden";
   renderCart();
 }
 function closeCart() {
   cartOpen = false;
   cartOverlay.classList.remove("active");
   cartPanel.classList.remove("active");
+  document.body.style.overflow = "";
 }
 
 cartBtn?.addEventListener("click", () => (cartOpen ? closeCart() : openCart()));

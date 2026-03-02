@@ -394,12 +394,21 @@ function renderAdminProducts(items) {
       Number(p.promoPrice) < Number(p.price);
 
     card.innerHTML = `
-      <div class="img">
-        <img src="${img}" alt="">
-        <button class="btn danger smallBtn deleteOrderBtn" data-id="${doc.id}">
-  Excluir
-</button>
-      </div>
+  <div class="img">
+    <img src="${img}" alt="">
+  </div>
+
+  <div class="body">
+    <h3>${p.name || "Produto"}</h3>
+    Discord: ${data.discord}<br>
+    Total: ${data.total}<br>
+    Status: ${data.status}<br><br>
+
+    <button class="btn danger smallBtn deleteOrderBtn" data-id="${doc.id}">
+      Excluir
+    </button>
+  </div>
+`;
 
       <div class="body">
         <h3>${p.name || "Produto"}</h3>

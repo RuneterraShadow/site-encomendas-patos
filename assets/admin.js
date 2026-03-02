@@ -513,7 +513,7 @@ function watchOrders() {
   const ordersRef = collection(db, "orders");
 
   onSnapshot(ordersRef, (snapshot) => {
-    cconst pendingContainer = document.getElementById("ordersPending");
+    const pendingContainer = document.getElementById("ordersPending");
 const completedContainer = document.getElementById("ordersCompleted");
 
 if (!pendingContainer || !completedContainer) return;

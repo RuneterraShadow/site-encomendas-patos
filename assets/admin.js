@@ -574,7 +574,9 @@ document.addEventListener("click", (e) => {
   e.target.classList.add("active");
   document.getElementById(tabName).classList.add("active");
 });
-import { deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+// ==============================
+// EXCLUIR PEDIDO
+// ==============================
 
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("deleteOrderBtn")) {
@@ -585,10 +587,10 @@ document.addEventListener("click", async (e) => {
 
     try {
       await deleteDoc(doc(db, "orders", id));
-      alert("Pedido excluído!");
+      alert("Pedido excluído com sucesso!");
     } catch (err) {
-      console.error(err);
-      alert("Erro ao excluir.");
+      console.error("Erro ao excluir:", err);
+      alert("Erro ao excluir pedido.");
     }
   }
 });

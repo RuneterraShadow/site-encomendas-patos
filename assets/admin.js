@@ -526,7 +526,7 @@ completedContainer.innerHTML = "";
       const id = docSnap.id;
 
       const div = document.createElement("div");
-      div.className = "panel";
+      div.className = "panel orderCard";
       div.style.marginBottom = "10px";
 
       div.innerHTML = `

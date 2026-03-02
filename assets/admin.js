@@ -408,7 +408,6 @@ function renderAdminProducts(items) {
       Excluir
     </button>
   </div>
-`;
 
       <div class="body">
         <h3>${p.name || "Produto"}</h3>

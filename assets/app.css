@@ -488,7 +488,7 @@ label{
 #cartPanel {
   position: fixed !important;
   top: 0 !important;
-  right: -350px !important;
+  left: -350px !important;   /* 👈 começa escondido na esquerda */
   width: 350px !important;
   height: 100vh !important;
 
@@ -499,12 +499,12 @@ label{
   flex-direction: column;
   padding: 20px;
 
-  box-shadow: -10px 0 40px rgba(0,0,0,0.7);
-  transition: right 0.25s ease;
+  box-shadow: 10px 0 40px rgba(0,0,0,0.7); /* sombra invertida */
+  transition: left 0.25s ease;
 }
 
 #cartPanel.active {
-  right: 0 !important;
+  left: 0 !important; /* 👈 aparece pela esquerda */
 }
 
 .cartHeader{ display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }

@@ -513,10 +513,13 @@ function watchOrders() {
   const ordersRef = collection(db, "orders");
 
   onSnapshot(ordersRef, (snapshot) => {
-    const list = document.getElementById("ordersList");
-    if (!list) return;
+    cconst pendingContainer = document.getElementById("ordersPending");
+const completedContainer = document.getElementById("ordersCompleted");
 
-    list.innerHTML = "";
+if (!pendingContainer || !completedContainer) return;
+
+pendingContainer.innerHTML = "";
+completedContainer.innerHTML = "";
 
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
@@ -548,7 +551,11 @@ function watchOrders() {
         });
       }
 
-      list.appendChild(div);
+     if (data.status === "pendente") {
+  pendingContainer.appendChild(div);
+} else {
+  completedContainer.appendChild(div);
+}
     });
   });
 }

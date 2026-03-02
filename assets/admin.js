@@ -400,13 +400,6 @@ function renderAdminProducts(items) {
 
   <div class="body">
     <h3>${p.name || "Produto"}</h3>
-    Discord: ${data.discord}<br>
-    Total: ${data.total}<br>
-    Status: ${data.status}<br><br>
-
-    <button class="btn danger smallBtn deleteOrderBtn" data-id="${doc.id}">
-      Excluir
-    </button>
   </div>
 
       <div class="body">
@@ -540,19 +533,26 @@ completedContainer.innerHTML = "";
       div.className = "panel orderCard";
       div.style.marginBottom = "10px";
 
-      div.innerHTML = `
-        <strong>${data.nick}</strong><br>
-        Discord: ${data.discord}<br>
-        Total: ${data.total}<br>
-        Status: <b>${data.status}</b><br><br>
-        ${
-          data.status === "pendente"
-            ? `<button class="btn" data-id="${id}">
-                 Marcar como concluído
-               </button>`
-            : `<span style="color: #38d478;">✔ Concluído</span>`
-        }
-      `;
+     div.innerHTML = `
+  <strong>${data.nick}</strong><br>
+  Discord: ${data.discord}<br>
+  Total: ${data.total}<br>
+  Status: <b>${data.status}</b><br><br>
+
+  ${
+    data.status === "pendente"
+      ? `<button class="btn" data-id="${id}">
+           Marcar como concluído
+         </button>`
+      : `<span style="color: #38d478;">✔ Concluído</span>`
+  }
+
+  <br><br>
+
+  <button class="btn danger smallBtn deleteOrderBtn" data-id="${id}">
+    Excluir
+  </button>
+`;
 
       if (data.status === "pendente") {
         div.querySelector("button").addEventListener("click", async () => {

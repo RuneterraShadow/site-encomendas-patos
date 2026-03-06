@@ -1064,3 +1064,25 @@ label{
   z-index: 1000000;
   cursor: pointer;
 }
+/* =========================
+   ADMIN LAYOUT FIX
+========================= */
+
+.adminLayout{
+  display: grid;
+  grid-template-columns: 1fr 420px; /* esquerda | pedidos */
+  gap: 16px;
+  align-items: start;
+}
+
+/* coluna da direita (pedidos) */
+.adminOrders{
+  max-width: 420px;
+}
+
+/* responsivo */
+@media (max-width: 1000px){
+  .adminLayout{
+    grid-template-columns: 1fr;
+  }
+}

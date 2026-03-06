@@ -1042,6 +1042,10 @@ label{
   font-size: 14px;
   line-height: 1.35;
 }
+.orderCard button{
+  padding:6px 10px;
+  font-size:13px;
+}
 /* Esconde input + label acima dele */
 
 #headerTitle,

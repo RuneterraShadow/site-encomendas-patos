@@ -1036,26 +1036,8 @@ label{
 .tabContent.active {
   display: block;
 }
-.orderCard{
-  background:#141414;
-  border:1px solid #2a2a2a;
-  border-radius:12px;
-  padding:10px 12px;
-  margin-bottom:8px;
-
-  font-size:13px;
-  line-height:1.35;
-
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-
-  transition:all .15s ease;
-}
-
-.orderCard:hover{
-  border-color:#ff7a00;
-  box-shadow:0 6px 20px rgba(0,0,0,.35);
+.orderCard {
+  margin-bottom: 12px;
 }
 /* Esconde input + label acima dele */
 
@@ -1107,32 +1089,4 @@ label{
 .orderCard{
   padding: 8px 10px;
   margin-bottom: 8px;
-}
-.orderCard strong{
-  font-size:13px;
-  font-weight:700;
-}
-
-.orderCard p{
-  margin:2px 0;
-  color:#bdbdbd;
-}
-.orderCard{
-  padding:8px 10px;
-  margin-bottom:8px;
-  font-size:13px;
-}
-
-/* botão não ocupa a linha inteira */
-.orderCard .btn{
-  width:auto;
-  padding:4px 10px;
-  font-size:12px;
-  margin-top:4px;
-}
-.orderCard{
-  backdrop-filter: blur(4px);
-}
-.orderCard p{
-  margin:2px 0;
 }

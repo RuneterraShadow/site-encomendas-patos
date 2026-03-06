@@ -1074,3 +1074,14 @@ label{
   z-index: 1000000;
   cursor: pointer;
 }
+/* Faz o painel de pedidos ocupar o espaço vazio da coluna */
+#ordersPanel{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#ordersPending,
+#ordersCompleted{
+  flex: 1;
+}

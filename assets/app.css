@@ -1037,8 +1037,15 @@ label{
   display: block;
 }
 .orderCard {
-  margin-bottom: 10px;
-  padding: 12px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.orderCard .btn{
+  padding:4px 8px;
+  font-size:12px;
+  margin-top:4px;
 }
 .orderCard button{
   width:100%;

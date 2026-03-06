@@ -1041,6 +1041,10 @@ label{
   padding: 10px 12px;
   font-size: 14px;
   line-height: 1.35;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .orderCard button{
   padding:6px 10px;
@@ -1070,10 +1074,4 @@ label{
   position: fixed;
   z-index: 1000000;
   cursor: pointer;
-}
-#ordersPending,
-#ordersCompleted{
-  height: 520px;
-  overflow-y: auto;
-  padding-right: 4px;
 }

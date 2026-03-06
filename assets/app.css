@@ -1071,3 +1071,9 @@ label{
   z-index: 1000000;
   cursor: pointer;
 }
+#ordersPending,
+#ordersCompleted{
+  height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}

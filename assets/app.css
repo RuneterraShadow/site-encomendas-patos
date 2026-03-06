@@ -1047,7 +1047,7 @@ label{
   font-size:13px;
 }
 #ordersPanel{
-  margin-top:-60px;
+  min-height: 900px;
 }
 /* Esconde input + label acima dele */
 

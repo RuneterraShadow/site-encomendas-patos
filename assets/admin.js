@@ -618,9 +618,49 @@ const completedPage = completed.slice(startCompleted, startCompleted + ORDERS_PE
 
     });
 
+    renderPagination(
+  pending.length,
+  pagePending,
+  "paginationPending",
+  (p)=> pagePending = p
+);
+
+renderPagination(
+  completed.length,
+  pageCompleted,
+  "paginationCompleted",
+  (p)=> pageCompleted = p
+);
+    
   });
 
 }
+
+function renderPagination(total, page, containerId, setPage){
+
+  const totalPages = Math.ceil(total / ORDERS_PER_PAGE);
+  const container = document.getElementById(containerId);
+
+  if(!container) return;
+
+  container.innerHTML = "";
+
+  for(let i=1;i<=totalPages;i++){
+
+    const btn = document.createElement("button");
+    btn.textContent = i;
+
+    if(i === page) btn.style.background = "#ff7a00";
+
+    btn.onclick = () => {
+      setPage(i);
+      watchOrders();
+    };
+
+    container.appendChild(btn);
+  }
+}
+
 // Controle das abas de pedidos
 document.addEventListener("click", (e) => {
   if (!e.target.classList.contains("tabBtn")) return;

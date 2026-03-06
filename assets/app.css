@@ -1117,11 +1117,22 @@ label{
   margin:2px 0;
   color:#bdbdbd;
 }
+.orderCard{
+  padding:8px 10px;
+  margin-bottom:8px;
+  font-size:13px;
+}
+
+/* botão não ocupa a linha inteira */
 .orderCard .btn{
-  padding:4px 8px;
+  width:auto;
+  padding:4px 10px;
   font-size:12px;
-  border-radius:8px;
+  margin-top:4px;
 }
 .orderCard{
   backdrop-filter: blur(4px);
+}
+.orderCard p{
+  margin:2px 0;
 }

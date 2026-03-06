@@ -1037,18 +1037,13 @@ label{
   display: block;
 }
 .orderCard {
-  margin-bottom: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
-  line-height: 1.35;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 12px;
 }
 .orderCard button{
-  padding:6px 10px;
-  font-size:13px;
+  width:100%;
+  padding:6px;
+  margin-top:6px;
 }
 /* Esconde input + label acima dele */
 

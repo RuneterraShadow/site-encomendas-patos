@@ -1042,15 +1042,12 @@ label{
   font-size: 13px;
   line-height: 1.2;
 }
-.orderCard .btn{
-  padding:4px 8px;
-  font-size:12px;
-  margin-top:4px;
-}
 .orderCard button{
-  width:100%;
-  padding:6px;
-  margin-top:6px;
+  padding:6px 10px;
+  font-size:13px;
+}
+#ordersPanel{
+  margin-top:-60px;
 }
 /* Esconde input + label acima dele */
 

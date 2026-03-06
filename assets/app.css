@@ -1037,17 +1037,7 @@ label{
   display: block;
 }
 .orderCard {
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  font-size: 13px;
-  line-height: 1.2;
-}
-.orderCard button{
-  padding:6px 10px;
-  font-size:13px;
-}
-#ordersPanel{
-  min-height: 900px;
+  margin-bottom: 12px;
 }
 /* Esconde input + label acima dele */
 
@@ -1073,15 +1063,4 @@ label{
   position: fixed;
   z-index: 1000000;
   cursor: pointer;
-}
-/* Faz o painel de pedidos ocupar o espaço vazio da coluna */
-#ordersPanel{
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-#ordersPending,
-#ordersCompleted{
-  flex: 1;
 }

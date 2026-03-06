@@ -513,62 +513,113 @@ function fillProductForm(p) {
 // HISTÓRICO DE PEDIDOS
 // ============================
 
+const ORDERS_PER_PAGE = 5;
+
+let pagePending = 1;
+let pageCompleted = 1;
+
+function paginate(list, page) {
+  const start = (page - 1) * ORDERS_PER_PAGE;
+  const end = start + ORDERS_PER_PAGE;
+  return list.slice(start, end);
+}
+
 function watchOrders() {
+
   const ordersRef = collection(db, "orders");
 
   onSnapshot(ordersRef, (snapshot) => {
+
     const pendingContainer = document.getElementById("ordersPending");
-const completedContainer = document.getElementById("ordersCompleted");
+    const completedContainer = document.getElementById("ordersCompleted");
 
-if (!pendingContainer || !completedContainer) return;
+    if (!pendingContainer || !completedContainer) return;
 
-pendingContainer.innerHTML = "";
-completedContainer.innerHTML = "";
+    pendingContainer.innerHTML = "";
+    completedContainer.innerHTML = "";
+
+    const orders = [];
 
     snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const id = docSnap.id;
+      orders.push({
+        id: docSnap.id,
+        ...docSnap.data()
+      });
+    });
+
+    const pending = orders.filter(o => o.status === "pendente");
+    const completed = orders.filter(o => o.status !== "pendente");
+
+    const startPending = (pagePending - 1) * ORDERS_PER_PAGE;
+const pendingPage = pending.slice(startPending, startPending + ORDERS_PER_PAGE);
+
+const startCompleted = (pageCompleted - 1) * ORDERS_PER_PAGE;
+const completedPage = completed.slice(startCompleted, startCompleted + ORDERS_PER_PAGE);
+
+    pendingPage.forEach((data) => {
+
+      const id = data.id;
 
       const div = document.createElement("div");
       div.className = "panel orderCard";
       div.style.marginBottom = "10px";
 
-     div.innerHTML = `
-  <strong>${data.nick}</strong><br>
-  Discord: ${data.discord}<br>
-  Total: ${data.total}<br>
-  Status: <b>${data.status}</b><br><br>
+      div.innerHTML = `
+      <strong>${data.nick}</strong><br>
+      Discord: ${data.discord}<br>
+      Total: ${data.total}<br>
+      Status: <b>${data.status}</b><br><br>
 
-  ${
-    data.status === "pendente"
-      ? `<button class="btn" data-id="${id}">
-           Marcar como concluído
-         </button>`
-      : `<span style="color: #38d478;">✔ Concluído</span>`
-  }
+      <button class="btn" data-id="${id}">
+        Marcar como concluído
+      </button>
 
-  <br><br>
+      <br><br>
 
-  <button class="btn danger smallBtn deleteOrderBtn" data-id="${id}">
-    Excluir
-  </button>
-`;
+      <button class="btn danger smallBtn deleteOrderBtn" data-id="${id}">
+        Excluir
+      </button>
+      `;
 
-      if (data.status === "pendente") {
-        div.querySelector("button").addEventListener("click", async () => {
-          await updateDoc(doc(db, "orders", id), {
-            status: "concluido"
-          });
+      div.querySelector("button").addEventListener("click", async () => {
+        await updateDoc(doc(db, "orders", id), {
+          status: "concluido"
         });
-      }
+      });
 
-     if (data.status === "pendente") {
-  pendingContainer.appendChild(div);
-} else {
-  completedContainer.appendChild(div);
-}
+      pendingContainer.appendChild(div);
+
     });
+
+    completedPage.forEach((data) => {
+
+      const id = data.id;
+
+      const div = document.createElement("div");
+      div.className = "panel orderCard";
+      div.style.marginBottom = "10px";
+
+      div.innerHTML = `
+      <strong>${data.nick}</strong><br>
+      Discord: ${data.discord}<br>
+      Total: ${data.total}<br>
+      Status: <b>${data.status}</b><br><br>
+
+      <span style="color: #38d478;">✔ Concluído</span>
+
+      <br><br>
+
+      <button class="btn danger smallBtn deleteOrderBtn" data-id="${id}">
+        Excluir
+      </button>
+      `;
+
+      completedContainer.appendChild(div);
+
+    });
+
   });
+
 }
 // Controle das abas de pedidos
 document.addEventListener("click", (e) => {

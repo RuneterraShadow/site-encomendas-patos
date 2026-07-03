@@ -220,6 +220,11 @@ el("saveSettingsBtn").addEventListener("click", async () => {
     bannerPosY: clampPos(el("bImagePosY").value, 50),
     bannerZoom: clampZoom(el("bImageZoom").value, 100),
 
+    showTrustBlock: el("showTrustBlock") ? el("showTrustBlock").value === "true" : true,
+    showFooter: el("showFooter") ? el("showFooter").value === "true" : true,
+    footerTitle: el("footerTitle") ? el("footerTitle").value.trim() : "",
+    footerText: el("footerText") ? el("footerText").value.trim() : "",
+    footerLinksRaw: el("footerLinksRaw") ? el("footerLinksRaw").value.trim() : "",
     footerCopy: el("footerCopy") ? el("footerCopy").value.trim() : "",
 
     /* 🔥 TOPO DO SITE */
